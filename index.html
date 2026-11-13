@@ -301,15 +301,17 @@ const sfx={
 };
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 const MUS={next:0,step:0,timer:null};
-function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=ERA.m,spb=60/m.bpm/4;
+const DISCO={bpm:122,wave:'square',bass:'square',root:220,scale:[0,2,4,7,9],prog:[0,5,-3,-5],pat:[4,null,3,4,null,2,null,3,4,null,5,4,3,null,2,null],drum:true,disco:true};
+function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=(S&&S.radio)?DISCO:ERA.m,spb=60/m.bpm/4;
   if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+.05;
   let guard=0;while(MUS.next<AC.currentTime+.25&&guard++<16){playStep(MUS.step,MUS.next,m,spb);MUS.next+=spb;MUS.step++;}}catch(e){}},60);}
 function playStep(i,t,m,spb){
   if(MUTE||!S||S.mode!=='play')return;
   const bar=Math.floor(i/16)%4,s=i%16,root=m.root*Math.pow(2,m.prog[bar]/12);
-  if(s%4===0)tone(root/2,spb*3,m.bass,.05,null,0,t);
+  if(m.disco){if(s%2===0)tone(root/(s%4===0?4:2),spb*1.6,m.bass,.045,null,0,t);if(s%4===0)tone(80,.1,'sine',.12,40,0,t);if(s%4===2)noise(.06,.05,t,6000);if(s%8===4)noise(.1,.08,t,3000);}
+  else if(s%4===0)tone(root/2,spb*3,m.bass,.05,null,0,t);
   const p=m.pat[s];if(p!=null){const oct=Math.floor(p/m.scale.length);tone(root*Math.pow(2,(m.scale[p%m.scale.length]+12*oct)/12),spb*.9,m.wave,.018,null,0,t);}
-  if(m.drum){if(s%8===4)noise(.08,.06,t,4000);if(s%8===0)tone(70,.08,'sine',.08,40,0,t);}
+  if(m.drum&&!m.disco){if(s%8===4)noise(.08,.06,t,4000);if(s%8===0)tone(70,.08,'sine',.08,40,0,t);}
 }
 
 /* ================= FONT PIXEL 3x5 ================= */
@@ -334,10 +336,11 @@ function newRun(shoe,tr){
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
      mode:'play',qte:null,dlg:null,nextEvent:18,nextDlg:9,hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
-     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
+     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
   $('log').innerHTML='';$('bib').textContent='N.'+bib;$('yr').textContent=YEAR;
   log(`Marcia del ${YEAR}: da ${ROUTE.c[0]} a ${ROUTE.c[ROUTE.c.length-1]}. ${S.wx.label}.`,'var(--amber)');
+  if(S.radio)log('Accendi la radiolina: parte un pezzo disco. Ti senti meno solo.','var(--green)');
   think(S.mh<S.ph?'mh':'ph');
   if(S.mh<48&&Math.random()<.15)setTimeout(()=>{if(S&&S.mode==='play'&&!S.qte&&!S.dlg)startQTE('blocco');},700);
 }
@@ -471,7 +474,7 @@ function update(dt){
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log('La suola dei mocassini si stacca.','var(--red)');}
   let pd=.03*sh.ph;if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&hour>=20)pd+=.03;
   S.ph=clamp(S.ph-pd*dt,0,100);
-  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(hour>=20)md+=wx.cold?.08:.05;md+=.03*S.warn;
+  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(hour>=20)md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;
   S.mh=clamp(S.mh-md*dt,0,100);
   const lp=lvl(S.ph),lm=lvl(S.mh);S.thT-=dt;
   if(lp>S.lvPH){think('ph');S.thT=rand(12,18);}else if(lm>S.lvMH){think('mh');S.thT=rand(12,18);}
@@ -506,7 +509,7 @@ function update(dt){
   S.drops.forEach(p=>{p.x-=60*dt;p.y+=180*dt;});S.drops=S.drops.filter(p=>p.y<H);
   if(S.mode!=='play')return;
   if(S.ph<=0)return die('Sincope. Crolli sull\'asfalto e non ti rialzi.',false);
-  if(S.mh<=0)return die('La mente cede. Ti siedi in mezzo alla strada.',true);
+  if(S.mh<=0){S.panicDeath=true;return die('Crisi di panico. La mente cede e ti siedi in mezzo alla strada.',true);}
   if(S.npcs.every(n=>!n.alive))end(true);
 }
 const gunPos=()=>ERA.veh==='drone'?[S.truckX+20,76]:[S.truckX+27,93];
@@ -790,6 +793,7 @@ const PIXS={
  panini:['............','..oooooooo..','.opppppppppo','opppppppppppo','oyyyyyyyyyyo','oxxxxxxxxxxo','opppppppppo.','.oooooooooo.'],
  hamburger:['............','...oooooo...','..ommmmmmo..','.ommxmmmmmo.','.ommmmmxmmo.','.ommmmmmmmo.','..ommmmmmo..','...oooooo...'],
  orologio:['....oooo....','....onno....','...oooooo...','..owwwwwwo..','..owwoowwo..','..owwowwwo..','..owwwwwwo..','...oooooo...','....onno....','....oooo....'],
+ radio:['.....o......','......o.....','.oooooooooo.','.okkkkkkkko.','.okwkwkyyko.','.okkkkkyyko.','.okwkwkkkko.','.oooooooooo.'],
  zainetto:['...oooooo...','..ov....vo..','.oooooooooo.','.ovvvvvvvvo.','.ovvoooovvo.','.ovvvvvvvvo.','.ovvvvvvvvo.','.oooooooooo.'],
 };
 function sprite(k,dark,sc=5){
@@ -799,11 +803,13 @@ function sprite(k,dark,sc=5){
   return `<img class="spr" src="${c.toDataURL()}" width="${w*sc}" height="${h*sc}" alt="">`;
 }
 const ITEMS={
- biscotti:{n:'Biscotti di mamma ×'+BISC,d:'Li ha fatti tua madre la sera prima.'},
+ biscotti:{n:'Biscotti di mamma ×'+BISC,d:'Li ha fatti tua madre la sera prima.',always:true},
+ radio:{n:'Radio portatile',d:'Una radiolina a pile. Fa compagnia.',hint:'Si sblocca finendo una marcia in un modo particolare.'},
  panini:{n:'Panini burro e marmellata',lock:true},
  hamburger:{n:'Hamburger crudo',lock:true},
  orologio:{n:'Orologio del padre',lock:true},
 };
+const itemOpen=k=>{const it=ITEMS[k];return !!(it&&!it.lock&&(it.always||store.get('up_unlock',{})[k]||DEBUG));};
 const ZAINO_RUNS=5;let RUN_ITEMS=['biscotti'];
 function equip(){
   const un=store.get('up_unlock',{}),kn=store.get('up_know',{});let sel=store.get('up_lastShoe','tennis');
@@ -818,9 +824,9 @@ function equip(){
 }
 function pickItem(shoe){
   const un=store.get('up_unlock',{}),slots=(un.zainetto||DEBUG)?2:1,runs=store.get('up_runs',0);
-  let sel=RUN_ITEMS.filter(k=>ITEMS[k]&&!ITEMS[k].lock).slice(0,slots);
+  let sel=RUN_ITEMS.filter(itemOpen).slice(0,slots);
   const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">${slots>1?'🎒 Con lo zainetto hai 2 posti liberi.':'Hai un solo posto libero. 🔒 Zainetto (2 posti): finisci '+ZAINO_RUNS+' marce ('+Math.min(runs,ZAINO_RUNS)+'/'+ZAINO_RUNS+').'}</span></p>
-    <div class="choices pix">${Object.entries(ITEMS).map(([k,it])=>`<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${it.lock?'disabled':''}>${sprite(k,it.lock)}<b>${it.lock?'🔒 ???':it.n}</b><small>${it.lock?'Si sblocca finendo una marcia in un modo particolare.':it.d}</small></button>`).join('')}</div>
+    <div class="choices pix">${Object.entries(ITEMS).map(([k,it])=>{const op=itemOpen(k);return `<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${op?'':'disabled'}>${sprite(k,!op)}<b>${op?it.n:'🔒 ???'}</b><small>${op?it.d:'Si sblocca finendo una marcia in un modo particolare.'}</small></button>`;}).join('')}</div>
     <div class="row2"><button class="ghost" id="back">INDIETRO</button><button class="main" id="go">VAI ALLA PARTENZA</button></div>`);
     sc.querySelectorAll('.choices button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;
       if(sel.includes(k))sel=sel.filter(x=>x!==k);else{sel.push(k);if(sel.length>slots)sel.shift();}render();}));
@@ -838,8 +844,9 @@ function end(win){
   const runsN=store.get('up_runs',0)+1;store.set('up_runs',runsN);
   let unlockMsg='';
   {const posE=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,ends=store.get('up_ends',{});
-   const tag=win?'vittoria':posE===TOTAL?'primo_morto':posE===2?'penultimo':null;if(tag){ends[tag]=(ends[tag]||0)+1;store.set('up_ends',ends);}
-   const unZ=store.get('up_unlock',{});if(runsN>=ZAINO_RUNS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}}
+   const tags=[win?'vittoria':posE===TOTAL?'primo_morto':posE===2?'penultimo':null,S.panicDeath?'panico':null].filter(Boolean);tags.forEach(tag=>ends[tag]=(ends[tag]||0)+1);store.set('up_ends',ends);
+   const unZ=store.get('up_unlock',{});if(runsN>=ZAINO_RUNS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}
+   if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
   if(win){const un=store.get('up_unlock',{});if(!un.trekking){un.trekking=true;store.set('up_unlock',un);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccati: Scarponi da trekking</p>';}}
   const K2=store.get('up_know',{}),un2=store.get('up_unlock',{});let tipMsg='';
   K2[S.shoe]=K2[S.shoe]||{};
