@@ -138,6 +138,8 @@ button:disabled{opacity:.35}
       <div id="inv">
         <button id="iDrink">💧 BEVI</button>
         <button id="iBisc">🍪 BISCOTTI <span id="nBisc">2</span></button>
+        <button id="iPan">🥪 PANINI <span id="nPan">3</span></button>
+        <button id="iHam">🥩 HAMBURGER</button>
         <button id="iTub">🥫 TUBETTI <span id="nTub">0</span></button>
         <button id="iPee">🚽 LIBERATI</button>
       </div>
@@ -225,6 +227,19 @@ const CAST=[
  {id:'sofia',name:'Sofia',from:'Lisbona',shirt:'#a05a90',hair:'#2a1a10',skin:'#c89068'},
 ];
 const O=(l,r,s=0)=>({l,r,s});
+/* dialoghi extra dopo i 3 di base: con gli amici si diventa fratelli, con i rivali ci si odia a morte */
+const BOND=[
+ {t:"Se uno di noi due cade, l'altro va avanti. Promesso?",o:[O("Promesso. Ma nessuno cade.",18),O("Non posso promettertelo.",-6),O("Se serve, ti porto io.",24,-6)]},
+ {t:"Raccontami di casa tua. Mi serve sentire qualcosa di vero.",o:[O("Gli parli di tua madre e dei suoi biscotti.",20),O("Non ho voglia di parlare.",-8),O("Inventi una storia bellissima.",12)]},
+ {t:"Ho paura, {N}. Non dirlo a nessuno.",o:[O("Anch'io. Camminiamo vicini.",22),O("Ce l'hanno tutti.",6),O("Allora rallenta e lasciami spazio.",-18)]},
+ {t:"Quando finirà, vieni a trovarmi. Mia sorella fa un pane buonissimo.",o:[O("Ci verrò. Te lo giuro.",20),O("Non pensare al dopo.",-4),O("Ridi e gli dai una spinta amichevole.",14,-3)]},
+];
+const FEUD=[
+ {t:"Ehi, {N}. Spero che tu sia il prossimo.",o:[O("\"Dopo di te.\"",-18),O("Fai finta di non sentire.",-4),O("Gli offri un sorso d'acqua.",12)]},
+ {t:"Ti ho visto barcollare. Manca poco, vero?",o:[O("Sorridi e acceleri apposta.",-14,-5),O("Lo mandi al diavolo.",-20),O("\"Possiamo smetterla?\"",10)]},
+ {t:"Quando ti spareranno, applaudirò.",o:[O("Gli sputi vicino alle scarpe.",-22),O("Non rispondi.",-4),O("\"Io non ti odio.\"",12)]},
+ {t:"Dicono che tu sia il cocco dei soldati. Che schifo.",o:[O("Gli salti quasi addosso.",-24,-8),O("Abbassi lo sguardo.",-6),O("\"Siamo tutti qui per colpa loro.\"",10)]},
+];
 const DLG={
  marek:[{t:"Ehi, numero {N}! Sono Marek, da Danzica. Camminiamo vicini? Le ore passano prima.",o:[O("Volentieri, Marek.",15),O("Risparmia il fiato.",-10),O("Va bene, ma niente politica.",6)]},
   {t:"Mia madre lavora al porto. Se vinco, Danzica sarà esentata dalle requisizioni. Tu per chi cammini?",o:[O("Per la mia famiglia.",12),O("Per me stesso.",0),O("Non sono affari tuoi.",-12)]},
@@ -245,7 +260,7 @@ const DLG={
   {t:"Facevo l'infermiera, prima della guerra. Qui non posso curare nessuno.",o:[O("Stai curando me.",15),O("Nessuno può curare questo.",0),O("Allora risparmia le forze.",-2)]},
   {t:"Se resto indietro, non voltarti. Promettimelo.",o:[O("Non ti lascerò indietro.",12),O("Te lo prometto.",8),O("Non promettere niente.",-6)]}],
 };
-const relLabel=r=>r>=40?'Amico':r>=15?'Simpatia':r<=-40?'Rivale':r<=-15?'Ostile':'Neutrale';
+const relLabel=r=>r>=80?'Fraterno':r<=-80?'Odio mortale':r>=40?'Amico':r>=15?'Simpatia':r<=-40?'Rivale':r<=-15?'Ostile':'Neutrale';
 const relColor=r=>r>=15?'var(--green)':r<=-15?'var(--red)':'var(--dim)';
 
 
@@ -351,6 +366,7 @@ let S=null,PROFILE=null;
 function newRun(shoe,tr){
   fit();
   $('jukeHud').style.display=DEBUG?'inline':'none';
+  $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
   CAST.forEach(c=>npcs.push({...c,named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0}));
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
@@ -363,7 +379,7 @@ function newRun(shoe,tr){
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
      mode:'play',qte:null,dlg:null,nextEvent:18,nextDlg:9,hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
-     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
+     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
   $('log').innerHTML='';$('bib').textContent='N.'+bib;$('yr').textContent=YEAR;
   log(`Marcia del ${YEAR}: da ${ROUTE.c[0]} a ${ROUTE.c[ROUTE.c.length-1]}. ${S.wx.label}.`,'var(--amber)');
@@ -391,6 +407,9 @@ document.addEventListener('contextmenu',e=>e.preventDefault());
 const onTap=(id,fn)=>$(id).addEventListener('pointerdown',e=>{e.preventDefault();if(S&&S.mode==='play')fn();});
 onTap('iDrink',()=>{if(S.drinkCd>0)return;S.hy=Math.min(100,S.hy+22);S.bl=Math.min(100,S.bl+16);S.drinkCd=6;sfx.eat();log('Chiedi la borraccia e bevi. La vescica se ne ricorderà.','var(--blue)');});
 onTap('iBisc',()=>{if(S.bisc<=0)return;S.bisc--;eat(10,8,0,'Un biscotto di mamma. Sa di casa.');});
+onTap('iPan',()=>{if(S.pan<=0)return;S.pan--;eat(18,6,0,'Pane, burro e marmellata. Ti torna il fiato.');});
+onTap('iHam',()=>{if(S.ham<=0)return;S.ham--;eat(35,0,0,'Carne cruda. Ti fa schifo, ma senti la forza tornare.');
+  if(Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
 onTap('iTub',()=>{if(S.tub<=0)return;S.tub--;eat(18,0,4,'Un tubetto di concentrato. Disgustoso, ma nutre.');});
 onTap('iPee',()=>{if(S.bl<35||S.peeing>0)return;S.peeing=5;log('Ti liberi senza fermarti... il passo ne risente. Tieni il ritmo!','var(--amber)');});
 $('mute').addEventListener('click',()=>{MUTE=!MUTE;store.set('up_mute',MUTE);$('mute').textContent=MUTE?'🔇':'🔊';initAudio();});
@@ -450,8 +469,9 @@ function choice(title,text,opts,dur,def){
   sfx.tick();
 }
 function startDialog(){
-  const cands=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving&&n.stage<3&&n!==S.lastTalk);if(!cands.length)return;
-  const npc=pick(cands),d=DLG[npc.id][npc.stage];
+  const extra=n=>n.stage>=3&&n.stage<7&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
+  const cands=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving&&(n.stage<3||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
+  const npc=pick(cands),d=npc.stage<3?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
   S.dlg={npc,d,t:0,dur:12};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.name} <span class="rl">· ${npc.from}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
@@ -466,6 +486,8 @@ function answer(i){
   log(npc.name+(o.r>5?' sorride.':o.r<0?' ti guarda storto.':' annuisce.')+(o.s?` (stamina ${o.s>0?'+':''}${o.s})`:''),o.r>0?'var(--green)':o.r<0?'var(--red)':'var(--dim)');
   const after=relLabel(npc.rel);
   if(after!==before&&(after==='Amico'||after==='Rivale'))log(npc.name+(after==='Amico'?' ora è tuo amico.':' ora è tuo rivale.'),after==='Amico'?'var(--green)':'var(--red)');
+  if(after!==before&&after==='Fraterno'){S.bro=true;log(npc.name+' ora è come un fratello per te.','var(--green)');}
+  if(after!==before&&after==='Odio mortale'){S.hate=true;log(npc.name+' ti odia a morte.','var(--red)');}
 }
 const isHeat=()=>{const h=hourNow(),w=S.wx.heat;return !!w&&h>=w[0]&&h<w[1];};
 function randomEvent(){
@@ -503,7 +525,7 @@ function update(dt){
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log('La suola dei mocassini si stacca.','var(--red)');}
   let pd=.03*sh.ph;if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&hour>=20)pd+=.03;
   S.ph=clamp(S.ph-pd*dt,0,100);
-  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(hour>=20)md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;
+  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(hour>=20)md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;
   S.mh=clamp(S.mh-md*dt,0,100);
   const lp=lvl(S.ph),lm=lvl(S.mh);S.thT-=dt;
   if(lp>S.lvPH){think('ph');S.thT=rand(12,18);}else if(lm>S.lvMH){think('mh');S.thT=rand(12,18);}
@@ -576,9 +598,10 @@ function hud(){
   let a='';
   if(DEBUG){const m=Math.floor(S.t)+7*60;a=`${fmt(S.speed)} km/h · ${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')} · PH ${Math.round(S.ph)} MH ${Math.round(S.mh)}`;}
   else if(S.t<=5)a='PARTENZA — cammina!';else if(S.peeing>0)a='TI STAI LIBERANDO...';else if(S.hill>0)a='SALITA';else if(S.rain>0)a='PIOGGIA';
+  if(!DEBUG&&S.watch){const m=Math.floor(S.t)+7*60;a='🕐 '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
   if($('alert').textContent!==a)$('alert').textContent=a;
   $('padL').classList.toggle('next',S.nextFoot==='L');$('padR').classList.toggle('next',S.nextFoot==='R');
-  $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
+  $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nPan').textContent=S.pan;$('iPan').disabled=S.pan<=0;$('iHam').disabled=S.ham<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
 }
 
 /* ================= GRAFICA DI GIOCO ================= */
@@ -856,9 +879,9 @@ function sprite(k,dark,sc=5){
 const ITEMS={
  biscotti:{n:'Biscotti di mamma ×'+BISC,d:'Li ha fatti tua madre la sera prima.',always:true},
  radio:{n:'Radio portatile',d:'Una radiolina a pile. Fa compagnia con la musica del momento.',hint:'Si sblocca finendo una marcia in un modo particolare.'},
- panini:{n:'Panini burro e marmellata',lock:true},
- hamburger:{n:'Hamburger crudo',lock:true},
- orologio:{n:'Orologio del padre',lock:true},
+ panini:{n:'Panini burro e marmellata ×3',d:'Tre panini avvolti nella carta di giornale.'},
+ hamburger:{n:'Hamburger crudo',d:'Carne cruda in un fagotto. Dà forza, se lo stomaco regge.'},
+ orologio:{n:'Orologio del padre',d:'Il vecchio orologio di tuo padre. Segna ancora l\'ora giusta.'},
 };
 const itemOpen=k=>{const it=ITEMS[k];return !!(it&&!it.lock&&(it.always||store.get('up_unlock',{})[k]||DEBUG));};
 const ZAINO_RUNS=5;let RUN_ITEMS=['biscotti'];
@@ -897,6 +920,9 @@ function end(win){
   {const posE=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,ends=store.get('up_ends',{});
    const tags=[win?'vittoria':posE===TOTAL?'primo_morto':posE===2?'penultimo':null,S.panicDeath?'panico':null].filter(Boolean);tags.forEach(tag=>ends[tag]=(ends[tag]||0)+1);store.set('up_ends',ends);
    const unZ=store.get('up_unlock',{});if(runsN>=ZAINO_RUNS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}
+   const deadN=S.npcs.filter(n=>!n.alive||n.leaving).length;
+   const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
+   U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
    if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
   if(win){const un=store.get('up_unlock',{});if(!un.trekking){un.trekking=true;store.set('up_unlock',un);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccati: Scarponi da trekking</p>';}}
   const K2=store.get('up_know',{}),un2=store.get('up_unlock',{});let tipMsg='';
