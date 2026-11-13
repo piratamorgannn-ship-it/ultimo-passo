@@ -235,8 +235,8 @@ const DEEP={
  vita2:{t:"E adesso? Ti sembra ancora una cosa possibile?",o:[Q("Sì. Finché cammino, è possibile.",D(8,7)),Q("No. Ma mi piace pensarci con te.",D(10,5))]},
  vita3:{t:"Hai ragione. Però parlarne ci tiene svegli.",o:[Q("Allora parlami tu della tua.",D(8,4,'vita4')),Q("Va bene. Solo un po'.",D(6,4))]},
  vita4:{t:"Io volevo fare il maestro. Insegnare ai bambini a leggere, come faceva mia nonna.",o:[Q("Saresti stato bravo. Sei paziente.",D(10,6)),Q("Lo sarai ancora. Te lo prometto.",D(8,8))]},
- amore:{t:"C'è qualcuno che ti aspetta, a casa?",o:[Q("Sì. E non so se rivedrò quella persona.",D(6,2,'amore2')),Q("No. Forse è meglio così.",D(4,0,'amore3')),Q("C'era. Ci siamo lasciati prima dell'estrazione.",D(6,2,'amore2'))]},
- amore2:{t:"Cosa le diresti, se fosse qui adesso?",o:[Q("Che non ho avuto paura. Anche se non è vero.",D(8,6)),Q("Che mi dispiace per tutte le volte che non c'ero.",D(10,4))]},
+ amore:{t:"C'è qualcuno che ti aspetta, a casa?",o:[Q("Sì. E non so se rivedrò quella persona.",D(6,2,'amore2')),Q("Sì: un ragazzo. Non l'ho mai detto a nessuno.",{...D(10,4,'amore2'),g:1,out:1}),Q("No. Forse è meglio così.",D(4,0,'amore3')),Q("C'era. Ci siamo lasciati prima dell'estrazione.",D(6,2,'amore2'))]},
+ amore2:{t:"Cosa diresti a quella persona, se fosse qui adesso?",o:[Q("Che non ho avuto paura. Anche se non è vero.",D(8,6)),Q("Che mi dispiace per tutte le volte che non c'ero.",D(10,4))]},
  amore3:{t:"Io ho lasciato una lettera sotto il cuscino di qualcuno. Non so se l'ha letta.",o:[Q("L'ha letta di sicuro. E l'ha tenuta.",D(10,5)),Q("Quando torni, glielo chiedi.",D(8,7))]},
  amicizia:{t:"Lo sai che sei l'unico amico vero che ho avuto?",o:[Q("Anche tu. Strano trovarsi proprio qui.",D(8,4,'amicizia2')),Q("Non dirlo. Mi fai piangere e mi serve il fiato.",D(6,6))]},
  amicizia2:{t:"Se resto indietro, non voltarti. Promettimelo.",o:[Q("Non te lo prometto.",D(12,3)),Q("Te lo prometto. Ma tu non restare indietro.",D(8,6))]},
@@ -245,6 +245,8 @@ const DEEP={
  morte3:{t:"Allora, se arrivo prima io, ti aspetto. Promesso.",o:[Q("Non avere fretta. Ci vediamo tra cent'anni.",D(10,8)),Q("Tienimi un posto vicino al fuoco.",D(10,6))]},
 };
 const DEEP_START=['vita','amore','amicizia','morte'];
+/* domanda curiosa (solo se il giocatore è gay e non l'ha ancora detto): la risposta può rivelarlo */
+const LOVEQ={t:"Ce l'hai la ragazza, a casa? Scommetto di sì.",o:[Q("«Sì, certo.»",{r:2,m:-3}),Q("«Non ho una ragazza. Ho un ragazzo.»",{r:0,m:5,out:1}),Q("«Non sono affari tuoi.»",{r:-6,m:0})]};
 /* insulti dei marciatori razzisti/omofobi (parole offensive censurate con asterischi) */
 const SLUR={
  black:["Che ci fai tu qui, ne**o? Questa marcia è per gente della Federazione vera.","Spero che i soldati sparino prima ai ne**i come te.","Tornatene da dove sei venuto, sporco ne**o. Ah, già: non puoi.","Ehi, ne**o, non starmi così vicino."],
@@ -255,7 +257,7 @@ const DEFEND=["«Lascialo stare.»","«Un'altra parola e inciampi tu.»","«Siam
 /* dialoghi extra dopo i 3 di base: con gli amici si diventa fratelli, con i rivali ci si odia a morte */
 const BOND=[
  {t:"Se uno di noi due cade, l'altro va avanti. Promesso?",o:[O("Promesso. Ma nessuno cade.",18),O("Non posso promettertelo.",-6),O("Se serve, ti porto io.",24,-6)]},
- {t:"Raccontami di casa tua. Mi serve sentire qualcosa di vero.",o:[O("Gli parli di tua madre e dei suoi biscotti.",20),O("Non ho voglia di parlare.",-8),O("Inventi una storia bellissima.",12)]},
+ {t:"Raccontami di casa tua. Mi serve sentire qualcosa di vero.",o:[O("Gli parli di tua madre e dei suoi biscotti.",20),O("Non ho voglia di parlare.",-8),O("Inventi una storia bellissima.",12),{...O("Gli parli del ragazzo che ami.",18),g:1,out:1}]},
  {t:"Ho paura, {N}. Non dirlo a nessuno.",o:[O("Anch'io. Camminiamo vicini.",22),O("Ce l'hanno tutti.",6),O("Allora rallenta e lasciami spazio.",-18)]},
  {t:"Quando finirà, vieni a trovarmi. Mia sorella fa un pane buonissimo.",o:[O("Ci verrò. Te lo giuro.",20),O("Non pensare al dopo.",-4),O("Ridi e gli dai una spinta amichevole.",14,-3)]},
 ];
@@ -402,7 +404,7 @@ function newRun(shoe,tr){
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
-     mode:'play',qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
+     mode:'play',qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
      bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
@@ -508,13 +510,15 @@ function deepTalk(){
   let left=DEEP_START.filter(k=>!S.deepUsed.includes(k));if(!left.length){S.deepUsed=[];left=DEEP_START.slice();}
   const k=pick(left);S.deepUsed.push(k);openDlg(pick(br),DEEP[k],'deep');return true;
 }
+function loveQ(){const c=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving);if(!c.length)return false;openDlg(pick(c),LOVEQ,'loveq');return true;}
 function bigotTalk(){
   const bg=S.npcs.filter(n=>n.bigot&&n.alive&&!n.leaving);if(!bg.length)return false;
-  const pool=[...(S.black?SLUR.black:[]),...(S.gay?SLUR.gay:[])];
+  const pool=[...(S.black?SLUR.black:[]),...(S.outed?SLUR.gay:[])];if(!pool.length)return false;
   S.mh=Math.max(0,S.mh-6);sfx.bad();
   openDlg(pick(bg),{t:pick(pool),o:SLUR_O},'bigot');return true;
 }
 function openDlg(npc,d,kind){
+  d={...d,o:d.o.filter(o=>!o.g||S.gay)};
   S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.name} <span class="rl">· ${npc.from||'?'}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
@@ -527,6 +531,10 @@ function answer(i){
     log(o.m>0?'Lo guardi dritto negli occhi. Lui sputa per terra.':o.m<-5?'Le sue parole ti restano addosso.':'Fai finta di niente. Brucia lo stesso.',o.m>0?'var(--green)':'var(--red)');
     const fr=friends();if(fr.length&&Math.random()<.65){const f=pick(fr);setTimeout(()=>{if(!S||S.mode!=='play')return;S.mh=Math.min(100,S.mh+8);f.rel=Math.min(100,f.rel+4);log(f.name+' si mette in mezzo: '+pick(DEFEND),'var(--green)');sfx.good();},1800);}
     return;}
+  if(i>=0&&g.d.o[i].out&&!S.outed){S.outed=true;setTimeout(()=>{if(S&&S.mode==='play')log('Qualcuno ha sentito. La voce corre lungo la fila.','var(--dim)');},2500);}
+  if(g.kind==='loveq'){if(i<0){log(npc.name+' alza le spalle.','var(--dim)');return;}const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
+    if(o.out){const ok=npc.rel>=0&&Math.random()<.75;npc.rel=clamp(npc.rel+(ok?8:-18),-100,100);log(npc.name+(ok?' sorride: «Allora spero che ti aspetti.»':' fa una smorfia e si allontana.'),ok?'var(--green)':'var(--red)');}
+    else log(npc.name+(o.r<0?' alza le mani: «Scusa.»':' annuisce.'),'var(--dim)');return;}
   if(g.kind==='deep'){if(i<0){log(npc.name+' resta in silenzio accanto a te.','var(--dim)');return;}
     const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=Math.min(100,S.mh+o.m);
     if(o.n)setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.alive&&!npc.leaving)openDlg(npc,DEEP[o.n],'deep');},1800);
@@ -607,7 +615,8 @@ function update(dt){
   if(S.qte){const q=S.qte;q.t+=dt;const tb=$('qt');if(tb)tb.style.width=(100-q.t/q.dur*100)+'%';if(q.timing){const mk=$('mk');if(mk)mk.style.left=(clamp(q.t/q.dur,0,1)*100)+'%';}if(q.t>=q.dur)endQTE(false);}
   else if(S.dlg){S.dlg.t+=dt;const tb=$('dt');if(tb)tb.style.width=(100-S.dlg.t/S.dlg.dur*100)+'%';
     if(S.dlg.t>=S.dlg.dur){if(S.dlg.choice){const g=S.dlg;S.dlg=null;hideBox();g.opts[g.def].f();}else answer(-1);}}
-  else{if(S.t>=S.nextEvent){randomEvent();S.nextEvent=S.t+rand(13,22);}else if(S.t>=S.nextBigot&&(S.black||S.gay)&&bigotTalk()){S.nextBigot=S.t+rand(70,120);}
+  else{if(S.t>=S.nextEvent){randomEvent();S.nextEvent=S.t+rand(13,22);}else if(S.t>=S.nextBigot&&(S.black||S.outed)&&bigotTalk()){S.nextBigot=S.t+rand(70,120);}
+    else if(S.gay&&!S.outed&&!S.loveAsked&&S.t>=S.nextLoveQ&&loveQ()){S.loveAsked=true;}
     else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(35,55);}
     else if(S.t>=S.nextDlg){startDialog();S.nextDlg=S.t+rand(18,28);}}
   if(S.hill>0)S.hill-=dt;if(S.rain>0)S.rain-=dt;
