@@ -72,6 +72,11 @@ button:disabled{opacity:.35}
 #screen .choices button{text-align:left;padding:9px}
 #screen .choices button small{display:block;color:var(--dim);font-size:11px;margin-top:3px;line-height:1.35}
 #screen .choices button.sel{box-shadow:inset 0 0 0 2px var(--amber)}
+#screen .choices.pix{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
+#screen .choices.pix button{text-align:center;display:flex;flex-direction:column;align-items:center}
+#screen .choices.pix button:disabled{opacity:.6}
+#screen img.spr{image-rendering:pixelated;image-rendering:crisp-edges;margin:2px auto 6px;max-width:100%;height:auto}
+#screen .row2{display:flex;gap:10px;justify-content:center}
 #screen .row3{display:flex;gap:8px;width:100%;max-width:560px;margin-bottom:14px}
 #screen .row3 button{flex:1;text-align:center;font-size:15px;font-weight:700;padding:12px 4px}
 #screen table{font-size:12px;margin:0 auto 12px;border-collapse:collapse}
@@ -773,15 +778,52 @@ function quiz(){
     $('skip').addEventListener('click',()=>{for(;i<pool.length;i++)ans.push([pool[i],Math.floor(Math.random()*3)]);finish();});
   };ask();
 }
+/* ---- sprite pixel ---- */
+const PAL={o:'#1a1410',w:'#e8e4d8',l:'#8a8a8a',b:'#3a6ea5',s:'#b0aaa0',g:'#3f8f4f',n:'#7a4a26',d:'#4a2a14',v:'#5b6b3a',k:'#2a2a2a',r:'#d8692a',y:'#e0c040',c:'#b07a3a',p:'#d9b070',m:'#d77a8a',x:'#c03030'};
+const PIXS={
+ ginnastica:['................','.....oooo.......','....owwwwo......','....owlwlwo.....','...owwlwlwwoo...','...owbbbwwwwwo..','..owwwbbbbwwwwo.','..owwwwwwbbwwwo.','..osssssssssssso','...ooooooooooooo'],
+ tennis:['................','................','.....oooo.......','....owwwwoo.....','....owlwlwwoo...','...owwlwlwwwwoo.','..owggwwwwwwwwwo','..owwgggggwwwwwo','..osssssssssssso','...ooooooooooooo'],
+ mocassini:['................','................','................','......oooooo....','.....onnnnnnoo..','....onnddddnnnoo','...onnnnnnnnnnno','..onnnnnnnnnnnno','..oddddddddddddo','...oooooooooooo.'],
+ trekking:['....ooooo.......','....onnnno......','....onlnlo......','....onnlno......','...onnlnlnoo....','...onnnlnnnnoo..','..onnnnnnnnnnno.','..ovvvvvvvvvvvo.','..okkkkkkkkkkko.','..okokokokokoko.'],
+ running:['................','................','.....ooo........','....orrro.......','....orlrloo.....','...orrlrlrrroo..','..orwwrrrrrrrroo','.orrrwwwwrrrrrro','.oyyyyyyyyyyyyo.','..oooooooooooo..'],
+ biscotti:['...oooooo...','..occccccoo.','.occdcccdcco','.occcccccco.','.ocdcccdccco','.occccccdcco','.occdccccco.','..occcccco..','...oooooo...'],
+ panini:['............','..oooooooo..','.opppppppppo','opppppppppppo','oyyyyyyyyyyo','oxxxxxxxxxxo','opppppppppo.','.oooooooooo.'],
+ hamburger:['............','...oooooo...','..ommmmmmo..','.ommxmmmmmo.','.ommmmmxmmo.','.ommmmmmmmo.','..ommmmmmo..','...oooooo...'],
+ orologio:['....oooo....','....onno....','...oooooo...','..owwwwwwo..','..owwoowwo..','..owwowwwo..','..owwwwwwo..','...oooooo...','....onno....','....oooo....'],
+ zainetto:['...oooooo...','..ov....vo..','.oooooooooo.','.ovvvvvvvvo.','.ovvoooovvo.','.ovvvvvvvvo.','.ovvvvvvvvo.','.oooooooooo.'],
+};
+function sprite(k,dark,sc=5){
+  const m=PIXS[k];if(!m)return'';const w=Math.max(...m.map(r=>r.length)),h=m.length;
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');
+  m.forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch==='.'||!PAL[ch])return;g.fillStyle=dark?(ch==='o'?'#111':'#3a3a3a'):PAL[ch];g.fillRect(x,y,1,1);}));
+  return `<img class="spr" src="${c.toDataURL()}" width="${w*sc}" height="${h*sc}" alt="">`;
+}
+const ITEMS={
+ biscotti:{n:'Biscotti di mamma ×'+BISC,d:'Li ha fatti tua madre la sera prima.'},
+ panini:{n:'Panini burro e marmellata',lock:true},
+ hamburger:{n:'Hamburger crudo',lock:true},
+ orologio:{n:'Orologio del padre',lock:true},
+ zainetto:{n:'Zainetto',lock:true},
+};
 function equip(){
-  const un=store.get('up_unlock',{}),kn=store.get('up_know',{});let sel='tennis';
-  const open=k=>!SHOES[k].unlock||un[k]||DEBUG;
+  const un=store.get('up_unlock',{}),kn=store.get('up_know',{});let sel=store.get('up_lastShoe','tennis');
+  const open=k=>!SHOES[k].unlock||un[k]||DEBUG;if(!open(sel))sel='tennis';
   const info=(k,s)=>{const z=kn[k]||{};return '✚ '+(z.pro||DEBUG?s.pro:'???')+'<br>− '+(z.con||DEBUG?s.con:'??? (lo scoprirai usandole)');};
-  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p>Scegli le scarpe. Nell'altro slot hai solo i <b>biscotti di mamma</b> (×${BISC}).<br><span class="lbl" style="font-size:11px">Pregi e difetti si scoprono marcia dopo marcia.</span></p>
-    <div class="choices">${Object.entries(SHOES).map(([k,s])=>`<button data-k="${k}" class="${k===sel?'sel':''}" ${open(k)?'':'disabled'}>${open(k)?'':'🔒 '}${s.n}<small>${open(k)?info(k,s):s.unlock}</small></button>`).join('')}</div>
-    <button class="main" id="go">VAI ALLA PARTENZA</button>`);
+  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">1/2 · <b>Scegli le scarpe.</b> <span class="lbl" style="font-size:11px">Pregi e difetti si scoprono marcia dopo marcia.</span></p>
+    <div class="choices pix">${Object.entries(SHOES).map(([k,s])=>`<button data-k="${k}" class="${k===sel?'sel':''}" ${open(k)?'':'disabled'}>${sprite(k,!open(k))}<b>${open(k)?'':'🔒 '}${s.n}</b><small>${open(k)?info(k,s):s.unlock}</small></button>`).join('')}</div>
+    <button class="main" id="go">AVANTI</button>`);
     sc.querySelectorAll('.choices button').forEach(b=>b.addEventListener('click',()=>{sel=b.dataset.k;render();}));
-    $('go').addEventListener('click',()=>loading(sel));};
+    $('go').addEventListener('click',()=>{store.set('up_lastShoe',sel);pickItem(sel);});};
+  render();
+}
+function pickItem(shoe){
+  let sel='biscotti';
+  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">Hai un solo posto libero.</span></p>
+    <div class="choices pix">${Object.entries(ITEMS).map(([k,it])=>`<button data-k="${k}" class="${k===sel?'sel':''}" ${it.lock?'disabled':''}>${sprite(k,it.lock)}<b>${it.lock?'🔒 ???':it.n}</b><small>${it.lock?'Non ancora disponibile.':it.d}</small></button>`).join('')}</div>
+    <div class="row2"><button class="ghost" id="back">INDIETRO</button><button class="main" id="go">VAI ALLA PARTENZA</button></div>`);
+    sc.querySelectorAll('.choices button').forEach(b=>b.addEventListener('click',()=>{sel=b.dataset.k;render();}));
+    $('back').addEventListener('click',equip);
+    $('go').addEventListener('click',()=>loading(shoe));};
   render();
 }
 function loading(shoe){
