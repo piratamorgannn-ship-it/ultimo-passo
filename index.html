@@ -158,7 +158,7 @@ const $=id=>document.getElementById(id);
 const cv=$('scene'),cx=cv.getContext('2d');
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), pick=a=>a[Math.floor(Math.random()*a.length)];
 const fmt=(n,d=1)=>n.toFixed(d).replace('.',',');
-let DEBUG=false,DEBUG_YEAR=null;
+let DEBUG=false,DEBUG_YEAR=null,DEBUG_ID=''; /* [DEV] DEBUG_ID: ''=casuale, 'none','black','gay','both' */
 const MEM={};const store={get(k,d){if(k in MEM)return MEM[k];try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){MEM[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 function fit(){const r={width:cv.clientWidth,height:cv.clientHeight};if(r.width<10||r.height<10)return;const w=clamp(Math.round(H*r.width/r.height),110,560);if(cv.width!==w||cv.height!==H){cv.width=w;cv.height=H;}W=w;PX=Math.round(W*.3);cx.imageSmoothingEnabled=false;}
 const offMin=()=>-(PX-40)/SPR, offMax=()=>(W-PX-10)/SPR;
@@ -408,6 +408,7 @@ function newRun(shoe,tr){
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
   $('log').innerHTML='';$('bib').textContent='N.'+bib;$('yr').textContent=YEAR;
   log(`Marcia del ${YEAR}: da ${ROUTE.c[0]} a ${ROUTE.c[ROUTE.c.length-1]}. ${S.wx.label}.`,'var(--amber)');
+  if(DEBUG_ID){S.black=DEBUG_ID==='black'||DEBUG_ID==='both';S.gay=DEBUG_ID==='gay'||DEBUG_ID==='both';}
   S.skin=S.black?pick(['#6a4028','#5a3420','#7a4a2a']):'#e8b896';
   if(S.black||S.gay){const gs=S.npcs.filter(n=>!n.named);for(let k=0;k<2;k++){const b=pick(gs);b.bigot=true;b.rel=-30;b.from=pick(['Vienna','Lione','Breslavia','Graz','Brno','Tolosa']);b.elimAt=Math.max(b.elimAt,rand(300,700));}}
   if(S.gay)log('“Penso a lui, che mi ha salutato alla stazione senza potermi abbracciare.”','var(--dim)','th');
@@ -859,7 +860,7 @@ Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
   show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button>
-  <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
+  <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="did"><option value="">identità casuale</option>${[['none','né nero né gay'],['black','nero'],['gay','gay'],['both','nero + gay']].map(([v,l])=>`<option value="${v}" ${DEBUG_ID===v?'selected':''}>${l}</option>`).join('')}</select><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
   const done=()=>{if(fin)return;fin=true;t.style.transition='none';t.style.top='14%';go.classList.remove('hide');};
@@ -868,6 +869,7 @@ function titleScreen(){
   sc.onclick=e=>{if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target===go)return;done();};
   $('jkT').addEventListener('click',e=>{e.stopPropagation();initAudio();openJuke();});
   $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;});
+  $('did').addEventListener('change',()=>{DEBUG_ID=$('did').value;});
   $('fsT').addEventListener('click',e=>{e.stopPropagation();window.__goFull();});
   $('rtT').addEventListener('click',e=>{e.stopPropagation();rotOk=!rotOk;checkRot();});
   go.addEventListener('click',e=>{e.stopPropagation();initAudio();JUKE=null;const j=$('juke');if(j)j.remove();DEBUG=$('dbg').checked;intro();});
