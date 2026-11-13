@@ -85,6 +85,14 @@ button:disabled{opacity:.35}
 #tcv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 .ttl{position:absolute;left:0;right:0;top:-25%;margin:0;text-align:center;font-size:clamp(30px,8vmin,72px)!important;letter-spacing:.12em!important;color:#f4dca0!important;text-shadow:3px 3px 0 #6a0a0a,6px 6px 0 #000;transition:top 5s linear;font-weight:900}
 #screen.title #go{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);white-space:nowrap}
+#juke{position:absolute;inset:6% 8%;background:#120e16f2;border:2px solid #4a405a;padding:8px;overflow:auto;z-index:5;text-align:left}
+#juke .jh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
+#juke .jh button{padding:3px 8px;font-size:10px}
+#juke .jl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:5px}
+#juke .jl button{text-align:left;padding:6px 8px;font-size:12px}
+#juke .jl button small{display:block;color:var(--dim);font-size:10px}
+#juke .jl button.sel{box-shadow:inset 0 0 0 2px var(--amber)}
+#jukeHud{background:none;border:0;box-shadow:none;padding:0 2px;font-size:13px;display:none}
 #screen.title .dbg{position:absolute;right:6px;bottom:4px;font-size:10px;color:#8a7a8a;text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end}
 #screen select{font:inherit;background:#3a3248;color:var(--ink);border:2px solid #000;padding:2px;font-size:10px}
 #screen.intro{background:#0a080c;cursor:pointer}
@@ -113,7 +121,7 @@ button:disabled{opacity:.35}
   <div id="stage">
     <canvas id="scene"></canvas>
     <div id="hud">
-      <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
+      <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
       <div class="bars">
         <span class="lbl">STAMINA</span><div class="bar"><div class="fill" id="bST"></div><div class="cap" id="bCAP"></div></div>
         <span class="lbl">ACQUA</span><div class="bar"><div class="fill" id="bHY"></div></div>
@@ -307,11 +315,14 @@ const sfx={
 };
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 const MUS={next:0,step:0,timer:null};
-function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=(S&&S.radio&&ERA.r)?ERA.r:ERA.m,spb=60/m.bpm/4;
+/* [DEV] jukebox di debug — da togliere nella versione pubblica */
+let JUKE=null;
+const TRACKS=()=>ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r}]:[])]);
+function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=JUKE||((S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4;
   if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+.05;
   let guard=0;while(MUS.next<AC.currentTime+.25&&guard++<16){playStep(MUS.step,MUS.next,m,spb);MUS.next+=spb;MUS.step++;}}catch(e){}},60);}
 function playStep(i,t,m,spb){
-  if(MUTE||!S||S.mode!=='play')return;
+  if(MUTE||(!JUKE&&(!S||S.mode!=='play')))return;
   const bar=Math.floor(i/16)%4,s=i%16,root=m.root*Math.pow(2,m.prog[bar]/12);
   if(m.drums){const kick=()=>tone(80,.1,'sine',.12,40,0,t),hat=v=>noise(v,.04,t,7000),snare=(v,d)=>noise(v,d,t,2800),B=(f,d)=>tone(f,d,m.bass,.045,null,0,t);
     if(m.drums==='four'){if(s%4===0)kick();if(s%4===2)hat(.06);if(s%8===4)snare(.1,.08);}
@@ -339,6 +350,7 @@ function balloon(s,cxp,y,col='#1a1410',bg='#f4ecd0'){const w=s.length*4+5,x=Math
 let S=null,PROFILE=null;
 function newRun(shoe,tr){
   fit();
+  $('jukeHud').style.display=DEBUG?'inline':'none';
   const npcs=[],lo=offMin(),hi=offMax();
   CAST.forEach(c=>npcs.push({...c,named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0}));
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
@@ -383,6 +395,8 @@ onTap('iTub',()=>{if(S.tub<=0)return;S.tub--;eat(18,0,4,'Un tubetto di concentra
 onTap('iPee',()=>{if(S.bl<35||S.peeing>0)return;S.peeing=5;log('Ti liberi senza fermarti... il passo ne risente. Tieni il ritmo!','var(--amber)');});
 $('mute').addEventListener('click',()=>{MUTE=!MUTE;store.set('up_mute',MUTE);$('mute').textContent=MUTE?'🔇':'🔊';initAudio();});
 $('mute').textContent=MUTE?'🔇':'🔊';
+/* [DEV] in partita, con debug attivo: 🎵 cambia traccia (auto → tutte le tracce → auto) */
+$('jukeHud').addEventListener('click',()=>{const T=TRACKS();let i=T.findIndex(t=>t.m===JUKE);i++;if(i>=T.length){JUKE=null;toast('🎵 Musica automatica',1800);}else{JUKE=T[i].m;toast('🎵 '+T[i].n,1800);}MUS.step=0;initAudio();});
 function eat(st,mh,ph,msg){
   S.st=Math.min(S.maxSt,S.st+st);S.mh=Math.min(100,S.mh+mh);S.ph=Math.min(100,S.ph+ph);sfx.eat();
   const full=S.sto>45;S.sto+=30;log(msg,'var(--green)');
@@ -757,17 +771,28 @@ Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
   show(`<canvas id="tcv"></canvas><h1 class="ttl" id="ttl">L'ULTIMO PASSO</h1><button class="main hide" id="go">INIZIA A CAMMINARE</button>
-  <div class="dbg" id="dbgw"><span><button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
+  <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;
   const done=()=>{if(fin)return;fin=true;t.style.transition='none';t.style.top='14%';go.classList.remove('hide');};
   requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.top='14%';}));
   t.addEventListener('transitionend',done);setTimeout(done,5600);
-  sc.onclick=e=>{if(e.target.closest('#dbgw')||e.target===go)return;done();};
+  sc.onclick=e=>{if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target===go)return;done();};
+  $('jkT').addEventListener('click',e=>{e.stopPropagation();initAudio();openJuke();});
   $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;});
   $('fsT').addEventListener('click',e=>{e.stopPropagation();window.__goFull();});
   $('rtT').addEventListener('click',e=>{e.stopPropagation();rotOk=!rotOk;checkRot();});
-  go.addEventListener('click',e=>{e.stopPropagation();initAudio();DEBUG=$('dbg').checked;intro();});
+  go.addEventListener('click',e=>{e.stopPropagation();initAudio();JUKE=null;const j=$('juke');if(j)j.remove();DEBUG=$('dbg').checked;intro();});
+}
+function openJuke(){
+  let j=$('juke');if(j){j.remove();return;}
+  j=document.createElement('div');j.id='juke';sc.appendChild(j);
+  const render=()=>{const T=TRACKS();j.innerHTML=`<div class="jh"><b>🎵 JUKEBOX (debug)</b><span><button class="ghost" id="jkS">■ STOP</button> <button class="ghost" id="jkX">✕</button></span></div>${MUTE?'<p class="lbl" style="color:var(--red)">Audio disattivato: riattivalo con 🔊 in gioco.</p>':''}
+    <div class="jl">${T.map((t,i)=>`<button data-i="${i}" class="${JUKE===t.m?'sel':''}">${JUKE===t.m?'▶ ':''}${t.n}<small>${t.m.bpm} bpm</small></button>`).join('')}</div>`;
+    j.querySelectorAll('.jl button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();JUKE=T[+b.dataset.i].m;MUS.step=0;render();}));
+    $('jkS').addEventListener('click',e=>{e.stopPropagation();JUKE=null;render();});
+    $('jkX').addEventListener('click',e=>{e.stopPropagation();JUKE=null;j.remove();});};
+  render();
 }
 function intro(){
   show(`<div class="intro-tx" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div>`,'intro');
