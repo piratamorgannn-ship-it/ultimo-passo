@@ -83,7 +83,7 @@ button:disabled{opacity:.35}
 #screen td{padding:1px 8px;text-align:left}
 #screen.title{background:#000;padding:0;justify-content:flex-start}
 #tcv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-.ttl{position:absolute;left:0;right:0;top:-25%;margin:0;text-align:center;font-size:clamp(30px,8vmin,72px)!important;letter-spacing:.12em!important;color:#f4dca0!important;text-shadow:3px 3px 0 #6a0a0a,6px 6px 0 #000;transition:top 5s linear;font-weight:900}
+.ttl{position:absolute;left:50%;top:-25%;transform:translateX(-50%);margin:0;image-rendering:pixelated;image-rendering:crisp-edges;transition:top 5s steps(16,end)}
 #screen.title #go{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);white-space:nowrap}
 #juke{position:absolute;inset:6% 8%;background:#120e16f2;border:2px solid #4a405a;padding:8px;overflow:auto;z-index:5;text-align:left}
 #juke .jh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
@@ -671,6 +671,18 @@ function drawFace(g,c){
 }
 
 /* ================= ARTE DEL TITOLO ================= */
+const BIG={L:['10000','10000','10000','10000','10000','10000','11111'],U:['10001','10001','10001','10001','10001','10001','01110'],T:['11111','00100','00100','00100','00100','00100','00100'],
+ I:['111','010','010','010','010','010','111'],M:['10001','11011','10101','10101','10001','10001','10001'],O:['01110','10001','10001','10001','10001','10001','01110'],
+ P:['11110','10001','10001','11110','10000','10000','10000'],A:['01110','10001','10001','11111','10001','10001','10001'],S:['01111','10000','10000','01110','00001','00001','11110'],
+ "'":['1','1','0','0','0','0','0'],' ':['000','000','000','000','000','000','000']};
+function drawTitleText(c){
+  const txt="L'ULTIMO PASSO",gap=1;let W=0;[...txt].forEach(ch=>W+=BIG[ch][0].length+gap);W+=2;const H=7+3;
+  c.width=W;c.height=H;const g=c.getContext('2d');
+  const draw=(ox,oy,colFn)=>{let x=ox;[...txt].forEach(ch=>{const gl=BIG[ch];gl.forEach((row,y)=>[...row].forEach((b,i)=>{if(b==='1'){g.fillStyle=colFn(y);g.fillRect(x+i,oy+y,1,1);}}));x+=gl[0].length+gap;});};
+  draw(2,2,()=>'#000');draw(1,1,()=>'#6a0a0a');draw(0,0,y=>y<2?'#fff0c0':y<5?'#f4dca0':'#c89850');
+  const sc_=Math.max(2,Math.floor(Math.min(window.innerWidth*.86/W,window.innerHeight*.2/H)));
+  c.style.width=W*sc_+'px';c.style.height=H*sc_+'px';
+}
 function drawTitleArt(c){
   const r={width:c.clientWidth,height:c.clientHeight},TH_=135,TW=clamp(Math.round(TH_*r.width/Math.max(1,r.height)),90,600);
   c.width=TW;c.height=TH_;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
@@ -701,18 +713,17 @@ function drawTitleArt(c){
     if(Math.floor(y/3)%3===0)P(cxp-Math.max(1,t*2)/2,y,Math.max(1,t*2),1,'#c8a870');}
   // pali vicini
   for(let i=0;i<3;i++){const t=.2+i*.3,y=c1+t*(TH_-c1),w=3+t*TW*.32,x=TW*.52+Math.sin(t*2.2)*TW*.05+w/2+4+t*10,h=10+t*30;P(x,y-h,1+t*2,h,'#140810');P(x-3-t*4,y-h+2,7+t*8,1,'#140810');}
-  // pozza di sangue e mano
-  const hx=0,hy=TH_-22;
-  for(let dy=-7;dy<=7;dy++){const w=Math.round(30*Math.sqrt(1-(dy/7.5)**2));P(hx+12-w,hy+10+dy,w*2,1,'#4a0606');}
-  for(let dy=-5;dy<=5;dy++){const w=Math.round(20*Math.sqrt(1-(dy/5.5)**2));P(hx+12-w,hy+10+dy,w*2,1,'#6a0a0a');}
-  [[30,7],[34,12],[-2,11],[22,15],[38,9]].forEach(([x,y])=>P(hx+x,hy+y,2,1,'#b02828'));
-  const skin='#d8a078',sh='#a8704c',ol='#1a0808';
-  const parts=[[0,5,6,8,'#2a2a3a'],[5,5,14,10,skin],[8,1,3,5,skin],[10,0,2,2,skin],[19,5,7,2,skin],[19,8,8,2,skin],[19,11,7,2,skin],[19,14,5,1,skin]];
-  parts.forEach(([x,y,w,h])=>P(hx+x-1,hy+y-1,w+2,h+2,ol));
-  parts.forEach(([x,y,w,h,col])=>P(hx+x,hy+y,w,h,col));
-  P(hx+25,hy+4,1,1,skin);P(hx+26,hy+7,1,1,skin);P(hx+25,hy+10,1,1,skin);
-  P(hx+7,hy+13,11,2,sh);P(hx+10,hy+8,6,1,sh);P(hx+13,hy+10,4,1,sh);P(hx+20,hy+6,5,1,sh);P(hx+20,hy+9,6,1,sh);P(hx+20,hy+12,5,1,sh);
-  P(hx+1,hy+7,4,1,'#3a3a4a');
+  // corpo abbandonato sulla strada, in una pozza di sangue
+  const by=TH_-37,tb=(by-c1)/(TH_-c1),bx=Math.round(TW*.52+Math.sin(tb*2.2)*TW*.05-16);
+  for(let dy=-6;dy<=6;dy++){const w=Math.round(22*Math.sqrt(1-(dy/6.5)**2))+((dy*7)%3);P(bx+14-w,by+3+dy,w*2,1,'#4a0606');}
+  for(let dy=-4;dy<=4;dy++){const w=Math.round(15*Math.sqrt(1-(dy/4.5)**2));P(bx+12-w,by+3+dy,w*2,1,'#6a0a0a');}
+  P(bx+34,by+6,5,1,'#4a0606');P(bx+38,by+7,3,1,'#4a0606');
+  [[2,6],[24,8],[8,-1],[30,4],[16,9]].forEach(([x,y])=>P(bx+x,by+y,2,1,'#b02828'));
+  const ol='#120606',hair='#2a1a10',skin='#d8a078',shirt='#3a5a7a',pants='#2a2a3a',shoe='#141414';
+  const body=[[-6,-3,2,2,skin],[-4,-3,8,2,shirt],[0,-1,4,4,hair],[3,0,1,3,skin],[4,-1,9,5,shirt],[8,4,4,1,skin],[13,0,8,4,pants],[21,-1,6,2,pants],[21,2,5,2,pants],[27,-1,2,2,shoe],[26,2,2,2,shoe]];
+  body.forEach(([x,y,w,h])=>P(bx+x-1,by+y-1,w+2,h+2,ol));
+  body.forEach(([x,y,w,h,col])=>P(bx+x,by+y,w,h,col));
+  P(bx+5,by+2,7,1,'#2a4058');P(bx+14,by+3,6,1,'#1a1a28');P(bx+1,by,2,1,'#3a2a1a');
 }
 
 /* ================= MAPPA ================= */
@@ -765,15 +776,15 @@ function show(html,cls=''){sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.in
 const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
-Cinquanta ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi rallenta viene richiamato. Al terzo richiamo, viene giustiziato.
+Cinquanta ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
 L'ultimo rimasto in piedi ottiene la Grazia: salva la propria vita e libera la sua terra dalle requisizioni per dieci anni.
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
-  show(`<canvas id="tcv"></canvas><h1 class="ttl" id="ttl">L'ULTIMO PASSO</h1><button class="main hide" id="go">INIZIA A CAMMINARE</button>
+  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button>
   <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
-  const t=$('ttl'),go=$('go');let fin=false;
+  const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
   const done=()=>{if(fin)return;fin=true;t.style.transition='none';t.style.top='14%';go.classList.remove('hide');};
   requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.top='14%';}));
   t.addEventListener('transitionend',done);setTimeout(done,5600);
