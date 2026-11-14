@@ -1498,7 +1498,7 @@ function presentPlayer(shoe){
     <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city}</div><p>${P.desc}</p></div></div>
     <button class="main" id="go">AVANTI</button>`);
   const c=$('pspr'),main=cx;cx=c.getContext('2d');cx.imageSmoothingEnabled=false;try{drawWalker(2,1,P,0,true,false);}finally{cx=main;}
-  $('go').addEventListener('click',()=>loadThen(()=>loading(shoe)));
+  $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);}));
 }
 function loading(shoe){
   show(`<h2>PARTENZA DA ${ROUTE.c[0].toUpperCase()} · ${YEAR}</h2><p style="font-size:16px;max-width:420px">${pick(TIPS)}</p><p class="lbl">— Manuale del Marciatore, ed. ${YEAR}</p><button class="main" id="go">INIZIA</button>`);
