@@ -24,6 +24,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-m
 #screen.ldsc{background:#0a080c}
 .ldg{display:flex;flex-direction:column;align-items:center;gap:12px}
 .ldt{font-size:14px;letter-spacing:4px;color:var(--amber);animation:blink 1s steps(2) infinite}
+.ldtip{font-size:15px;max-width:520px;margin:14px 0 0;line-height:1.4;color:var(--ink)}
 .ldb{width:220px;height:14px;border:2px solid #4a405a;background:#14101a;padding:2px}.ldb b{display:block;height:100%;width:0;background:var(--amber)}
 #vig{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(150,0,0,.55) 100%)}
 #fx{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;z-index:1}
@@ -1486,7 +1487,8 @@ function makePlayer(){
 }
 /* schermata di caricamento di 2 secondi tra una schermata e l'altra */
 function loadThen(fn){
-  show(`<div class="ldg"><div class="ldt">CARICAMENTO</div><div class="ldb"><b id="ldf"></b></div></div>`,'ldsc');
+  let tip=pick(TIPS);if(TIPS.length>1)while(tip===loadThen.last)tip=pick(TIPS);loadThen.last=tip;
+  show(`<div class="ldg"><div class="ldt">CARICAMENTO</div><div class="ldb"><b id="ldf"></b></div><p class="ldtip">${tip}</p><p class="lbl" style="font-size:10px">— Manuale del Marciatore</p></div>`,'ldsc');
   const f=$('ldf'),t0=performance.now();let done=false;
   const an=()=>{if(done||!document.body.contains(f))return;const p=Math.min(1,(performance.now()-t0)/2000);f.style.width=Math.round(p*20)*5+'%';if(p<1)requestAnimationFrame(an);else{done=true;fn();}};an();
 }
