@@ -84,6 +84,13 @@ button:disabled{opacity:.35}
 #screen .choices button{text-align:left;padding:9px}
 #screen .choices button small{display:block;color:var(--dim);font-size:11px;margin-top:3px;line-height:1.35}
 #screen .choices button.sel{box-shadow:inset 0 0 0 2px var(--amber)}
+.trbtn{position:absolute;z-index:5;left:calc(14px + env(safe-area-inset-left));bottom:calc(30px + env(safe-area-inset-bottom));padding:5px 10px;font-size:11px}
+#screen.troph .tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;width:100%;max-width:760px}
+#screen.troph .tgrid button{padding:6px 3px;font-size:10px;line-height:1.2;overflow:hidden}
+#screen.troph .tgrid canvas,#screen.troph .tgrid svg,#screen.troph .tgrid img{max-width:100%}
+#screen.troph .tgrid button.lock{opacity:.75}
+#screen.troph .tgrid button.sel{box-shadow:inset 0 0 0 2px var(--amber)}
+#screen.troph .tinfo{min-height:74px;max-width:640px;font-size:12px;line-height:1.45;margin:8px auto;text-align:left}
 #screen .choices.pix{grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
 #screen .choices.pix button small{font-size:10px}
 #screen .choices.pix button{text-align:center;display:flex;flex-direction:column;align-items:center}
@@ -1257,7 +1264,7 @@ Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stes
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
-  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="copy">© cpt_morgannn</div>
+  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button>${store.get('up_runs',0)>=1?'<button class="ghost trbtn" id="trophy">🏆 TROFEI</button>':''}<div class="copy">© cpt_morgannn</div>
   <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="did"><option value="">identità casuale</option>${[['none','né nero né gay'],['black','nero'],['gay','gay'],['both','nero + gay']].map(([v,l])=>`<option value="${v}" ${DEBUG_ID===v?'selected':''}>${l}</option>`).join('')}</select><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
@@ -1271,6 +1278,7 @@ function titleScreen(){
   $('did').addEventListener('change',()=>{DEBUG_ID=$('did').value;});
   $('fsT').addEventListener('click',e=>{e.stopPropagation();window.__goFull();});
   $('rtT').addEventListener('click',e=>{e.stopPropagation();rotOk=!rotOk;checkRot();});
+  if($('trophy'))$('trophy').addEventListener('click',e=>{e.stopPropagation();initAudio();trophies(0);});
   go.addEventListener('click',e=>{e.stopPropagation();initAudio();JUKE=null;const j=$('juke');if(j)j.remove();DEBUG=$('dbg').checked;intro();});
 }
 function openJuke(){
@@ -1368,6 +1376,34 @@ function pickItem(shoe){
     $('back').addEventListener('click',equip);
     $('go').addEventListener('click',()=>{RUN_ITEMS=sel.slice();presentPlayer(shoe);});};
   render();
+}
+
+/* ================= TROFEI: tutti gli sbloccabili (pagina 1 scarpe, pagina 2 oggetti) ================= */
+const T_ITEM={
+ biscotti:{pro:'Un po\' di stamina e un po\' di mente.',con:'Sono solo due.',how:'Li hai dall\'inizio: te li ha dati tua madre.'},
+ radio:{pro:'La mente cala il 30% più lentamente e la musica del momento ti fa compagnia.',con:'Col passare della marcia si guasta e diventa sempre più inquietante.',how:'Sei morto per una crisi di panico.'},
+ hamburger:{pro:'Moltissima stamina in un colpo solo.',con:'4 volte su 10 lo vomiti.',how:'Sei diventato fratello di un altro marciatore.'},
+ panini:{pro:'Tanta stamina e un po\' di mente, per tre volte.',con:'Occupano il tuo unico posto libero.',how:'Qualcuno ti ha odiato a morte.'},
+ orologio:{pro:'Vedi giorno e ora, e la mente cala il 15% più lentamente.',con:'Non si mangia.',how:'Sei morto quando più di metà dei marciatori era già caduta.'},
+ sigarette:{pro:'Ogni sigaretta: +20 mente e +25 stamina.',con:'−10 fisico ogni volta e rischio di polmonite.',how:'Hai finito una marcia odiato da tutti.'},
+ zainetto:{n:'Zainetto',pro:'Porti 2 oggetti invece di 1.',con:'Nessuno.',how:'Hai vinto 3 marce di fila.'},
+};
+const T_SHOE={ginnastica:'Disponibili dall\'inizio.',tennis:'Disponibili dall\'inizio.',mocassini:'Disponibili dall\'inizio.',trekking:'Disponibili dall\'inizio.'};
+function trophies(page){
+  const un=store.get('up_unlock',{});
+  const list=page===0?Object.entries(SHOES).map(([k,s])=>({k,n:s.n,open:!s.unlock||!!un[k],pro:s.pro,con:s.con,how:T_SHOE[k]||'',hint:s.unlock||''}))
+    :[...Object.keys(ITEMS),'zainetto'].map(k=>{const it=ITEMS[k]||{},t=T_ITEM[k]||{};const open=k==='zainetto'?!!un.zainetto:(it.always||!!un[k]);return {k,n:t.n||it.n,open,pro:t.pro,con:t.con,how:t.how,hint:'Si sblocca in un modo particolare.'};});
+  const got=list.filter(x=>x.open).length;let cur=null;
+  show(`<h2>🏆 TROFEI · ${page===0?'1/2 SCARPE':'2/2 OGGETTI'}</h2><p class="lbl" style="margin-bottom:6px">Sbloccati: ${got} / ${list.length} · tocca un oggetto per i dettagli</p>
+    <div class="tgrid pix" style="grid-template-columns:repeat(${list.length},minmax(0,1fr))">${list.map((x,i)=>`<button data-i="${i}" class="${x.open?'':'lock'}">${sprite(x.k,!x.open,4)}<br><b>${x.open?x.n:'🔒 ???'}</b></button>`).join('')}</div>
+    <div class="tinfo" id="tinfo"><span class="lbl">Tocca una carta.</span></div>
+    <div class="row2"><button class="ghost" id="tback">MENU</button>${page===0?'<button class="main" id="tnext">OGGETTI ›</button>':'<button class="main" id="tprev">‹ SCARPE</button>'}</div>`,'troph');
+  sc.querySelectorAll('.tgrid button').forEach(b=>b.addEventListener('click',()=>{const x=list[+b.dataset.i];
+    sc.querySelectorAll('.tgrid button').forEach(o=>o.classList.toggle('sel',o===b));
+    $('tinfo').innerHTML=x.open?`<b>${x.n}</b><br>✚ ${x.pro}<br>− ${x.con}<br><span style="color:var(--amber)">🏆 ${x.how}</span>`:`<b>🔒 ???</b><br><span class="lbl">${x.hint}</span>`;}));
+  $('tback').addEventListener('click',titleScreen);
+  if($('tnext'))$('tnext').addEventListener('click',()=>trophies(1));
+  if($('tprev'))$('tprev').addEventListener('click',()=>trophies(0));
 }
 /* ================= SCHEDA DEL GIOCATORE ================= */
 const P_FIRST=['Luca','Marco','Andrea','Tomas','Jakub','Erik','Pavel','Mathis','Jonas','Diego','Nico','Viktor','Elias','Hugo','Milo','Teo','Sami','Aleks','Dario','Leon','Bruno','Oskar','Ivan','Felix','Matteo','Rafael','Stefan','Adam','Kai','Nils'];
