@@ -556,8 +556,9 @@ function think(kind){const v=kind==='mh'?S.mh:S.ph,l=lvl(v);log('“'+pick(TH[ki
 /* ================= INPUT ================= */
 function step(foot){
   if(!S||S.mode!=='play')return;
+  if(S.collapsed){if(S.qte&&S.qte.type==='rialzati')qteHit();else if(!S.downMsgT||S.t-S.downMsgT>4){S.downMsgT=S.t;log('Sei a terra: non puoi camminare finché non ti rialzi.','var(--red)');}return;}
   const pad=foot==='L'?$('padL'):$('padR');
-  if(foot!==S.nextFoot){S.speed=Math.max(0,S.speed-1.6);S.st=Math.max(0,S.st-2);S.steps=[];log('Inciampi! Alterna sinistro e destro.','var(--red)');sfx.bad();buzz(60);flash(pad,'bad');return;}
+  if(foot!==S.nextFoot){S.speed=Math.max(0,S.speed-1.6);S.st=Math.max(0,S.st-2);S.steps=[];S.tripT=S.t;log('Inciampi! Alterna sinistro e destro.','var(--red)');sfx.bad();buzz(60);flash(pad,'bad');return;}
   S.steps.push(S.t);if(S.steps.length>6)S.steps.shift();
   S.nextFoot=foot==='L'?'R':'L';sfx.step();flash(pad,'hit');
 }
@@ -628,7 +629,7 @@ function endQTE(ok){
     else{sfx.bad();log('Non riesci ad alzarti.','var(--red)');S.rT=0;}
     return;}
   if(q.type==='salva'){const n=S.saving;if(!n)return;
-    if(ok){sfx.good();log('Lo tieni su. Un passo, poi un altro.',G);}else{sfx.bad();buzz(120);n.saveFail=true;log('Rallenti per reggerlo.',Rd);addWarn();}
+    if(ok){sfx.good();log('Lo tieni su. Un passo, poi un altro.',G);}else{sfx.bad();buzz(120);n.saveFail=true;log('Rallenti per reggerlo.',Rd);addWarn('hai rallentato per sorreggere un amico');}
     n.saveLeft--;
     if(n.saveLeft>0&&S.mode==='play')setTimeout(()=>{if(S&&S.mode==='play'&&!S.qte&&n.alive)startQTE('salva',n.name);else finishSave(n);},1200);else finishSave(n);
     return;}
@@ -636,7 +637,7 @@ function endQTE(ok){
       spinta:()=>log('Resti in piedi. '+q.who+' sbuffa.',G),sgambetto:()=>log('Lo scavalchi. '+q.who+' impreca.',G),isteria:()=>{S.mh+=4;log('Il respiro torna regolare.',G);},blocco:()=>log('Le gambe ripartono.',G)})[q.type]();return;}
   sfx.bad();buzz(120);
   if(q.type==='acqua'){log('La bottiglia cade nella polvere.','var(--dim)');return;}
-  if(q.type==='blocco'){log('Sei rimasto fermo troppo a lungo.',Rd);addWarn();return;}
+  if(q.type==='blocco'){log('Sei rimasto fermo troppo a lungo.',Rd);addWarn('sei rimasto bloccato, fermo in mezzo alla strada');return;}
   const fr=friends();
   if(fr.length&&Math.random()<.5){log(pick(fr).name+' ti sorregge per un braccio.',G);S.speed-=.8;S.st-=5;return;}
   if(q.type==='crampo'){S.st-=18;S.ph-=4;S.speed-=2;log('Il crampo ti morde la gamba.',Rd);}
@@ -725,7 +726,7 @@ function randomEvent(){
   if(ch==='salita'){S.hillLen=Math.random()<.5?rand(12,18):rand(28,42);S.hill=S.hillLen;log(S.hillLen>25?'Inizia una lunga salita.':'Una salita.','var(--amber)');}
   else if(ch==='pioggia'){S.rain=35;S.thunder=1.2;sfx.thunder();log('Un tuono. Poi la pioggia.','var(--amber)');}
   else if(ch==='sasso')choice('SASSO NELLA SCARPA','Un sasso ti si è infilato nella scarpa. Ogni passo è una lama.',[
-     {l:'Fermati a toglierlo (richiamo sicuro)',f:()=>{addWarn();log('Togli il sasso. Il soldato prende nota.','var(--red)');}},
+     {l:'Fermati a toglierlo (richiamo sicuro)',f:()=>{addWarn('ti sei fermato a togliere il sasso');log('Togli il sasso. Il soldato prende nota.','var(--red)');}},
      {l:'Tienilo e stringi i denti',f:()=>{S.st=Math.max(0,S.st-12);S.stone=60;log('Tieni il sasso. Il piede pulsa.','var(--red)');}}],8,1);
   else startQTE(ch);
 }
@@ -738,6 +739,8 @@ function update(dt){
   if(S.peeing>0){cap=Math.min(cap,6.9);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
   if(S.collapsed)cap=0;
+  S.capNow=cap;
+  if(!S.collapsed&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?.94:1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
@@ -844,14 +847,24 @@ function deathReaction(k,second){
   S.chat={n,s,t:4.2};S.chatT=Math.max(S.chatT||0,3);
   if(k===1&&!second){log('“Allora è vero. Ci ammazzano davvero.”','var(--red)','th');}
 }
-function addWarn(){
+function slowWhy(){
+  if(S.collapsed)return S.collapsed==='mh'?'eri a terra per un crollo mentale':'eri a terra per un crollo fisico';
+  if(S.qte&&S.qte.type==='blocco')return 'avevi le gambe bloccate';
+  if(S.peeing>0)return 'ti stavi liberando';
+  if((S.capNow||9)<LIMIT)return S.st<25?'stamina esaurita: le gambe non andavano più veloci':'fisico a pezzi: il corpo non reggeva il passo';
+  if(S.tripT&&S.t-S.tripT<3.5)return 'inciampavi: non alternavi sinistro e destro';
+  const st=S.steps;if(st.length<2||S.t-st[st.length-1]>2)return 'avevi smesso di camminare';
+  return 'passo troppo lento'+(S.hill>0?' in salita (serve un ritmo più veloce)':'');
+}
+function addWarn(why){
   if(S.mode!=='play')return;
+  why=why||slowWhy();S.warnLog=S.warnLog||[];S.warnLog.push(why);
   S.warn++;S.lastWarnT=S.t;S.mh-=6;sfx.warn();buzz([120,60,120,60,120]);
   S.balloon={s:'N.'+S.bib+' RICHIAMO!',t:2.6};
-  log(`RICHIAMO ${S.warn}/3 — "Numero ${S.bib}!"`,'var(--red)');
+  log(`RICHIAMO ${S.warn}/3 — "Numero ${S.bib}!" (${why})`,'var(--red)');
   if(S.warn>=3){if(S.collapsed==='mh'){S.panicDeath=true;die('Crisi di panico: eri crollato a terra e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);}
     else if(S.collapsed==='ph')die('Sincope: il corpo ha ceduto e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);
-    else die('Terzo richiamo (3/3). Non avvisano più.',true);}
+    else die('Terzo richiamo (3/3): '+why+'. Non avvisano più.',true);}
 }
 /* crollo mentale o fisico: ti accasci; non ti uccidono subito, ma restando fermo arrivano i richiami */
 function collapse(kind){
@@ -1346,7 +1359,7 @@ function end(win){
   const pos=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,hrs=Math.floor(S.t/60),mins=Math.floor(S.t%60);
   const rows=S.npcs.filter(n=>n.named).map(n=>`<tr><td>${n.name} <span class="lbl">N.${n.bibN}</span></td><td style="color:${relColor(n.rel)}">${relLabel(n.rel)}</td><td class="lbl">${n.alive&&!n.leaving?'in marcia':'morto'}</td></tr>`).join('');
   const t=S.tr,trait=v=>v>=62?'alto':v<=38?'basso':'medio';
-  show(`<h1 style="color:${win?'var(--green)':'var(--red)'}">${win?'LA GRAZIA':'FINE'}</h1><h2>${win?'Sei l\'ultimo rimasto sulla strada.':S.cause}</h2>
+  show(`<h1 style="color:${win?'var(--green)':'var(--red)'}">${win?'LA GRAZIA':'FINE'}</h1><h2>${win?'Sei l\'ultimo rimasto sulla strada.':S.cause}</h2>${!win&&S.warnLog&&S.warnLog.length?'<p class="lbl">Richiami ricevuti: '+S.warnLog.slice(-3).map((w,i)=>(i+1)+') '+w).join(' · ')+'</p>':''}
   <p>Marcia del ${YEAR} (${ROUTE.c[0]} → ${ROUTE.c[ROUTE.c.length-1]}) · N.${S.bib} · <b>${hrs} ore ${mins} min</b> · <b>${fmt(S.km)} km</b> · posizione <b>${pos}ª</b>/${TOTAL}${S.t>best?' · <span style="color:var(--amber)">record</span>':''}</p>
   ${unlockMsg}${tipMsg}<table>${rows}</table>
   <p class="lbl" style="font-size:11px">Profilo nascosto — fisico ${trait(t.f)}, nervi ${trait(t.n)}, stomaco ${trait(t.s)}, carisma ${trait(t.c)}</p>
