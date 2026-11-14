@@ -715,7 +715,7 @@ function choice(title,text,opts,dur,def){
 const ASKS={tub:['un tubetto','Ho il cinturone vuoto. Mi daresti un tubetto? Uno solo.'],bisc:['un biscotto','Quei biscotti... li ha fatti tua madre? Me ne dai uno?'],pan:['un panino','Ho visto i panini. Ti prego, uno. Ti ripago al traguardo.'],bar:['la barretta','Quella barretta... io non mangio da ore. Me la dai?'],cig:['una sigaretta','Hai una sigaretta? Mi tremano le mani.']};
 function askItem(){
   if(S.alone)return false;
-  const have=Object.keys(ASKS).filter(k=>(S[k]||0)>0);if(!have.length)return false;
+  const have=Object.keys(ASKS).filter(k=>(S[k]||0)>0);if(!have.length)return 'none';
   const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&isNear(n));if(!c.length)return false;
   const n=pick(c),k=pick(have),[what,line]=ASKS[k];
   choice(n.name.toUpperCase()+' TI CHIEDE '+what.toUpperCase(),'«'+line+'»',[
@@ -890,7 +890,7 @@ function update(dt){
   else{if(S.t>=S.nextEvent){randomEvent();S.nextEvent=S.t+rand(13,22);}else if(S.t<(S.dlgFree||0)){}else if(S.t>=S.nextBigot&&(S.black||S.outed)&&bigotTalk()){S.nextBigot=S.t+rand(70,120);}
     else if(S.gay&&!S.outed&&!S.loveAsked&&S.t>=S.nextLoveQ&&loveQ()){S.loveAsked=true;}
     else if(S.t>=S.nextVillain&&villainAct()){S.nextVillain=S.t+rand(55,95);}
-    else if(S.askTimes.length&&S.t>=S.askTimes[0]){if(askItem())S.askTimes.shift();else S.askTimes[0]=S.t+20;}
+    else if(S.askTimes.length&&S.t>=S.askTimes[0]){const r=askItem();if(r==='none'){const h=hourNow(),nx=17+24*(Math.floor((h-17)/24)+1);S.askTimes[0]=(nx-9)*HOUR+rand(0,3*HOUR);S.askTimes.sort((a,b)=>a-b);}else if(r)S.askTimes.shift();else S.askTimes[0]=S.t+20;}
     else if(progress()>.8&&S.t>=S.nextMad&&madTalk()){S.nextMad=S.t+rand(25,40);}
     else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(16,26);}
     else if(S.t>=S.nextDlg){S.nextDlg=S.t+(startDialog()===false?5:rand(14,22));}}
