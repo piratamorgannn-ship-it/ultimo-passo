@@ -172,7 +172,7 @@ button:disabled{opacity:.35}
 <script>
 (()=>{
 'use strict';
-const H=128,LIMIT=6.4,K=4.6,TOTAL=50,QPER=7,SPR=2;
+const H=128,LIMIT=6.4,K=4.6,TOTAL=50,QPER=10,SPR=2;
 let W=320,PX=96;
 const $=id=>document.getElementById(id);
 const cv=$('scene');let cx=cv.getContext('2d');let OFF=null,OCX=null;
@@ -402,7 +402,7 @@ const relLabel=r=>r>=80?'Fraterno':r<=-80?'Odio mortale':r>=40?'Amico':r>=15?'Si
 const relColor=r=>r>=15?'var(--green)':r<=-15?'var(--red)':'var(--dim)';
 
 
-/* ================= TEST ATTITUDINALE (50 affermazioni, 7 a partita) ================= */
+/* ================= TEST ATTITUDINALE (65 affermazioni, 10 a partita) ================= */
 // [affermazione, tratto principale, segno]  f=fisico n=nervi s=stomaco c=carisma
 const QUIZ=[
 ['Amo i miei genitori.','n',1],['Mi sono sempre piaciuti i fiori.','c',1],['Ho avuto pensieri sessuali verso persone del mio stesso sesso.','c',1],['A volte sento voci quando sono solo.','n',-1],['Ho rubato qualcosa almeno una volta.','f',1],
@@ -415,6 +415,9 @@ const QUIZ=[
 ['Ho fatto cose di cui mi pento.','n',-1],['Mi piacciono i bambini.','c',1],['La mia pelle brucia facilmente al sole.','f',-1],['Raramente mi ammalo.','f',1],['Mi capita di sentirmi fuori dal mio corpo.','n',-1],
 ['Preferisco perdere che imbrogliare.','c',1],['Mi sono iscritto alla Marcia di mia volontà.','n',1],['Ho sempre fame.','s',1],['Mi tremano le mani quando sono agitato.','n',-1],['Ho perso qualcuno durante la guerra.','f',1],
 ['So nuotare bene.','f',1],['Le folle mi mettono a disagio.','c',-1],['Mi addormento appena tocco il cuscino.','f',1],['A volte il cibo mi sembra avvelenato.','s',-1],['Penso che vincerò.','n',1],
+['Conto i passi quando cammino.','n',1],['Ho mangiato terra almeno una volta.','s',1],['Parlo con gli animali e a volte mi rispondono.','n',-1],['Mi piace l\'odore della benzina.','s',-1],['Ho sognato la mia morte più di una volta.','n',-1],
+['Riesco a stare sveglio due notti di fila.','f',1],['Mi lavo le mani più volte di quanto serva.','n',-1],['Ho tenuto in vita una pianta per più di cinque anni.','c',1],['Mi è capitato di ridere a un funerale.','c',-1],['Le mie scarpe sono la cosa più importante che possiedo.','f',1],
+['Ho baciato qualcuno solo per vincere una scommessa.','c',1],['Il mio stomaco brontola quando mento.','s',-1],['Posso guardare il sole senza sbattere le palpebre.','f',-1],['Ricordo il nome di tutti quelli che mi hanno fatto un torto.','n',-1],['Canto da solo quando ho paura.','c',1],
 ];
 
 const TR='fnsc';
