@@ -20,6 +20,8 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-m
 #cdn.pop{animation:cdpop .9s steps(6,end)}
 @keyframes cdpop{0%{transform:translate(-50%,-50%) scale(1.3);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.15}}
 #fx{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;z-index:1}
+#chatd{position:absolute;display:none;transform:translate(-50%,-100%);background:#f4f4f0;color:#7a0a0a;border:2px solid #000;padding:3px 6px;font-size:10px;font-style:italic;pointer-events:none;z-index:2;box-shadow:2px 2px 0 #000;white-space:nowrap}
+#chatd:after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-3px;border:3px solid transparent;border-top-color:#000}
 #chatb{position:absolute;display:none;transform:translate(-50%,-100%);background:#f4f4f0;color:#111;border:2px solid #000;padding:3px 6px;font-size:10px;line-height:1.25;max-width:170px;text-align:center;pointer-events:none;z-index:2;box-shadow:2px 2px 0 #000}
 #chatb:after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-3px;border:3px solid transparent;border-top-color:#000}
 #scene{position:absolute;left:0;top:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
@@ -125,7 +127,7 @@ button:disabled{opacity:.35}
 <body>
 <div id="app">
   <div id="stage">
-    <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="chatb"></div><canvas id="cdn" class="ttl"></canvas>
+    <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="chatb"></div><div id="chatd">Sto morendo...</div><canvas id="cdn" class="ttl"></canvas>
     <div id="hud">
       <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
       <div class="bars">
@@ -461,7 +463,7 @@ function newRun(shoe,tr){
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
-     mode:'count',cd:0,cdStep:-1,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
+     mode:'count',cd:0,cdStep:-1,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
      bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
@@ -535,7 +537,7 @@ function startQTE(type,who){
 function qteHit(){const q=S.qte;if(!q)return;
   if(q.need){q.n++;sfx.tick();const el=$('qn');if(el)el.textContent=q.n+' / '+q.need;if(q.n>=q.need)endQTE(true);}
   else if(q.timing){const p=q.t/q.dur;endQTE(p>=q.z0&&p<=q.z1);}else endQTE(true);}
-const friends=()=>S.npcs.filter(n=>n.named&&n.alive&&!n.leaving&&n.rel>=40);
+const friends=()=>S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=40);
 function endQTE(ok){
   const q=S.qte;S.qte=null;hideBox();const G='var(--green)',Rd='var(--red)';
   if(ok){sfx.good();({acqua:()=>{S.hy=Math.min(100,S.hy+20);S.bl+=8;log('Bevi avidamente.',G);},crampo:()=>log('Il crampo si scioglie.',G),caduta:()=>log('Barcolli ma resti in piedi.',G),
@@ -559,18 +561,18 @@ function choice(title,text,opts,dur,def){
 }
 function startDialog(){
   const extra=n=>n.stage>=3&&n.stage<7&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
-  const cands=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving&&(n.stage<3||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
+  const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<3||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
   const npc=pick(cands),d=npc.stage<3?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
   openDlg(npc,d,'base');
 }
 function deepTalk(){
-  const br=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving&&n.rel>=80);if(!br.length)return false;
+  const br=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=80);if(!br.length)return false;
   let left=DEEP_START.filter(k=>!S.deepUsed.includes(k));if(!left.length){S.deepUsed=[];left=DEEP_START.slice();}
   const k=pick(left);S.deepUsed.push(k);openDlg(pick(br),DEEP[k],'deep');return true;
 }
-function loveQ(){const c=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving);if(!c.length)return false;openDlg(pick(c),LOVEQ,'loveq');return true;}
+function loveQ(){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving);if(!c.length)return false;openDlg(pick(c),LOVEQ,'loveq');return true;}
 function bigotTalk(){
-  const bg=S.npcs.filter(n=>n.bigot&&n.alive&&!n.leaving);if(!bg.length)return false;
+  const bg=S.npcs.filter(n=>n!==S.dyingNpc&&n.bigot&&n.alive&&!n.leaving);if(!bg.length)return false;
   const pool=[...(S.black?SLUR.black:[]),...(S.outed?SLUR.gay:[])];if(!pool.length)return false;
   S.mh=Math.max(0,S.mh-6);sfx.bad();
   openDlg(pick(bg),{t:pick(pool),o:slurOpts()},'bigot');return true;
@@ -658,7 +660,7 @@ function update(dt){
   if(S.balloon){S.balloon.t-=dt;if(S.balloon.t<=0)S.balloon=null;}
   if(S.chat){S.chat.t-=dt;if(S.chat.t<=0||!S.chat.n.alive)S.chat=null;}
   S.chatT=(S.chatT==null?4:S.chatT)-dt;
-  if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
+  if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n!==S.dyingNpc&&n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
     if(vis.length){const tier=pr<.34?0:pr<.67?1:2,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&hourNow()>=20;
       const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:CHAT[tier];
       S.chat={n:pick(vis),s:pick(pool),t:3.6};}S.chatT=rand(6,12)*(1-.35*pr)*(S.hill>0||S.rain>0?.65:1);}
@@ -684,6 +686,7 @@ function update(dt){
     else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(35,55);}
     else if(S.t>=S.nextDlg){startDialog();S.nextDlg=S.t+rand(18,28);}}
   if(S.hill>0){S.hill-=dt;if(S.hill<=0){S.desc=7;log('In cima. Ora si scende.','var(--green)');}}if(S.desc>0)S.desc-=dt;if(S.rain>0)S.rain-=dt;
+  if(!S.dyingNpc&&S.npcs.filter(n=>n.alive&&!n.leaving).length+1<=6){const c=S.npcs.filter(n=>n.alive&&!n.leaving);if(c.length){S.dyingNpc=pick(c);if(S.dlg&&S.dlg.npc===S.dyingNpc){S.dlg=null;hideBox();}if(S.chat&&S.chat.n===S.dyingNpc)S.chat=null;}}
   if(!S.finale&&S.npcs.filter(n=>n.alive&&!n.leaving).length<=2){S.finale=true;const fin=ROUTE.c[ROUTE.c.length-1];S.zplan.push({z:'finale',dur:1e9,name:fin});S.zi=S.zplan.length-1;S.zNext=1e9;S.zones.push({z:'finale',s:S.scroll-.5*W/.15});
     log(`In fondo alla strada appare ${fin}. Siete rimasti in tre.`,'var(--amber)');sfx.fanfare();S.fwT=1.5;}
   if(S.finale){S.fwT-=dt;if(S.fwT<=0){S.fwT=rand(.5,1.3);S.fw.push({x:rand(20,W-20),y:82,vx:rand(-8,8),vy:-rand(70,95),t:0,c:pick(['#ff5050','#ffd040','#50e0ff','#ff70e0','#80ff70','#ffffff']),boom:rand(.6,.95)});tone(rand(500,700),.4,'sine',.03,2200);}
@@ -853,6 +856,7 @@ function drawScene(){
   const dk=darkness(hour);
   if(dk>0){cx.fillStyle=`rgba(8,6,20,${dk})`;cx.fillRect(0,0,W,H);cx.fillStyle=fut?`rgba(248,60,60,${dk*.25})`:`rgba(240,220,150,${dk*.35})`;cx.beginPath();cx.moveTo(S.truckX+28,100);cx.lineTo(S.truckX+140,88);cx.lineTo(S.truckX+140,122);cx.closePath();cx.fill();}
   if(S.thunder>.9){cx.fillStyle='rgba(255,255,240,.6)';cx.fillRect(0,0,W,H);}
+  {const el=$('chatd'),n=S.dyingNpc;if(n&&n.alive&&!n.leaving&&S.mode==='play'&&(S.t%1)<.75){const k=cv.clientWidth/W;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
   {const el=$('chatb');if(S.chat&&S.mode==='play'){const n=S.chat.n,k=cv.clientWidth/W;el.textContent=S.chat.s;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
   {const pr=S.mode==='play'||S.mode==='dying'?progress():S.greyP||0;S.greyP=pr;const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})`;if(cv.style.filter!==f)cv.style.filter=f;}
 }
@@ -1146,8 +1150,9 @@ function end(win){
   <p>Marcia del ${YEAR} (${ROUTE.c[0]} → ${ROUTE.c[ROUTE.c.length-1]}) · N.${S.bib} · <b>${hrs} ore ${mins} min</b> · <b>${fmt(S.km)} km</b> · posizione <b>${pos}ª</b>/${TOTAL}${S.t>best?' · <span style="color:var(--amber)">record</span>':''}</p>
   ${unlockMsg}${tipMsg}<table>${rows}</table>
   <p class="lbl" style="font-size:11px">Profilo nascosto — fisico ${trait(t.f)}, nervi ${trait(t.n)}, stomaco ${trait(t.s)}, carisma ${trait(t.c)}</p>
-  <button class="main" id="go">PROSSIMA MARCIA</button>`);
+  <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`);
   $('go').addEventListener('click',mapScreen);
+  $('home').addEventListener('click',()=>{const c=$('chatb'),d=$('chatd');if(c)c.style.display='none';if(d)d.style.display='none';titleScreen();});
 }
 
 /* ================= ORIENTAMENTO ================= */
