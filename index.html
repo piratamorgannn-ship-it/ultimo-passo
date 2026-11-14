@@ -262,6 +262,16 @@ const CAST=[
  {id:'sofia',name:'Sofia',from:'Lisbona',shirt:'#a05a90',hair:'#2a1a10',skin:'#c89068'},
 ];
 const O=(l,r,s=0)=>({l,r,s});
+/* nomi e città casuali: ogni personaggio con nome mantiene il carattere, ma nome e provenienza cambiano a ogni marcia */
+const CAST_POOL={
+ marek:{n:['Marek','Tomasz','Janek','Piotr','Kuba','Andrzej','Mikołaj','Jonas','Darius','Wojtek'],c:['Danzica','Stettino','Riga','Klaipėda','Tallinn','Kiel','Rostock','Gdynia']},
+ ilse:{n:['Ilse','Greta','Frieda','Liesel','Ingrid','Astrid','Helga','Karin','Sabine','Ute'],c:['Lipsia','Dresda','Brema','Hannover','Malmö','Göteborg','Bergen','Magdeburgo']},
+ ennio:{n:['Ennio','Gino','Tonino','Bruno','Renzo','Nando','Aldo','Carlo','Franco','Sandro'],c:['Torino','Genova','Bologna','Milano','Bergamo','Verona','Parma','Livorno']},
+ dragan:{n:['Dragan','Goran','Zoran','Milan','Vuk','Ante','Dejan','Branko','Stipe','Nikola'],c:['Spalato','Zara','Mostar','Sarajevo','Niš','Skopje','Tirana','Podgorica']},
+ pieter:{n:['Pieter','Joost','Bram','Wim','Koen','Jan','Sander','Hendrik','Ruud','Maarten'],c:['Rotterdam','Utrecht','Gand','Anversa','Groninga','Leida','Lovanio','Delft']},
+ sofia:{n:['Sofia','Inês','Carmen','Lucía','Marta','Beatriz','Rosa','Teresa','Ana','Pilar'],c:['Lisbona','Porto','Coimbra','Siviglia','Valencia','Bilbao','Granada','Saragozza']},
+};
+const NAMES=['Lukas','Jonas','Felix','Emil','Anton','Oskar','Viktor','Pavel','Ivan','Sergej','Dmitri','Oleg','Yuri','Mikhail','Boris','Stefan','Tibor','László','Bence','Ferenc','Radu','Mihai','Vlad','Andrei','Bogdan','Nikos','Yannis','Kostas','Dimitris','Alexis','Matteo','Luca','Marco','Paolo','Giorgio','Davide','Pietro','Michele','Simone','Fabio','Hugo','Louis','Jules','Marcel','Pierre','Antoine','Lucien','Rémi','Diego','Pablo','Javier','Mateo','Álvaro','Iker','Rui','Tiago','Duarte','João','Nuno','Sean','Liam','Connor','Owen','Rhys','Finn','Lars','Nils','Erik','Olav','Sven','Aksel','Mats','Jakub','Ondřej','Tomáš','Marek','Kamil','Szymon','Arto','Juho','Eero','Ville','Anja','Lena','Mila','Nina','Eva','Klara','Olga','Irina','Vera','Daria','Ivana','Jana','Petra','Zofia','Hanna','Ewa','Elena','Giulia','Chiara','Sara','Marie','Camille','Léa','Chloé','Lucia','Elena','Nuria','Joana','Rita','Sigrid','Maja','Saga','Aino','Kaisa','Ilona','Réka','Ioana','Maria','Katya','Nadia','Tanja','Dunja','Mira'];
 /* discorsi profondi con gli amici fraterni: ogni risposta può portare avanti la discussione */
 const D=(r,m,n)=>({r,m,n});const Q=(l,x)=>({l,...x});
 const DEEP={
@@ -353,13 +363,13 @@ const FEUD=[
  {t:"Dicono che tu sia il cocco dei soldati. Che schifo.",o:[O("Gli salti quasi addosso.",-24,-8),O("Abbassi lo sguardo.",-6),O("\"Siamo tutti qui per colpa loro.\"",10)]},
 ];
 const DLG={
- marek:[{t:"Ehi, numero {N}! Sono Marek, da Danzica. Camminiamo vicini? Le ore passano prima.",o:[O("Volentieri, Marek.",15),O("Risparmia il fiato.",-10),O("Va bene, ma niente politica.",6)]},
-  {t:"Mia madre lavora al porto. Se vinco, Danzica sarà esentata dalle requisizioni. Tu per chi cammini?",o:[O("Per la mia famiglia.",12),O("Per me stesso.",0),O("Non sono affari tuoi.",-12)]},
+ marek:[{t:"Ehi, numero {N}! Sono {ME}, da {CITY}. Camminiamo vicini? Le ore passano prima.",o:[O("Volentieri, {ME}.",15),O("Risparmia il fiato.",-10),O("Va bene, ma niente politica.",6)]},
+  {t:"Mia madre lavora al porto. Se vinco, {CITY} sarà esentata dalle requisizioni. Tu per chi cammini?",o:[O("Per la mia famiglia.",12),O("Per me stesso.",0),O("Non sono affari tuoi.",-12)]},
   {t:"Ho i piedi in fiamme... dimmi qualcosa, qualsiasi cosa.",o:[O("Gli racconti del mare d'inverno.",15,-4),O("Stringi i denti, come tutti.",-6),O("Gli passi un biscotto.",22,-8)]}],
  ilse:[{t:"Non farti illusioni, {N}. Qui non si fanno amicizie.",o:[O("Allora perché mi parli?",8),O("Hai ragione.",0),O("Vedremo chi cede prima.",-10)]},
   {t:"Mio padre ha fatto la Marcia anni fa. Non è tornato. Io invece tornerò.",o:[O("Mi dispiace per tuo padre.",12),O("Lo dicono tutti.",-10),O("Ti credo.",6)]},
   {t:"Stai rallentando. Tieni il mio passo, se ci riesci.",o:[O("Tengo il tuo passo.",10,-6),O("Vai pure avanti.",-4),O("Grazie del consiglio.",6)]}],
- ennio:[{t:"Sai cosa mi manca? Un bicerin caldo. E una sedia. Soprattutto una sedia.",o:[O("Ridi di gusto.",12,3),O("Non parlare di sedie.",4),O("Taci, mi deconcentri.",-10)]},
+ ennio:[{t:"Sai cosa mi manca? Un caffè bollente. E una sedia. Soprattutto una sedia.",o:[O("Ridi di gusto.",12,3),O("Non parlare di sedie.",4),O("Taci, mi deconcentri.",-10)]},
   {t:"Scommettiamo? Il primo che si lamenta offre da bere al traguardo.",o:[O("Ci sto.",12),O("Al traguardo non c'è niente da bere.",-4),O("Hai già perso: ti lamenti da ore.",8)]},
   {t:"Senti... se non arrivo, scrivi tu a mia sorella? Via Nizza 14.",o:[O("Te lo prometto.",18),O("Arriverai, smettila.",8),O("Pensa a camminare.",-10)]}],
  dragan:[{t:"Togliti dalla mia linea, {N}. Questa è la mia parte di strada.",o:[O("Mi sposto.",5),O("La strada è di tutti.",-8),O("Provaci, a spostarmi.",-18)]},
@@ -367,7 +377,7 @@ const DLG={
   {t:"Tu e io saremo gli ultimi. Lo sento. E allora?",o:[O("Allora ci rispetteremo.",15),O("Allora vincerò io.",-15),O("Allora vedremo.",0)]}],
  pieter:[{t:"Hai notato? La strada è sempre la stessa. Siamo noi a cambiare.",o:[O("Bella idea.",10),O("Penso solo al prossimo passo.",4),O("Sei strano.",-8)]},
   {t:"Conto i pali del telegrafo. Siamo a duecentotrenta. Conti con me?",o:[O("Duecentotrentuno.",14),O("Mi farebbe impazzire.",-2),O("Conta da solo.",-10)]},
-  {t:"Non ho paura di fermarmi. Ho paura di non ricordare perché ho iniziato.",o:[O("In fondo lo sappiamo tutti.",12),O("Trovati un motivo nuovo. Ora.",10),O("Non è il momento, Pieter.",-6)]}],
+  {t:"Non ho paura di fermarmi. Ho paura di non ricordare perché ho iniziato.",o:[O("In fondo lo sappiamo tutti.",12),O("Trovati un motivo nuovo. Ora.",10),O("Non è il momento, {ME}.",-6)]}],
  sofia:[{t:"Zoppichi col sinistro. Allenta un po' i lacci, fidati.",o:[O("Grazie, lo faccio.",12,6),O("Sto benissimo.",-4),O("Pensa ai tuoi piedi.",-10)]},
   {t:"Facevo l'infermiera, prima della guerra. Qui non posso curare nessuno.",o:[O("Stai curando me.",15),O("Nessuno può curare questo.",0),O("Allora risparmia le forze.",-2)]},
   {t:"Se resto indietro, non voltarti. Promettimelo.",o:[O("Non ti lascerò indietro.",12),O("Te lo prometto.",8),O("Non promettere niente.",-6)]}],
@@ -495,11 +505,12 @@ function newRun(shoe,tr){
   $('jukeHud').style.display=DEBUG?'inline':'none';
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
-  CAST.forEach(c=>npcs.push({...c,named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0}));
+  const usedN=new Set();
+  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
   const bib=Math.floor(rand(1,100)),used=new Set([bib]);
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,100));}while(used.has(n));used.add(n);
-    npcs.push({id:'g'+i,name:'N.'+n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
+    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn,bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
   const sh=SHOES[shoe];
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
@@ -645,7 +656,8 @@ function bigotTalk(){
   openDlg(pick(bg),{t:pick(pool),o:slurOpts()},'bigot');return true;
 }
 function openDlg(npc,d,kind){
-  d={...d,o:d.o.filter(o=>!o.g||S.gay)};
+  const fill=x=>x.replace(/\{ME\}/g,npc.name).replace(/\{CITY\}/g,npc.from||'casa');
+  d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
   S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.name} <span class="rl">· ${npc.from||'?'}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
@@ -731,8 +743,9 @@ function update(dt){
   S.chatT=(S.chatT==null?4:S.chatT)-dt;
   if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n!==S.dyingNpc&&n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
     if(vis.length){const tier=pr<.34?0:pr<.67?1:2,mad=pr>.8&&Math.random()<.6,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&hourNow()>=20;
-      const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:mad?CHAT_MAD:CHAT[tier];
-      const who=pick(vis);S.chat={n:who,s:who.villain?(S.infame&&Math.random()<.4?'Bravo, socio. Siamo noi i furbi.':pick(VILLAIN_SAY)):pick(pool),t:3.6};}S.chatT=rand(6,12)*(1-.35*pr)*(S.hill>0||S.rain>0?.65:1);}
+      const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:mad?CHAT_MAD:(()=>{const r=Math.random();
+        if(tier===0)return r<.75?CHAT[0]:CHAT_HOME;if(tier===1)return r<.45?CHAT[1]:r<.65?CHAT_PAIN:r<.82?CHAT_LONELY:CHAT_HOME;return r<.45?CHAT[2]:r<.7?CHAT_PAIN:r<.88?CHAT_LONELY:CHAT_HOME;})();
+      const who=pick(vis);S.chat={n:who,s:who.villain?(S.infame&&Math.random()<.4?'Bravo, socio. Siamo noi i furbi.':freshPick(VILLAIN_SAY)):freshPick(pool),t:3.6};}S.chatT=rand(4,8)*(1-.35*pr)*(S.hill>0||S.rain>0?.65:1);}
   const lo=offMin(),hi=offMax();
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
@@ -1281,10 +1294,10 @@ DLG.marek.push(
  {t:"Canta con me, {N}. Una canzone di mare, piano, che i soldati non sentano.",o:[O("Canti a mezza voce con lui.",16,4),O("Non ho fiato per cantare.",0),O("Vuoi farci ammazzare?",-12)]});
 DLG.ilse.push(
  {t:"Ho visto come guardi i soldati. Li odi anche tu, vero?",o:[O("Sì. Li odio.",10),O("Odiare stanca.",6),O("Io non odio nessuno.",-6)]},
- {t:"Mio padre mi ha insegnato a contare i respiri. Quattro dentro, quattro fuori. Prova.",o:[O("Provi con lei.",14,5),O("Non mi serve.",-6),O("Grazie, Ilse.",10)]},
+ {t:"Mio padre mi ha insegnato a contare i respiri. Quattro dentro, quattro fuori. Prova.",o:[O("Provi con lei.",14,5),O("Non mi serve.",-6),O("Grazie, {ME}.",10)]},
  {t:"Se dovessi morire... non dire a nessuno che ho pianto. Neanche a te stesso.",o:[O("Non lo dirò mai.",16),O("Non hai pianto. Era pioggia.",14),O("Piangono tutti.",-4)]});
 DLG.ennio.push(
- {t:"A Torino ho un bar. Beh, mio zio. Beh, gli lavo i bicchieri. Comunque ti offro da bere.",o:[O("Accetto. Due bicchieri.",14),O("Prima arriva al traguardo.",4),O("Basta parlare di bere.",-8)]},
+ {t:"A {CITY} ho un bar. Beh, mio zio. Beh, gli lavo i bicchieri. Comunque ti offro da bere.",o:[O("Accetto. Due bicchieri.",14),O("Prima arriva al traguardo.",4),O("Basta parlare di bere.",-8)]},
  {t:"Hai visto quel soldato? Ha il naso storto come mio cugino. Magari è mio cugino.",o:[O("Ridi fino a farti male.",14,3),O("Non ridere dei soldati.",-2),O("Chiamalo, vediamo.",8)]},
  {t:"Non mi vengono più le battute. È brutto, sai? È come se mi rubassero la faccia.",o:[O("Allora le faccio io per te.",18),O("Ti torneranno.",8),O("Meglio, così stai zitto.",-14)]});
 DLG.dragan.push(
@@ -1292,13 +1305,13 @@ DLG.dragan.push(
  {t:"Ho un fratello piccolo. Se vinco, non lo estrarranno mai. È l'unico motivo per cui respiro.",o:[O("È un buon motivo.",14),O("Anch'io ho i miei.",6),O("Commovente.",-12)]},
  {t:"Ti ho visto aiutare gli altri. Sei stupido. O forse sei l'unico che ha capito qualcosa.",o:[O("Forse tutte e due.",14),O("Sono stupido.",4),O("Tu non hai capito niente.",-14)]});
 DLG.pieter.push(
- {t:"Secondo te le stelle ci guardano? Io credo di sì. Scommetto che si annoiano.",o:[O("Allora diamogli spettacolo.",12),O("Le stelle non guardano niente.",-2),O("Guarda la strada, Pieter.",-6)]},
+ {t:"Secondo te le stelle ci guardano? Io credo di sì. Scommetto che si annoiano.",o:[O("Allora diamogli spettacolo.",12),O("Le stelle non guardano niente.",-2),O("Guarda la strada, {ME}.",-6)]},
  {t:"Ho scritto il mio nome su un sasso e l'ho lasciato al primo chilometro. Così resto da qualche parte.",o:[O("Lo farò anch'io.",14),O("Un sasso non ricorda niente.",-6),O("Bella idea.",10)]},
  {t:"Se divento matto, promettimi che mi dirai la verità. Anche se è brutta.",o:[O("Te lo prometto.",16),O("Siamo già tutti matti.",8),O("Non diventerai matto.",4)]});
 DLG.sofia.push(
  {t:"Fammi vedere le mani. Gonfie. Bevi di più, {N}. È un ordine.",o:[O("Bevi subito.",12,4),O("Sì, infermiera.",10),O("Lasciami stare.",-10)]},
  {t:"In ospedale tenevo la mano a chi moriva. Qui non posso. Mi sembra di tradirli tutti.",o:[O("Tieni la mia, allora.",18),O("Non è colpa tua.",10),O("Qui non c'è tempo per queste cose.",-10)]},
- {t:"Ho visto morire tanta gente, {N}. Ma mai così giovane. E mai così tanta.",o:[O("Le prendi la mano in silenzio.",16),O("Guarda avanti, Sofia.",4),O("Smettila di contarli.",-6)]});
+ {t:"Ho visto morire tanta gente, {N}. Ma mai così giovane. E mai così tanta.",o:[O("Le prendi la mano in silenzio.",16),O("Guarda avanti, {ME}.",4),O("Smettila di contarli.",-6)]});
 BOND.push(
  {t:"Quando ti guardo camminare mi viene voglia di continuare. Lo sapevi?",o:[O("Anche a me con te.",20),O("Non dire scemenze.",-4),O("Allora non guardare altrove.",14)]},
  {t:"Ti ricordi com'eri al primo chilometro? Sembravi un bambino spaventato.",o:[O("Lo sono ancora.",18),O("E tu un vecchio brontolone.",14),O("Non me lo ricordare.",-6)]},
@@ -1337,6 +1350,18 @@ VILLAIN_SAY.push("Avanti, cadi. Ti aspetto.","Ti ho visto zoppicare, eh?","Ancor
 SLUR.black.push("Torna da dove sei venuto, ne**o.","Un ne**o che marcia per la Federazione. Che barzelletta.","Non toccarmi, ne**o. Mi sporchi.");
 SLUR.gay.push("Cammina come un uomo, fr***o.","Se mi guardi ancora, fr***o, ti faccio cadere io.","Un fr***o in meno sarebbe una bella notizia.");
 DEFEND.push("«Prenditela con me, se hai fegato.»","«Lui cammina meglio di te.»","«Un'altra parola e ti lascio indietro io.»","«Chiudi la bocca e risparmia il fiato.»");
+
+/* ---- balloon: altre frasi e nuove categorie ---- */
+CHAT[0].push("Scommetto che arrivo a Pasqua.","Qualcuno ha un pettine? Voglio essere bello in TV.","Mia zia mi ha detto di salutare la telecamera.","Corriamo? No? Va bene, scherzavo.","Ho le scarpe nuove. Errore da principiante.","Sapete che ore sono? No? Neanch'io.","Il soldato laggiù ha una faccia simpatica. Quasi.","Mi sono preparato tutto l'anno. Cioè, ho dormito tanto.","Se vinco mi compro una moto rossa.","Ho dimenticato di dare da mangiare al gatto.","Dieci a uno che il primo a crollare è quello col cappello.","Chi ha portato le carte? Facciamo una partita camminando.","Ma perché la chiamano Marcia? È una passeggiata!","Ho mangiato troppo a colazione. Già pentito.","Questa folla mi fa sentire un calciatore.","Uno, due, uno, due. Facile, no?");
+CHAT[1].push("Ho la lingua di cartone.","Mi gira tutto. Il cielo, la strada, voi.","Chi ha avuto l'idea di questa marcia merita di farla lui.","Non ho più saliva.","Mi fischiano le orecchie da un'ora.","Ho smesso di sentire i piedi. È un bene?","Mi si chiudono gli occhi camminando.","Parlo da solo da mezz'ora. Ve ne siete accorti?","Odio questa strada. Odio ogni sasso.","Quando finisce la notte? Finisce, vero?","Ho visto un uomo cadere e non mi sono girato.","Respirate piano. Piano.","Il blindato è più vicino o sbaglio?","Ho fame e nausea insieme.","Non ridete più. Perché non ridete più?","Ancora un passo. Poi un altro. Poi un altro.");
+CHAT[2].push("Lasciatemi qui. No, non lasciatemi.","Non sento più niente. Niente.","Siete ancora tutti lì? Non vi vedo.","Ho paura di chiudere gli occhi.","Qualcuno si ricorderà di noi?","Voglio tornare a ieri.","Non ho più un nome. Ho solo un numero.","Se cado, giratemi verso il cielo.","Ditegli che non avevo paura. Mentite.","Il mio cuore batte strano.","Non voglio essere l'ultimo. Non voglio essere solo.","Basta. Vi prego. Basta.","Il traguardo non esiste. Non è mai esistito.","Ho sognato di essere a casa. Ero sveglio.","Chi resta, viva anche per me.","Contatemi. Contatemi fra i vivi ancora un po'.");
+CHAT_HILL.push("La strada ce l'ha con me.","Questa collina è un muro.","Chi è in cima, mi tira su?","Ogni salita è un richiamo che aspetta.","Le ginocchia mi scricchiolano come una porta vecchia.","Ma non finisce mai?","Ho visto la cima tre volte. Era sempre un'altra salita.","Spingete! No, non spingete me!","Il cuore mi esce dal petto.","Salita. Ancora. Salita.","Respira, sali, respira, sali.","Odio le montagne. Le ho sempre odiate.");
+CHAT_RAIN.push("Le scarpe sono due secchi.","Ho freddo e sono bagnato. Bell'accoppiata.","Piove sul bagnato. Letteralmente.","Almeno i soldati si bagnano anche loro.","Apro la bocca e bevo. Gratis.","Non sento più le dita dei piedi.","Sto camminando dentro una nuvola.","Ogni goccia pesa un chilo.","Speravo nel sole. Ingenuo.","Fango fino alle caviglie. Splendido.");
+CHAT_COLD.push("Il freddo mi entra fino ai denti.","Ho le labbra blu, guardate.","Se mi fermo divento una statua.","Chi ha un guanto? Uno solo.","Respiro ghiaccio.","Le stelle sono gelide stanotte.","Ho smesso di tremare. È un brutto segno?","Il naso non lo sento più.","Vorrei un camino. Un camino e un letto.","Questa notte non finisce mai.");
+const CHAT_PAIN=["Mi brucia la schiena come fuoco.","Ho una spina nel piede da chilometri.","Le vesciche si sono aperte. Sento il calzino bagnato.","Ogni passo è un chiodo.","Il ginocchio fa un rumore strano.","Mi fa male perfino respirare.","Ho un crampo che non passa.","Le spalle sono di pietra.","Mi sanguinano i piedi. Lo so senza guardare.","Ho mal di testa da ieri.","Il fianco mi tira come un elastico.","Non so più cosa non mi fa male.","Mi bruciano gli occhi dal sudore.","Le caviglie sono gonfie come pane.","Ho la gola di carta vetrata.","Mi tremano le mani e non so perché."];
+const CHAT_LONELY=["Nessuno mi ha salutato alla partenza.","Siamo in tanti e mi sento solo.","Non conosco nessuno qui. Nessuno.","Parlatemi. Qualcuno. Di qualsiasi cosa.","Mi sembra di camminare da solo da sempre.","Se muoio, chi lo saprà?","Mia madre non è venuta a vedermi.","Tutti hanno qualcuno a bordo strada. Io no.","Ho smesso di cercare facce amiche.","Non ho nessuno da cui tornare.","Il mio vicino è morto. Non sapevo nemmeno il suo nome.","Ho parlato con un palo del telegrafo. Mi ha capito.","Fa male non avere nessuno a cui pensare.","Sono solo io e la strada.","Vorrei che qualcuno mi tenesse la mano.","Mi hanno estratto e nessuno ha pianto."];
+const CHAT_HOME=["A quest'ora mia madre mette su il caffè.","Mi manca il mio letto. Il mio cuscino storto.","Chissà se il mio cane mi aspetta.","Da me adesso suonano le campane.","Mi manca l'odore del pane di mio padre.","Vorrei sentire la voce di mia sorella.","La mia stanza ha una finestra sul cortile. La vedo adesso.","Al mio paese c'è un fiume. Mi ci tuffavo da bambino.","Domenica c'era il pranzo da mia nonna.","Ho lasciato un libro a metà sul comodino.","Il mio amico mi aspetta al bar, come ogni sera.","Mi manca perfino la scuola. Pensa.","D'estate andavamo al lago. Che sole.","Mia madre canta mentre stira. La sento.","Vorrei solo sedermi in cucina.","Casa mia ha le persiane verdi. Ricordatevelo."];
+function freshPick(pool){S.chatUsed=S.chatUsed||new Set();let c=pool.filter(x=>!S.chatUsed.has(x));if(!c.length){pool.forEach(x=>S.chatUsed.delete(x));c=pool;}const x=pick(c);S.chatUsed.add(x);return x;}
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
