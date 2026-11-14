@@ -605,10 +605,10 @@ function hideBox(){box.className='box hide';}
 function relUp(n,d){const before=relLabel(n.rel);n.rel=clamp(n.rel+d,-100,100);const after=relLabel(n.rel);
   if(after!==before&&after==='Fraterno'){S.bro=true;n.buddy=n.buddy||pick([-5,-4,4,5]);n.lane=pick([2,3]);log(n.name+' ora è come un fratello per te.','var(--green)');}
   else if(after!==before&&after==='Amico')log(n.name+' ora è tuo amico.','var(--green)');}
-const HELP={sgambetto:'{n} ti tira su al volo prima che tu cada.',crampo:'{n} ti massaggia la gamba mentre camminate.',caduta:'{n} ti afferra prima che tu cada.',isteria:'{n} ti stringe la mano: «Respira con me.»',blocco:'{n} ti spinge avanti: «Muoviti, dai!»',spinta:'{n} si mette in mezzo e ti tiene in piedi.'};
+const HELP={rialzati:'{n} ti afferra sotto le braccia e ti rimette in piedi: «Non qui. Non adesso.»',sgambetto:'{n} ti tira su al volo prima che tu cada.',crampo:'{n} ti massaggia la gamba mentre camminate.',caduta:'{n} ti afferra prima che tu cada.',isteria:'{n} ti stringe la mano: «Respira con me.»',blocco:'{n} ti spinge avanti: «Muoviti, dai!»',spinta:'{n} si mette in mezzo e ti tiene in piedi.'};
 function startQTE(type,who){
   /* 1 volta su 4 un amico ti aiuta da solo (e l'amicizia cresce) */
-  if(HELP[type]){const fr=friends();if(fr.length&&Math.random()<.25){const f=pick(fr);S.qte={type,who,t:0,n:0};log(HELP[type].replace('{n}',f.name),'var(--green)');endQTE(true);relUp(f,6);return;}}
+  if(HELP[type]){const br=friends().filter(n=>n.rel>=80),fr=br.length?br:(type==='rialzati'?[]:friends());if(fr.length&&Math.random()<(br.length?.5:.25)){const f=pick(fr);S.qte={type,who,t:0,n:0};log(HELP[type].replace('{n}',f.name),'var(--green)');endQTE(true);relUp(f,6);return;}}
   const q={type,t:0,who,n:0};
   Object.assign(q,{
    crampo:{dur:3.6,need:8,title:'CRAMPO!',sub:'Massaggia il polpaccio camminando',btn:'MASSAGGIA'},
@@ -681,7 +681,9 @@ function deepTalk(){
   const br=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=80);if(!br.length)return false;
   let left=DEEP_START.filter(k=>!S.deepUsed.includes(k));if(!left.length){S.deepUsed=[];left=DEEP_START.slice();}
   const n=br.find(isNear);if(!n){nearOr(pick(br));return false;}
-  const k=pick(left);S.deepUsed.push(k);openDlg(n,DEEP[k],'deep');return true;
+  const pr=progress(),r=Math.random();let k;
+  if(pr>.6&&r<.5)k=freshPick(BRO_SICK);else if(r<.55)k=freshPick(BRO_CHAT);else{k=pick(left);S.deepUsed.push(k);}
+  openDlg(n,DEEP[k],'deep');return true;
 }
 function loveQ(){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving);if(!c.length)return false;const n=c.find(isNear);if(!n){nearOr(pick(c));return false;}openDlg(n,LOVEQ,'loveq');return true;}
 function bigotTalk(){
@@ -714,7 +716,7 @@ function answer(i){
     if(o.out){const ok=npc.rel>=0&&Math.random()<.75;npc.rel=clamp(npc.rel+(ok?8:-18),-100,100);log(npc.name+(ok?' sorride: «Allora spero che ti aspetti.»':' fa una smorfia e si allontana.'),ok?'var(--green)':'var(--red)');}
     else log(npc.name+(o.r<0?' alza le mani: «Scusa.»':' annuisce.'),'var(--dim)');return;}
   if(g.kind==='deep'){if(i<0){log(npc.name+' resta in silenzio accanto a te.','var(--dim)');return;}
-    const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=Math.min(100,S.mh+o.m);
+    const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
     if(o.n)setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.alive&&!npc.leaving)openDlg(npc,DEEP[o.n],'deep');},1800);
     else log(npc.name+' ti stringe la spalla, senza dire niente.','var(--green)');
     return;}
@@ -797,7 +799,7 @@ function update(dt){
   if(S.callCur){S.callCur.t-=dt;if(S.callCur.t<=0)S.callCur=null;}else if(S.calls.length){S.callCur={s:S.calls.shift(),t:1.8};sfx.warnSoft();}
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
-    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);}n.off-=(S.speed*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+30)shoot(n,x);return;}
+    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);if(n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}n.off-=(S.speed*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+30)shoot(n,x);return;}
     {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;}
      if(n.tempW&&S.t-n.tempW>60&&w>40){n.warns=0;n.tempW=0;}}
     n.v+=(rand(6.5,7.3)-n.v)*dt*.3;
@@ -821,7 +823,7 @@ function update(dt){
     else if(S.gay&&!S.outed&&!S.loveAsked&&S.t>=S.nextLoveQ&&loveQ()){S.loveAsked=true;}
     else if(S.t>=S.nextVillain&&villainAct()){S.nextVillain=S.t+rand(55,95);}
     else if(progress()>.8&&S.t>=S.nextMad&&madTalk()){S.nextMad=S.t+rand(25,40);}
-    else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(35,55);}
+    else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(16,26);}
     else if(S.t>=S.nextDlg){S.nextDlg=S.t+(startDialog()===false?5:rand(14,22));}}
   if(S.hill>0){S.hill-=dt;if(S.hill<=0){S.desc=7;log('In cima. Ora si scende.','var(--green)');}}if(S.desc>0)S.desc-=dt;if(S.rain>0)S.rain-=dt;
   if(S.infame){S.swT-=dt;if(S.swT<=0){S.swT=rand(4,9);const d=rand(-9,6);S.mh=clamp(S.mh+d,0,100);if(d<-5)log(pick(['“Cosa ho fatto?”','“Non guardatemi così.”','“Ho fatto quello che dovevo. Vero?”','“Li sento ridere di me.”']),'var(--red)','th');}}
@@ -1478,6 +1480,47 @@ Object.assign(DEEP,{
  dio:{t:"Credi in qualcosa, {N}? Qualcuno lassù che ci guarda?",o:[Q("Sì. Ci credo.",D(8,4,'dio2')),Q("No. Siamo soli.",D(6,0,'dio2')),Q("Credo in te.",D(14,6))]},
  dio2:{t:"Se c'è, spero che si vergogni. E se non c'è, almeno ci siamo noi due.",o:[Q("«Ci siamo noi due.»",D(12,8)),Q("Annuisci in silenzio.",D(8,5))]}});
 DEEP_START.push('paura','casa','futuro','dio');
+/* ---- fraterno: chiacchiere del più e del meno, nuovi discorsi profondi, discorsi "malati" verso la fine ---- */
+Object.assign(DEEP,{
+ // chiacchiere
+ c_cibo:{t:"Se potessi mangiare una cosa sola, adesso, cosa sceglieresti?",o:[Q("La pasta al forno della domenica.",D(6,5,'c_cibo2')),Q("Un'arancia fredda.",D(6,5,'c_cibo2')),Q("Non parlarmi di cibo, ti prego.",D(3,1))]},
+ c_cibo2:{t:"Io un panino col salame grosso così. E una birra, anche se mia madre non vuole.",o:[Q("«Te lo offro io, quando arriviamo.»",D(8,6)),Q("Ridi e ti fa male la pancia.",D(6,7))]},
+ c_musica:{t:"Canticchiami qualcosa. Qualsiasi cosa. Questo silenzio mi mangia.",o:[Q("Canticchi una canzone della radio.",D(8,7)),Q("«Non so cantare.» «Meglio, così ridiamo.»",D(8,6)),Q("«Dopo. Adesso respiro.»",D(2,0))]},
+ c_scarpe:{t:"Guarda le mie scarpe. Sembrano due bocche che ridono.",o:[Q("«Le mie invece piangono.»",D(6,6)),Q("«Legale con lo spago, dai.»",D(6,4))]},
+ c_stelle:{t:"Quella stella là, la vedi? La chiamo come te. Così ti trovo anche al buio.",o:[Q("«E quella vicina come te.»",D(10,7)),Q("«Scegline una più luminosa.»",D(8,6))]},
+ c_scuola:{t:"Qual era la materia che odiavi di più a scuola?",o:[Q("Matematica. Sempre.",D(5,4,'c_scuola2')),Q("Ginnastica. Che ironia.",D(6,6,'c_scuola2')),Q("Le ho odiate tutte.",D(5,4,'c_scuola2'))]},
+ c_scuola2:{t:"Io avevo un maestro che ci faceva marciare in cortile. Diceva che serviva. Bastardo, aveva ragione.",o:[Q("«Gli manderemo una cartolina.»",D(8,7)),Q("Non ridi. Non ce la fai.",D(4,1))]},
+ c_animali:{t:"Hai mai avuto un cane? Io ne avevo uno, Bricco. Mangiava le pantofole.",o:[Q("«Io un gatto che mi odiava.»",D(6,6)),Q("«Mi sarebbe piaciuto.»",D(6,4)),Q("«Raccontami ancora di Bricco.»",D(8,6))]},
+ c_gioco:{t:"Facciamo un gioco: ogni dieci passi dici una cosa bella. Inizio io: il pane caldo.",o:[Q("«Le lenzuola pulite.»",D(8,7)),Q("«La pioggia d'estate.»",D(8,7)),Q("«Non mi viene niente.»",D(3,-2))]},
+ c_barzelletta:{t:"Sai quella del soldato che chiede la strada a un marciatore? No? Neanche io. Volevo solo farti sorridere.",o:[Q("Sorridi davvero.",D(8,7)),Q("«Funziona, sai.»",D(8,6))]},
+ c_piedi:{t:"Facciamo a cambio di piedi per un'ora? I miei sono rovinati, ma almeno sono simpatici.",o:[Q("«Affare fatto.»",D(6,6)),Q("«I miei sono peggio, fidati.»",D(6,5))]},
+ // nuovi discorsi profondi
+ d_padre:{t:"Tuo padre... gli somigli? Io ho paura di diventare come il mio.",o:[Q("Sì, e ne sono fiero.",D(8,5,'d_padre2')),Q("Spero di no.",D(8,3,'d_padre2')),Q("Non l'ho mai conosciuto.",D(8,2,'d_padre2'))]},
+ d_padre2:{t:"Se arriviamo in fondo, decidiamo noi chi diventare. Non loro. Né la Marcia.",o:[Q("«Lo decidiamo insieme.»",D(12,8)),Q("«Se arriviamo...»",D(6,2))]},
+ d_colpa:{t:"Ho una cosa sulla coscienza. Una sola, ma pesa più dello zaino. Posso dirtela?",o:[Q("«Dimmela. Resta qui con me.»",D(10,4,'d_colpa2')),Q("«Tienila. Me la dirai alla fine.»",D(6,4))]},
+ d_colpa2:{t:"Ho lasciato mio fratello da solo il giorno dell'estrazione. Avevo paura che prendessero anche lui. L'hanno preso me.",o:[Q("«Lo hai protetto, invece.»",D(12,7)),Q("Gli prendi la mano e camminate così.",D(14,6))]},
+ d_ricordo:{t:"Qual è il ricordo più bello che hai? Me lo presti per un po'?",o:[Q("Gli racconti un'estate al mare.",D(10,8,'d_ricordo2')),Q("Gli racconti il primo bacio.",D(10,8,'d_ricordo2')),Q("«Non ne ho di belli.»",D(4,-3,'d_ricordo2'))]},
+ d_ricordo2:{t:"Adesso ce l'ho anch'io. Se crollo, penserò a quello. È tuo, ma ne faccio buon uso.",o:[Q("«Tienilo. È un regalo.»",D(12,8)),Q("«Io terrò uno dei tuoi.»",D(10,7))]},
+ d_corpo:{t:"Non sento più il corpo, {N}. Solo il cuore, e va forte. È normale?",o:[Q("«È normale. Siamo vivi.»",D(8,4,'d_corpo2')),Q("«Respira con me: dentro, fuori.»",D(10,6))]},
+ d_corpo2:{t:"Allora contami i passi tu. Io conto i tuoi. Così nessuno si ferma.",o:[Q("«Uno, due, uno, due...»",D(10,8)),Q("Annuisci, e cominciate a contare.",D(10,7))]},
+ // malati (verso la fine)
+ m_ombre:{t:"Ci sono altri due che camminano con noi. Li vedi? Uno ha la tua faccia.",o:[Q("«Non c'è nessuno. Guardami.»",D(4,4,'m_ombre2')),Q("«Sì. Ci seguono da ore.»",D(8,-6,'m_ombre2')),Q("Non rispondi, e non ti volti.",D(2,-2))]},
+ m_ombre2:{t:"Se li saluto, se ne vanno? O restano per sempre?",o:[Q("«Salutali. Poi guarda solo la strada.»",D(8,3)),Q("«Restano. E va bene così.»",D(8,-7))]},
+ m_morto:{t:"Penso di essere già morto ieri sera. Dimmi la verità: tu riesci a toccarmi?",o:[Q("Gli stringi forte il braccio: «Sei qui.»",D(12,5)),Q("«Forse siamo morti tutti e due.»",D(8,-8,'m_morto2'))]},
+ m_morto2:{t:"Allora è per questo che non sento i piedi. Che pace, eh?",o:[Q("«Svegliati! Cammina!»",D(6,3)),Q("«Che pace.»",D(6,-6))]},
+ m_strada:{t:"La strada respira, {N}. Si gonfia e si sgonfia. Mettiti al passo con lei.",o:[Q("«È la stanchezza. Bevi.»",D(4,4)),Q("Provi a respirare con la strada.",D(8,-6)),Q("«Lo sento anch'io.»",D(8,-5,'m_strada2'))]},
+ m_strada2:{t:"Quando arriviamo in fondo la strada ci mangia. Ma piano, con gentilezza.",o:[Q("«Nessuno ci mangia. Arriviamo e basta.»",D(6,4)),Q("«Con gentilezza.»",D(6,-7))]},
+ m_soldato:{t:"Il soldato mi ha fatto l'occhiolino. Vuole che lo faccia. Dice che dopo è bello.",o:[Q("«Non ascoltarlo. Ascolta me.»",D(12,4,'m_soldato2')),Q("«Forse ha ragione...»",D(4,-10))]},
+ m_soldato2:{t:"Ok. Allora parlami tu. Di qualsiasi cosa. Non smettere.",o:[Q("Gli parli di casa tua senza fermarti.",D(12,6)),Q("Gli racconti la tua prima bici.",D(12,6))]},
+ m_nome:{t:"Come mi chiamo? Non me lo ricordo più. Tu ce l'hai ancora il mio nome?",o:[Q("«Ti chiami {ME}. Ripetilo con me.»",D(12,5)),Q("«Non importa più come ci chiamiamo.»",D(6,-6))]},
+ m_neve:{t:"Sta nevicando. Senti? Fiocchi caldi, come cenere. Apri la bocca.",o:[Q("«Non nevica. Sono le tue ciglia.»",D(4,3)),Q("Apri la bocca al cielo.",D(8,-7)),Q("«È cenere. Chiudi gli occhi un secondo.»",D(6,-3))]},
+});
+const BRO_CHAT=['c_cibo','c_musica','c_scarpe','c_stelle','c_scuola','c_animali','c_gioco','c_barzelletta','c_piedi'];
+DEEP_START.push('d_padre','d_colpa','d_ricordo','d_corpo');
+const BRO_SICK=['m_ombre','m_morto','m_strada','m_soldato','m_nome','m_neve'];
+/* urla di chi sta per crollare */
+const DYING_SCREAM=["AAAAAAH! AIUTATEMI! NON CE LA FACCIO!","NO! NO! VOGLIO TORNARE A CASA!","MAMMA! MAMMAAA!","LE GAMBE! NON SENTO PIÙ LE GAMBE!","ASPETTATEMI! VI PREGO, ASPETTATEMI!","NON SPARATE! MI ALZO! MI ALZO!","DIO, PRENDIMI TU, NON LORO!","VEDO LA LUCE... È CALDA... È COSÌ CALDA...","CI VEDIAMO DALL'ALTRA PARTE, RAGAZZI!","AH AH AH! HO VINTO IO! HO VINTO IO!","È TUTTO UN SOGNO! SVEGLIATEMI!","LA STRADA MI TIRA GIÙ! MI TIRA GIÙ!","NON VOGLIO MORIRE COSÌ! NON COSÌ!","QUALCUNO MI DIA LA MANO! UNA MANO SOLA!","LI SENTO! I MORTI MI CHIAMANO PER NOME!","VI MALEDICO TUTTI! VOI E LA VOSTRA GRAZIA!","PADRE NOSTRO... PADRE NOSTRO... NON MI RICORDO...","DITE A MIA MADRE CHE HO CAMMINATO FINO ALLA FINE!","NON ERA LA MIA ESTRAZIONE! NON ERO IO!","SONO STANCO... LASCIATEMI DORMIRE UN MINUTO...","GLI ANGELI HANNO GLI STIVALI! LI VEDO!","ANCORA UN PASSO! UNO SOLO! ASPETTATE!","FERMATE IL MONDO! VOGLIO SCENDERE!","PERDONATEMI! PERDONATEMI TUTTI!"];
+
 MAD.push(
  {t:"Il sole è caduto, l'ho visto. Adesso quello lassù è un lampione.",o:[Q("«È il sole. È sempre lui.»",{r:-2,m:2}),Q("«Hai ragione, è un lampione.»",{r:5,m:-6}),Q("Guardi su anche tu, e ti gira la testa.",{r:3,m:-4})]},
  {t:"Ho parlato con quello che è morto stamattina. Dice che di là non si cammina.",o:[Q("«Cos'altro ti ha detto?»",{r:6,m:-7}),Q("«Basta. Non dire così.»",{r:-3,m:1}),Q("Gli dai un pizzicotto per svegliarlo.",{r:0,m:2})]},
