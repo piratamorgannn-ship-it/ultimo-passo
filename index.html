@@ -314,7 +314,7 @@ function villainAct(){
   if(Math.random()<meChance){log(v.name+' ti si avvicina alle spalle...','var(--red)');startQTE('sgambetto',v.name);return true;}
   const vic=pick(S.npcs.filter(n=>n.alive&&!n.leaving&&!n.villain&&n!==S.dyingNpc&&n!==S.saving));if(!vic)return false;
   const opts=[
-   {l:'Difendi '+vic.name,f:()=>{S.karma++;S.st=Math.max(0,S.st-6);S.mh=Math.min(100,S.mh+3);vic.elimAt+=rand(42,84);v.rel=-80;if(vic.named)relUp(vic,15);
+   {l:'Difendi '+vic.name,f:()=>{S.karma++;S.st=Math.max(0,S.st-6);S.mh=Math.min(100,S.mh+3);vic.elimAt+=rand(60,120);v.rel=-80;if(vic.named)relUp(vic,15);
       S.npcs.filter(n=>n.named&&n.alive&&n!==vic).forEach(n=>relUp(n,4));log('Ti metti in mezzo. '+vic.name+' resta in piedi; '+v.name+' ti guarda con odio.','var(--green)');karmaCheck();}},
    {l:'Aiuti '+v.name,f:()=>{S.karma--;S.st=Math.min(S.maxSt,S.st+8);vic.elimAt=Math.min(vic.elimAt,S.t+rand(2,6));if(vic.named)relUp(vic,-60);
       S.npcs.filter(n=>n.named&&n.alive&&n!==vic).forEach(n=>relUp(n,-15));log('Dai una spinta a '+vic.name+'. Cade. '+v.name+' ti strizza l\'occhio: «Bravo, socio.»','var(--red)');karmaCheck();}},
@@ -363,7 +363,7 @@ const CHAT_MAD=["Sono tornati a marciare con noi dalla morte. Li vedi anche tu?"
 const CHAT_HILL=["Un'altra salita? Ma chi l'ha disegnata questa strada?","Maledetta collina.","Le gambe mi bruciano.","Chi ha messo una montagna proprio qui?","Non finisce più, questa salita!","Se arrivo in cima giuro che non cammino più in vita mia."];
 const CHAT_RAIN=["Perfetto. Ci mancava solo la pioggia.","Ho l'acqua anche nelle mutande.","Le scarpe fanno ciac ciac a ogni passo.","Almeno adesso non ho sete.","Questa pioggia mi entra nelle ossa."];
 const CHAT_COLD=["Non sento più le dita.","Fa un freddo cane.","Datemi una coperta, vi prego.","Mi battono i denti più forte dei passi.","Se mi fermo congelo. Se mi fermo mi sparano."];
-const progress=()=>{const al=S.npcs.filter(n=>n.alive&&!n.leaving).length;return clamp(Math.max(S.t/490,(S.npcs.length-al)/(S.npcs.length-1)),0,1);};
+const progress=()=>{const al=S.npcs.filter(n=>n.alive&&!n.leaving).length;return clamp(Math.max(S.t/700,(S.npcs.length-al)/(S.npcs.length-1)),0,1);};
 const DEFEND=["«Lascialo stare.»","«Un'altra parola e inciampi tu.»","«Siamo tutti sulla stessa strada, idiota.»","«Se hai fiato per questo, cammina più forte.»"];
 /* dialoghi extra dopo i 3 di base: con gli amici si diventa fratelli, con i rivali ci si odia a morte */
 const BOND=[
@@ -530,10 +530,10 @@ function newRun(shoe,tr){
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
   const usedN=new Set(),bib=PLAYER?PLAYER.bib:Math.floor(rand(1,TOTAL+1)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);return n;};
-  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(210,600),ph:rand(0,4),leaving:0});});
+  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);
-    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(21,560),ph:rand(0,4),leaving:0});}
+    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
   const sh=SHOES[shoe];
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
@@ -661,7 +661,7 @@ function askSave(n){n.saveAsked=true;n.savePending=true;
     {l:'Lo lasci andare',f:()=>{n.savePending=false;n.leaving=1;S.mh-=12;log('Lasci la sua mano. Non ti volti.','var(--red)');}}],8,1);}
 function finishSave(n){S.saving=null;if(!n.alive||n.leaving)return;
   if(n.saveFail){n.leaving=1;S.mh-=10;log(n.name+' ti scivola via dalle braccia.','var(--red)');}
-  else{n.elimAt=S.t+rand(105,210);n.warns=0;n.w3=0;n.tempW=0;S.mh=Math.min(100,S.mh+10);relUp(n,10);log(n.name+' riprende fiato: «Ti devo la vita.»','var(--green)');}}
+  else{n.elimAt=S.t+rand(150,300);n.warns=0;n.w3=0;n.tempW=0;S.mh=Math.min(100,S.mh+10);relUp(n,10);log(n.name+' riprende fiato: «Ti devo la vita.»','var(--green)');}}
 function choice(title,text,opts,dur,def){
   S.dlg={choice:true,t:0,dur,def,opts};
   showBox('box',`<div class="nm" style="color:var(--amber);flex:none">${title}</div><div class="tx">${text}</div><div class="tm"><b id="dt"></b></div><div class="opts">${opts.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
@@ -739,8 +739,8 @@ function randomEvent(){
 }
 
 /* ================= LOGICA ================= */
-const HOUR=8.5; // secondi reali per 1 ora di gioco: ~10 min reali = fino a ~3 giorni di marcia con le notti
-const WARN_CLEAR=42; // secondi reali dopo cui si cancella un richiamo
+const HOUR=12; // secondi reali per 1 ora di gioco: max ~15 min reali = fino a ~3 giorni di marcia con le notti
+const WARN_CLEAR=60; // secondi reali dopo cui si cancella un richiamo
 const hourNow=()=>9+S.t/HOUR; // la marcia parte alle 9 del primo giorno
 const isNight=()=>{const h=hourNow()%24;return h>=20||h<6;};
 function update(dt){
@@ -754,7 +754,7 @@ function update(dt){
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?.94:1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
-  S.maxSt=Math.max(40,100-S.t*.086);
+  S.maxSt=Math.max(40,100-S.t*.06);
   let d=(.12+Math.max(0,S.speed-LIMIT)*.22)*sh.st;if(S.hill>0)d*=1.9;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
