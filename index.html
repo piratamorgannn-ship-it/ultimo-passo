@@ -822,6 +822,17 @@ function shoot(n,x){
   const friend=n.named&&n.rel>=40;S.mh-=friend?14:3;
   if(n.named||Math.random()<.35)log(friend?'Hanno sparato a '+n.name+'. Era tuo amico.':(n.named?'Hanno sparato a '+n.name+'.':'Uno sparo. '+n.name+' resta sull\'asfalto.'),friend?'var(--red)':'var(--dim)');
   if(S.dlg&&S.dlg.npc===n){S.dlg=null;hideBox();}
+  S.kills=(S.kills||0)+1;const k=S.kills;
+  setTimeout(()=>deathReaction(k),1200);if(k===1)setTimeout(()=>deathReaction(k,true),3600);
+}
+/* reazioni dei marciatori alle uccisioni: shock all'inizio, poi rassegnazione e rabbia */
+function deathReaction(k,second){
+  if(!S||S.mode!=='play')return;
+  const vis=S.npcs.filter(n=>n.alive&&!n.leaving&&n!==S.dyingNpc&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);if(!vis.length)return;
+  const n=pick(vis);let s;
+  if(n.villain)s=freshPick(VILLAIN_SAY);else if(k<=5)s=freshPick(DEATH_SHOCK);else s=freshPick(Math.random()<.5?DEATH_RESIGN:DEATH_ANGER);
+  S.chat={n,s,t:4.2};S.chatT=Math.max(S.chatT||0,3);
+  if(k===1&&!second){log('“Allora è vero. Ci ammazzano davvero.”','var(--red)','th');}
 }
 function addWarn(){
   if(S.mode!=='play')return;
@@ -1434,6 +1445,11 @@ const CHAT_PAIN=["Mi brucia la schiena come fuoco.","Ho una spina nel piede da c
 const CHAT_LONELY=["Nessuno mi ha salutato alla partenza.","Siamo in tanti e mi sento solo.","Non conosco nessuno qui. Nessuno.","Parlatemi. Qualcuno. Di qualsiasi cosa.","Mi sembra di camminare da solo da sempre.","Se muoio, chi lo saprà?","Mia madre non è venuta a vedermi.","Tutti hanno qualcuno a bordo strada. Io no.","Ho smesso di cercare facce amiche.","Non ho nessuno da cui tornare.","Il mio vicino è morto. Non sapevo nemmeno il suo nome.","Ho parlato con un palo del telegrafo. Mi ha capito.","Fa male non avere nessuno a cui pensare.","Sono solo io e la strada.","Vorrei che qualcuno mi tenesse la mano.","Mi hanno estratto e nessuno ha pianto."];
 const CHAT_HOME=["A quest'ora mia madre mette su il caffè.","Mi manca il mio letto. Il mio cuscino storto.","Chissà se il mio cane mi aspetta.","Da me adesso suonano le campane.","Mi manca l'odore del pane di mio padre.","Vorrei sentire la voce di mia sorella.","La mia stanza ha una finestra sul cortile. La vedo adesso.","Al mio paese c'è un fiume. Mi ci tuffavo da bambino.","Domenica c'era il pranzo da mia nonna.","Ho lasciato un libro a metà sul comodino.","Il mio amico mi aspetta al bar, come ogni sera.","Mi manca perfino la scuola. Pensa.","D'estate andavamo al lago. Che sole.","Mia madre canta mentre stira. La sento.","Vorrei solo sedermi in cucina.","Casa mia ha le persiane verdi. Ricordatevelo."];
 function freshPick(pool){S.chatUsed=S.chatUsed||new Set();let c=pool.filter(x=>!S.chatUsed.has(x));if(!c.length){pool.forEach(x=>S.chatUsed.delete(x));c=pool;}const x=pick(c);S.chatUsed.add(x);return x;}
+
+/* ---- reazioni alle uccisioni ---- */
+const DEATH_SHOCK=["Oh Dio... oh Dio...","Allora ci ammazzano davvero...","Parlava con me e un attimo dopo gli hanno fatto esplodere la testa.","Ho il suo sangue sulle scarpe. Ho il suo sangue sulle scarpe!","Non è possibile. Non è possibile.","Era vero. Era tutto vero.","Mi viene da vomitare.","Non guardate. Non guardate indietro.","Ha urlato il nome di sua madre.","Gli hanno sparato come a un cane.","Credevo fosse solo propaganda. Credevo...","Quel rumore. Non lo dimenticherò mai.","Aveva la mia età. Aveva la mia età!","Lo hanno lasciato lì, in mezzo alla strada.","Tremo. Non riesco a smettere di tremare.","Ho sentito l'osso rompersi.","Sto per svenire. Tenetemi.","Qualcuno ha visto la sua faccia? Io sì. Io sì.","Mamma, voglio tornare a casa.","Gli ho sorriso stamattina. Gli ho sorriso.","Si è girato verso di noi prima dello sparo.","È caduto senza un lamento. Senza niente.","Poteva essere chiunque. Poteva essere me.","Ho sentito qualcosa di caldo sulla faccia.","Non è un gioco. Non è mai stato un gioco."];
+const DEATH_RESIGN=["Un altro angelo.","La marcia è questa. Purtroppo...","Uno in meno. Per tutti.","Non mi giro più. Non serve.","Ci si abitua. È questa la cosa peggiore.","Riposa, amico. Tu almeno hai finito.","Prima o poi tocca a tutti.","Ho smesso di contarli.","Un'altra madre che aspetterà invano.","Un altro nome che nessuno dirà più.","Che la terra gli sia leggera.","Silenzio. Anche lui merita un minuto di silenzio.","Non piango più. Non ho più niente dentro.","Il prossimo potrei essere io. Va bene così.","Cammina. Cammina e non pensare.","È la strada che decide. Non noi."];
+const DEATH_ANGER=["Bastardi. Bastardi in divisa.","Un giorno pagherete. Tutti.","Sparate a dei ragazzi. Siete fieri, eh?","Guardateli: ridono. Ridono!","Vorrei strappargli quel fucile di mano.","Maledetto Consiglio. Maledetti tutti.","Assassini. Assassini!","Lo chiamano ordine. È un macello.","Spero che quel blindato si ribalti.","Anche voi avete delle madri. Pensateci.","Chi vi ha insegnato a uccidere così?","Un giorno abbatteremo le vostre statue.","Ditemi il vostro nome, soldato. Voglio ricordarlo.","Sputo sulla vostra Grazia.","Non siamo bestie. Non siamo bestie!","Che i vostri figli non debbano mai marciare."];
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
