@@ -134,7 +134,7 @@ button:disabled{opacity:.35}
   <div id="stage">
     <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="chatb"></div><div id="chatd">Sto morendo...</div><canvas id="cdn" class="ttl"></canvas>
     <div id="hud">
-      <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">99</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
+      <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
       <div class="bars">
         <span class="lbl">STAMINA</span><div class="bar"><div class="fill" id="bST"></div><div class="cap" id="bCAP"></div></div>
         <span class="lbl">ACQUA</span><div class="bar"><div class="fill" id="bHY"></div></div>
@@ -166,7 +166,7 @@ button:disabled{opacity:.35}
 <script>
 (()=>{
 'use strict';
-const H=128,LIMIT=6.4,K=4.6,TOTAL=99,QPER=7,SPR=2;
+const H=128,LIMIT=6.4,K=4.6,TOTAL=50,QPER=7,SPR=2;
 let W=320,PX=96;
 const $=id=>document.getElementById(id);
 const cv=$('scene');let cx=cv.getContext('2d');let OFF=null,OCX=null;
@@ -446,14 +446,16 @@ const sfx={
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 const MUS={next:0,step:0,timer:null};
 /* [DEV] jukebox di debug — da togliere nella versione pubblica */
-let JUKE=null;
-let _TR=null;const TRACKS=()=>_TR||(_TR=ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r},{n:e.from+' · radio guasta a metà',m:{...e.r,dist:.5}},{n:e.from+' · radio guasta (finale)',m:{...e.r,dist:1}}]:[])]));
+let JUKE=null,MENU_MUSIC=true;
+/* marcia militare: dal titolo fino al VIA! */
+const MARCH={bpm:112,wave:'square',bass:'triangle',root:233,scale:[0,2,4,5,7,9,11],prog:[0,5,7,0],pat:[4,null,4,4,7,null,4,null,2,null,0,2,4,null,null,null],drums:'march',bm:'oompah'};
+let _TR=null;const TRACKS=()=>_TR||(_TR=[{n:'Marcia militare (titolo e menu)',m:MARCH}].concat(ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r},{n:e.from+' · radio guasta a metà',m:{...e.r,dist:.5}},{n:e.from+' · radio guasta (finale)',m:{...e.r,dist:1}}]:[])])));
 function radioDist(m){if(m&&m.dist!=null)return m.dist;if(!S||!S.radio||!ERA.r||m!==ERA.r||(S.mode!=='play'&&S.mode!=='dying'))return 0;return clamp((progress()-.15)/.85,0,1);}
-function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=JUKE||((S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4*(1+.55*radioDist(m));
+function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const menu=MENU_MUSIC&&(!S||(S.mode!=='play'&&S.mode!=='dying'));const m=JUKE||(menu?MARCH:(S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4*(1+.55*radioDist(m));
   if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+.05;
   let guard=0;while(MUS.next<AC.currentTime+.25&&guard++<16){playStep(MUS.step,MUS.next,m,spb);MUS.next+=spb;MUS.step++;}}catch(e){}},60);}
 function playStep(i,t,m,spb){
-  if(MUTE||(!JUKE&&(!S||S.mode!=='play')))return;
+  if(MUTE||(!JUKE&&m!==MARCH&&(!S||S.mode!=='play')))return;
   /* radio che si guasta: più la marcia è disperata (filtro grigio), più la musica si stona, rallenta, scende e diventa inquietante */
   const D=radioDist(m);
   const tn=(f,d,w,v,f2,dl,tt)=>{if(D>0){if(Math.random()<D*.35)return;const det=Math.pow(2,(Math.random()-.5)*D*1.4/12);f*=det;d*=1+D*.8;if(D>.55)w='sawtooth';v*=1-D*.25;if(D>.25&&!f2)f2=f*(1-D*.14);}tone(f,d,w,v,f2,dl,tt);};
@@ -465,12 +467,14 @@ function playStep(i,t,m,spb){
     if(m.drums==='four'){if(s%4===0)kick();if(s%4===2)hat(.06);if(s%8===4)snare(.1,.08);}
     else if(m.drums==='gated'){if(s===0||s===10)kick();if(s%8===4)snare(.2,.22);if(s%2===0)hat(.03);}
     else if(m.drums==='back'){if(s===0||s===6||s===8)kick();if(s%8===4)snare(.12,.1);if(s%2===0)hat(.035);}
+    else if(m.drums==='march'){if(s%8===0)tn(70,.14,'sine',.13,45,0,t);if(s%8===4)nz(.16,.09,t,3200);if(s>=12&&s<16)nz(.07,.04,t,3500);if(s%2===1)nz(.03,.03,t,5000);}
     else if(m.drums==='half'){if(s===0||s===3)kick();if(s===8)snare(.18,.18);hat(s%2?.02:.04);}
     if(m.bm==='oct'){if(s%2===0)B(root/(s%4===0?4:2),spb*1.6);}
     else if(m.bm==='eighth'){if(s%2===0)B(root/4,spb*1.5);}
     else if(m.bm==='off'){if(s%4===2)B(root/2,spb*1.8);}
     else if(m.bm==='pump'){if(s%4!==0)B(root/4,spb*.8);}
     else if(m.bm==='root'){if(s%8===0)B(root/4,spb*6);}
+    else if(m.bm==='oompah'){if(s%4===0)B(s%8===0?root/2:root/2*1.5,spb*1.8);}
     else if(m.bm==='long'){if(s%8===0)tn(root/4,spb*7,m.bass,.05,root/3,0,t);}}
   else if(m.dirge){if(s%8===0)tn(root/2,spb*7,m.bass,.045,null,0,t);if(s===0||s===8)tn(55,.35,'sine',.09,40,0,t);}
   else if(s%4===0)tn(root/2,spb*3,m.bass,.05,null,0,t);
@@ -623,9 +627,9 @@ function choice(title,text,opts,dur,def){
   sfx.tick();
 }
 function startDialog(){
-  const extra=n=>n.stage>=3&&n.stage<7&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
-  const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<3||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
-  const npc=pick(cands),d=npc.stage<3?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
+  const extra=n=>n.stage>=DLG[n.id].length&&n.stage<DLG[n.id].length+5&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
+  const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<DLG[n.id].length||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
+  const npc=pick(cands),d=npc.stage<DLG[npc.id].length?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
   openDlg(npc,d,'base');
 }
 function deepTalk(){
@@ -1079,7 +1083,7 @@ function show(html,cls=''){sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.in
 const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
-Novantanove ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
+Cinquanta ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
 L'ultimo rimasto in piedi ottiene la Grazia: salva la propria vita e libera la sua terra dalle requisizioni per dieci anni.
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
@@ -1091,7 +1095,8 @@ function titleScreen(){
   const done=()=>{if(fin)return;fin=true;t.style.transition='none';t.style.top='14%';go.classList.remove('hide');};
   requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.top='14%';}));
   t.addEventListener('transitionend',done);setTimeout(done,5600);
-  sc.onclick=e=>{if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target===go)return;done();};
+  MENU_MUSIC=true;
+  sc.onclick=e=>{initAudio();if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target===go)return;done();};
   $('jkT').addEventListener('click',e=>{e.stopPropagation();initAudio();openJuke();});
   $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;DEBUG_RUN0=store.get('up_runs',0);});
   $('did').addEventListener('change',()=>{DEBUG_ID=$('did').value;});
@@ -1116,6 +1121,7 @@ function intro(){
   sc.onclick=()=>mapScreen();
 }
 function mapScreen(){
+  MENU_MUSIC=true;
   setYear(DEBUG_YEAR?DEBUG_YEAR+store.get('up_runs',0)-DEBUG_RUN0:1980+store.get('up_runs',0));
   ROUTE=pick(ROUTES);const wx=WX[ROUTE.wx];
   show(`<div class="mapwrap"><canvas id="mcv" width="${MW}" height="${MH}"></canvas><div class="minfo"><h2>LA MARCIA DEL</h2><div class="yr">${YEAR}</div><h2 style="margin-top:6px">${ERA.name.toUpperCase()} · VIA ${ROUTE.n.toUpperCase()}</h2>
@@ -1196,6 +1202,7 @@ function loading(shoe){
   $('go').addEventListener('click',()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);});
 }
 function end(win){
+  MENU_MUSIC=false;
   if(!S||S.mode==='over')return;S.mode='over';hideBox();
   const best=store.get('up_best3',0);if(S.t>best)store.set('up_best3',S.t);
   const runsN=store.get('up_runs',0)+1;store.set('up_runs',runsN);
@@ -1266,6 +1273,70 @@ function frame(){
 document.addEventListener('visibilitychange',()=>{last=performance.now();});
 fit();titleScreen();
 requestAnimationFrame(frame);
+
+/* ================= FRASI E DIALOGHI AGGIUNTIVI ================= */
+DLG.marek.push(
+ {t:"Sai cosa faremo, se usciamo vivi? Una barca. Io e te. Aringhe fino alla vecchiaia.",o:[O("Io tengo il timone.",14),O("Odio il pesce.",2),O("Smettila di sognare.",-10)]},
+ {t:"Ho una ragazza, Agata. Le ho detto che tornavo per Natale. Ho mentito, vero?",o:[O("Non hai mentito. Hai sperato.",16),O("Forse sì.",-4),O("Non pensarci adesso.",6)]},
+ {t:"Canta con me, {N}. Una canzone di mare, piano, che i soldati non sentano.",o:[O("Canti a mezza voce con lui.",16,4),O("Non ho fiato per cantare.",0),O("Vuoi farci ammazzare?",-12)]});
+DLG.ilse.push(
+ {t:"Ho visto come guardi i soldati. Li odi anche tu, vero?",o:[O("Sì. Li odio.",10),O("Odiare stanca.",6),O("Io non odio nessuno.",-6)]},
+ {t:"Mio padre mi ha insegnato a contare i respiri. Quattro dentro, quattro fuori. Prova.",o:[O("Provi con lei.",14,5),O("Non mi serve.",-6),O("Grazie, Ilse.",10)]},
+ {t:"Se dovessi morire... non dire a nessuno che ho pianto. Neanche a te stesso.",o:[O("Non lo dirò mai.",16),O("Non hai pianto. Era pioggia.",14),O("Piangono tutti.",-4)]});
+DLG.ennio.push(
+ {t:"A Torino ho un bar. Beh, mio zio. Beh, gli lavo i bicchieri. Comunque ti offro da bere.",o:[O("Accetto. Due bicchieri.",14),O("Prima arriva al traguardo.",4),O("Basta parlare di bere.",-8)]},
+ {t:"Hai visto quel soldato? Ha il naso storto come mio cugino. Magari è mio cugino.",o:[O("Ridi fino a farti male.",14,3),O("Non ridere dei soldati.",-2),O("Chiamalo, vediamo.",8)]},
+ {t:"Non mi vengono più le battute. È brutto, sai? È come se mi rubassero la faccia.",o:[O("Allora le faccio io per te.",18),O("Ti torneranno.",8),O("Meglio, così stai zitto.",-14)]});
+DLG.dragan.push(
+ {t:"Al mio paese chi chiede aiuto è un debole. Tu chiedi aiuto, {N}?",o:[O("Quando serve, sì.",8),O("Mai.",4),O("E tu non ne hai bisogno?",-6)]},
+ {t:"Ho un fratello piccolo. Se vinco, non lo estrarranno mai. È l'unico motivo per cui respiro.",o:[O("È un buon motivo.",14),O("Anch'io ho i miei.",6),O("Commovente.",-12)]},
+ {t:"Ti ho visto aiutare gli altri. Sei stupido. O forse sei l'unico che ha capito qualcosa.",o:[O("Forse tutte e due.",14),O("Sono stupido.",4),O("Tu non hai capito niente.",-14)]});
+DLG.pieter.push(
+ {t:"Secondo te le stelle ci guardano? Io credo di sì. Scommetto che si annoiano.",o:[O("Allora diamogli spettacolo.",12),O("Le stelle non guardano niente.",-2),O("Guarda la strada, Pieter.",-6)]},
+ {t:"Ho scritto il mio nome su un sasso e l'ho lasciato al primo chilometro. Così resto da qualche parte.",o:[O("Lo farò anch'io.",14),O("Un sasso non ricorda niente.",-6),O("Bella idea.",10)]},
+ {t:"Se divento matto, promettimi che mi dirai la verità. Anche se è brutta.",o:[O("Te lo prometto.",16),O("Siamo già tutti matti.",8),O("Non diventerai matto.",4)]});
+DLG.sofia.push(
+ {t:"Fammi vedere le mani. Gonfie. Bevi di più, {N}. È un ordine.",o:[O("Bevi subito.",12,4),O("Sì, infermiera.",10),O("Lasciami stare.",-10)]},
+ {t:"In ospedale tenevo la mano a chi moriva. Qui non posso. Mi sembra di tradirli tutti.",o:[O("Tieni la mia, allora.",18),O("Non è colpa tua.",10),O("Qui non c'è tempo per queste cose.",-10)]},
+ {t:"Ho visto morire tanta gente, {N}. Ma mai così giovane. E mai così tanta.",o:[O("Le prendi la mano in silenzio.",16),O("Guarda avanti, Sofia.",4),O("Smettila di contarli.",-6)]});
+BOND.push(
+ {t:"Quando ti guardo camminare mi viene voglia di continuare. Lo sapevi?",o:[O("Anche a me con te.",20),O("Non dire scemenze.",-4),O("Allora non guardare altrove.",14)]},
+ {t:"Ti ricordi com'eri al primo chilometro? Sembravi un bambino spaventato.",o:[O("Lo sono ancora.",18),O("E tu un vecchio brontolone.",14),O("Non me lo ricordare.",-6)]},
+ {t:"Dividiamoci l'ultimo pezzo di pane. A metà, come i fratelli.",o:[O("A metà.",22,4),O("Tienilo tu.",10),O("Non ho fame.",-6)]},
+ {t:"Se vinci tu, va' da mia madre. Dille che ho camminato bene.",o:[O("Glielo dirò. Ma vincerai tu.",20),O("Diglielo tu.",8),O("Non parlare così.",4)]});
+FEUD.push(
+ {t:"Spero che tu inciampi, {N}. Lo spero a ogni passo.",o:[O("«Spera più forte.»",-18),O("Fai finta di niente.",-4),O("«Perché mi odi?»",10)]},
+ {t:"Ho visto cos'hai in tasca. Stanotte, quando dormirai in piedi, sarà mio.",o:[O("«Prova a toccarlo.»",-20),O("Ti allontani.",-4),O("Gli offri qualcosa.",12)]},
+ {t:"Ti assomiglio, sai? Ed è per questo che ti odio.",o:[O("«Non mi assomigli per niente.»",-14),O("«Allora odi te stesso.»",-18),O("«Forse hai ragione.»",8)]},
+ {t:"Dirò ai soldati che rallenti apposta. Vediamo a chi credono.",o:[O("Gli dai una spallata.",-22,-6),O("Fai finta di nulla.",-4),O("«Fallo, se hai coraggio.»",-12)]});
+Object.assign(DEEP,{
+ paura:{t:"Di cosa avevi paura da bambino?",o:[Q("Del buio.",D(6,2,'paura2')),Q("Di mio padre.",D(8,0,'paura2')),Q("Di niente. Ero un incosciente.",D(4,4))]},
+ paura2:{t:"Io del buio. E adesso guarda: ci camminiamo dentro tutta la notte.",o:[Q("«Allora siamo cresciuti.»",D(8,6)),Q("«Stammi vicino quando fa buio.»",D(10,6))]},
+ casa:{t:"Descrivimi la tua cucina. Ogni cosa. Voglio esserci anch'io.",o:[Q("Gli descrivi l'odore del caffè la mattina.",D(10,8,'casa2')),Q("Non me la ricordo più.",D(4,-4,'casa2'))]},
+ casa2:{t:"Quando torni, metti una sedia anche per me. Anche se non ci sarò.",o:[Q("«Ci sarai.»",D(10,6)),Q("«Ci sarà sempre una sedia per te.»",D(12,8))]},
+ futuro:{t:"Fra vent'anni, chi saremo? Ci pensi mai?",o:[Q("Due vecchi che si lamentano delle ginocchia.",D(10,8,'futuro2')),Q("Non riesco a vederlo.",D(4,-2,'futuro2'))]},
+ futuro2:{t:"Io mi vedo con dei figli. Gli racconterò di te, non della Marcia.",o:[Q("«Raccontagli che ridevamo.»",D(10,8)),Q("«Non raccontargli niente di tutto questo.»",D(8,4))]},
+ dio:{t:"Credi in qualcosa, {N}? Qualcuno lassù che ci guarda?",o:[Q("Sì. Ci credo.",D(8,4,'dio2')),Q("No. Siamo soli.",D(6,0,'dio2')),Q("Credo in te.",D(14,6))]},
+ dio2:{t:"Se c'è, spero che si vergogni. E se non c'è, almeno ci siamo noi due.",o:[Q("«Ci siamo noi due.»",D(12,8)),Q("Annuisci in silenzio.",D(8,5))]}});
+DEEP_START.push('paura','casa','futuro','dio');
+MAD.push(
+ {t:"Il sole è caduto, l'ho visto. Adesso quello lassù è un lampione.",o:[Q("«È il sole. È sempre lui.»",{r:-2,m:2}),Q("«Hai ragione, è un lampione.»",{r:5,m:-6}),Q("Guardi su anche tu, e ti gira la testa.",{r:3,m:-4})]},
+ {t:"Ho parlato con quello che è morto stamattina. Dice che di là non si cammina.",o:[Q("«Cos'altro ti ha detto?»",{r:6,m:-7}),Q("«Basta. Non dire così.»",{r:-3,m:1}),Q("Gli dai un pizzicotto per svegliarlo.",{r:0,m:2})]},
+ {t:"Le mie gambe non sono più mie. Le guida qualcun altro. Sei tu?",o:[Q("«Sì. Le guido io. Avanti.»",{r:8,m:-2}),Q("«Sono tue. Muovile.»",{r:0,m:2}),Q("Ti guardi le gambe. Sono tue?",{r:2,m:-8})]},
+ {t:"Ho mangiato l'erba del fosso. Era buona. Era buonissima.",o:[Q("«Sputala.»",{r:-2,m:1}),Q("Ne strappi un ciuffo anche tu.",{r:6,m:-6}),Q("Non dici niente.",{r:0,m:-2})]},
+ {t:"Shhh. Se stiamo zitti, i soldati si dimenticano di noi. Shhhh.",o:[Q("Stai zitto con lui.",{r:6,m:-3}),Q("«Non funziona così.»",{r:-3,m:1}),Q("«Shhh.»",{r:4,m:-1})]},
+ {t:"Ho visto il traguardo! È lì! È sempre lì! Non si avvicina mai!",o:[Q("«Ci arriveremo.»",{r:4,m:1}),Q("«Non c'è nessun traguardo.»",{r:-4,m:-6}),Q("Guardi anche tu. Ci credi.",{r:5,m:-7})]});
+CHAT[0].push("Ho portato tre paia di calze. Genio.","Qualcuno sa una barzelletta?","Questo cielo è troppo bello per una cosa così brutta.","Mio nonno camminava di più per andare a scuola.","Avete visto quella ragazza tra la folla? Mi ha salutato!","Quanti chilometri sono? Cento? Mille?","Fa caldo. Fa freddo. Non lo so, sono nervoso.","Al traguardo voglio una torta. Intera.");
+CHAT[1].push("Le vesciche hanno le vesciche.","Smettila di respirare così forte.","Mi sono bagnato addosso. Non ditelo a nessuno.","Vedo doppio. Due strade. Quale prendo?","Come si chiamava mia sorella? Non me lo ricordo.","Se rallento un attimo... solo un attimo...","Basta. Basta. Basta.","Ogni passo è un coltello.");
+CHAT[2].push("Pregate per me, se sapete come si fa.","Ho freddo dentro le ossa.","Ditemi che c'è una fine.","Ti prego, non guardarmi morire.","Ho visto la mia tomba al bordo della strada.","Mamma, scusa. Scusa. Scusa.","Non ho più lacrime.","Il prossimo sono io. Lo sento.");
+CHAT_MAD.push("Le mie scarpe ridono di me.","Ho contato i morti. Sono più dei vivi. Siamo noi i morti?","Il vento ha la voce di mio padre.","Ballate! Ballate con me!","Ho fame di stelle.","Qualcuno ha spento il mondo e nessuno se n'è accorto.","Sono un uccello. Domani volo via.","Non è sangue. È vernice. È tutto vernice.","Mi sono visto passare. Ero io, più avanti.","Shhh. Il blindato dorme.");
+CHAT_HILL.push("Chi l'ha messa qui questa salita, un sadico?","Su, su, su, sempre su.","Se cado, rotolo fino a casa.","Ho le cosce di legno.","Mi sanguinano i talloni.","In cima mi sdraio. Poi mi sparano. Ma mi sdraio.");
+CHAT_RAIN.push("Il cielo ci sta sputando addosso.","Ho le dita come uva passa.","Almeno il fango è morbido.","Pioggia e salite. Bel posto per morire.","Non vedo niente con quest'acqua negli occhi.");
+CHAT_COLD.push("Ho il fiato che fuma come un treno.","Dove sono le mie orecchie? Le avevo.","Il gelo mi morde le caviglie.","Un fuoco. Darei un rene per un fuoco.","Stanotte moriremo di freddo, non di pallottole.");
+VILLAIN_SAY.push("Avanti, cadi. Ti aspetto.","Ti ho visto zoppicare, eh?","Ancora pochi e poi tocca a voi.","Mi piace il rumore che fanno quando cadono.","Il prossimo sparo è per te, me lo sento.");
+SLUR.black.push("Torna da dove sei venuto, ne**o.","Un ne**o che marcia per la Federazione. Che barzelletta.","Non toccarmi, ne**o. Mi sporchi.");
+SLUR.gay.push("Cammina come un uomo, fr***o.","Se mi guardi ancora, fr***o, ti faccio cadere io.","Un fr***o in meno sarebbe una bella notizia.");
+DEFEND.push("«Prenditela con me, se hai fegato.»","«Lui cammina meglio di te.»","«Un'altra parola e ti lascio indietro io.»","«Chiudi la bocca e risparmia il fiato.»");
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
