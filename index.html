@@ -19,6 +19,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-m
 #cdn{display:none;top:42%!important;transition:none!important;transform:translate(-50%,-50%);z-index:3;pointer-events:none}
 #cdn.pop{animation:cdpop .9s steps(6,end)}
 @keyframes cdpop{0%{transform:translate(-50%,-50%) scale(1.3);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.15}}
+#vig{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(150,0,0,.55) 100%)}
 #fx{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;z-index:1}
 #chatd{position:absolute;display:none;transform:translate(-50%,-100%);background:#f4f4f0;color:#7a0a0a;border:2px solid #000;padding:3px 6px;font-size:10px;font-style:italic;pointer-events:none;z-index:2;box-shadow:2px 2px 0 #000;white-space:nowrap}
 #chatd:after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-3px;border:3px solid transparent;border-top-color:#000}
@@ -137,7 +138,7 @@ button:disabled{opacity:.35}
 <body>
 <div id="app">
   <div id="stage">
-    <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="chatb"></div><div id="chatd">Sto morendo...</div><canvas id="cdn" class="ttl"></canvas>
+    <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="vig"></div><div id="chatb"></div><div id="chatd">Sto morendo...</div><canvas id="cdn" class="ttl"></canvas>
     <div id="hud">
       <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
       <div class="bars">
@@ -1016,7 +1017,14 @@ function drawScene(){
   if(S.thunder>.9){cx.fillStyle='rgba(255,255,240,.6)';cx.fillRect(0,0,W,H);}
   {const el=$('chatd'),n=S.dyingNpc;if(n&&n.alive&&!n.leaving&&S.mode==='play'&&(S.t%1)<.75){const k=cv.clientWidth/W;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
   {const el=$('chatb');el.classList.toggle('shout',!!(S.chat&&S.chat.shout));if(S.chat&&S.mode==='play'){const n=S.chat.n,k=cv.clientWidth/W;el.textContent=S.chat.s;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
-  {const pr=S.mode==='play'||S.mode==='dying'?progress():S.greyP||0;S.greyP=pr;const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})`;if(cv.style.filter!==f)cv.style.filter=f;}
+  {const pr=S.mode==='play'||S.mode==='dying'?progress():S.greyP||0;S.greyP=pr;let bl='',tr='';const on=S.mode==='play';
+   /* MH < 5%: ogni 2-3 s una piccola scossa con leggera sfocatura */
+   if(on&&S.mh<5){S.shkN=(S.shkN==null?1:S.shkN)-1/60;if(S.shkN<=0){S.shkN=rand(2,3);S.shkT=.35;}}else S.shkT=0;
+   if(S.shkT>0){S.shkT-=1/60;const a=S.shkT/.35;bl=` blur(${(.9*a).toFixed(2)}px)`;tr=`translate(${(Math.random()*4-2)*a|0}px,${(Math.random()*3-1.5)*a|0}px)`;}
+   if(cv.style.transform!==tr){cv.style.transform=tr;$('fx').style.transform=tr;}
+   /* stamina o PH < 5%: lo schermo pulsa come un battito */
+   {const v=$('vig');let o=0;if(on&&(S.st<5||S.ph<5)){const ph=(performance.now()/1000)%1.1;o=ph<.12?ph/.12:ph<.45?1-(ph-.12)/.33:0;o*=.85;}const os=o.toFixed(2);if(v.style.opacity!==os)v.style.opacity=os;}
+   const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})${bl}`;if(cv.style.filter!==f)cv.style.filter=f;}
 }
 function drawVehicle(x,y,hh){
   const bob=Math.floor(S.t*6)%2,c=ERA.vc,hc=ERA.helm,night=hh>18||hh<6;
