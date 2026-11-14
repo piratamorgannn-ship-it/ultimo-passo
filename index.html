@@ -474,7 +474,8 @@ const MUS={next:0,step:0,timer:null};
 /* [DEV] jukebox di debug — da togliere nella versione pubblica */
 let JUKE=null,MENU_MUSIC=true;
 /* marcia militare: dal titolo fino al VIA! */
-const MARCH={bpm:112,wave:'square',bass:'triangle',root:233,scale:[0,2,4,5,7,9,11],prog:[0,5,7,0],pat:[4,null,4,4,7,null,4,null,2,null,0,2,4,null,null,null],drums:'march',bm:'oompah'};
+/* solo tamburo militare rullato, niente melodia */
+const MARCH={bpm:104,wave:'square',bass:'triangle',root:110,scale:[0],prog:[0,0,0,0],pat:Array(16).fill(null),drums:'march'};
 let _TR=null;const TRACKS=()=>_TR||(_TR=[{n:'Marcia militare (titolo e menu)',m:MARCH}].concat(ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r},{n:e.from+' · radio guasta a metà',m:{...e.r,dist:.5}},{n:e.from+' · radio guasta (finale)',m:{...e.r,dist:1}}]:[])])));
 function radioDist(m){if(m&&m.dist!=null)return m.dist;if(!S||!S.radio||!ERA.r||m!==ERA.r||(S.mode!=='play'&&S.mode!=='dying'))return 0;return clamp((progress()-.15)/.85,0,1);}
 function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const menu=MENU_MUSIC&&(!S||(S.mode!=='play'&&S.mode!=='dying'));const m=JUKE||(menu?MARCH:(S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4*(1+.55*radioDist(m));
@@ -493,7 +494,7 @@ function playStep(i,t,m,spb){
     if(m.drums==='four'){if(s%4===0)kick();if(s%4===2)hat(.06);if(s%8===4)snare(.1,.08);}
     else if(m.drums==='gated'){if(s===0||s===10)kick();if(s%8===4)snare(.2,.22);if(s%2===0)hat(.03);}
     else if(m.drums==='back'){if(s===0||s===6||s===8)kick();if(s%8===4)snare(.12,.1);if(s%2===0)hat(.035);}
-    else if(m.drums==='march'){if(s%8===0)tn(70,.14,'sine',.13,45,0,t);if(s%8===4)nz(.16,.09,t,3200);if(s>=12&&s<16)nz(.07,.04,t,3500);if(s%2===1)nz(.03,.03,t,5000);}
+    else if(m.drums==='march'){const bar=Math.floor(i/16)%4,acc=[0,3,6,8,10],roll=(bar%2===1&&s>=8)||(bar===3&&s>=4);if(s===0)tn(60,.18,'sine',.09,40,0,t);if(roll){nz(.07+.05*(s/16),.05,t,3000);nz(.05,.04,t+spb/2,3000);}else if(acc.includes(s))nz(s===0||s===8?.18:.11,.08,t,2800);else if(s%2===1)nz(.025,.03,t,3600);}
     else if(m.drums==='half'){if(s===0||s===3)kick();if(s===8)snare(.18,.18);hat(s%2?.02:.04);}
     if(m.bm==='oct'){if(s%2===0)B(root/(s%4===0?4:2),spb*1.6);}
     else if(m.bm==='eighth'){if(s%2===0)B(root/4,spb*1.5);}
