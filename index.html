@@ -72,7 +72,7 @@ button:disabled{opacity:.35}
 .track .zone{position:absolute;top:0;bottom:0;background:var(--green)}
 .track .mk{position:absolute;top:-4px;bottom:-4px;width:4px;background:var(--ink)}
 /* schermate */
-#screen{position:absolute;inset:0;background:rgba(14,10,18,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 22px;text-align:center;z-index:5;overflow:auto}
+#screen{position:absolute;inset:0;background:rgba(14,10,18,.97);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 22px;text-align:center;z-index:5;overflow:auto}
 #screen h1{font-size:28px;letter-spacing:4px;margin:0 0 4px;color:var(--amber)}
 #screen h2{font-size:12px;color:var(--dim);margin:0 0 12px;font-weight:400;letter-spacing:1px}
 #screen p{font-size:13px;line-height:1.5;margin:0 0 10px;max-width:520px}
@@ -88,6 +88,12 @@ button:disabled{opacity:.35}
 #screen .choices.pix button:disabled{opacity:.6}
 #screen img.spr{image-rendering:pixelated;image-rendering:crisp-edges;margin:2px auto 6px;max-width:100%;height:auto}
 #screen .row2{display:flex;gap:10px;justify-content:center}
+/* centratura che non taglia il contenuto quando è più alto dello schermo (si può scorrere dall'inizio) */
+#screen>:first-child{margin-top:auto}#screen>:last-child{margin-bottom:auto}
+/* fine marcia: tasti sempre visibili in basso, tabella personaggi su due colonne */
+#screen.endsc .row2{position:sticky;bottom:-16px;padding:8px 0 10px;background:#0e0a12;box-shadow:0 -8px 10px #0e0a12;width:100%;z-index:2;margin-bottom:-16px}
+#screen.endsc .ptab{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px 18px;font-size:12px;text-align:left;max-width:640px;margin:4px auto}
+#screen.endsc .ptab div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #screen .row3{display:flex;gap:8px;width:100%;max-width:560px;margin-bottom:14px}
 #screen .row3 button{flex:1;text-align:center;font-size:15px;font-weight:700;padding:12px 4px}
 #screen table{font-size:12px;margin:0 auto 12px;border-collapse:collapse}
@@ -628,7 +634,7 @@ function startQTE(type,who){
    isteria:{dur:4,need:7,title:'PANICO',sub:'Il cuore impazzisce. Respira.',btn:'RESPIRA'},
    blocco:{dur:4,need:10,title:'LE GAMBE NON SI MUOVONO',sub:'Tutti partono. Tu no. Sbloccati!',btn:'MUOVITI'},
    sgambetto:{dur:1.6,title:(who||'').toUpperCase()+' TI FA LO SGAMBETTO!',sub:'Salta quando il segno è nel verde',btn:'SALTA',timing:true},
-   rialzati:{dur:3,need:Math.min(45,25+5*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca il più veloce possibile!',btn:'RIALZATI'},
+   rialzati:{dur:3,need:Math.min(35,25+5*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca il più veloce possibile!',btn:'RIALZATI'},
    salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
   if(q.timing){q.z0=rand(.45,.65);q.z1=q.z0+.17;}
@@ -1408,13 +1414,13 @@ function end(win){
   if(cand.length){const k=pick(cand);K2[k]=K2[k]||{};K2[k].pro=true;tipMsg+=`<p>💡 Suggerimento: <b>${SHOES[k].n}</b> — ${SHOES[k].pro}</p>`;}
   store.set('up_know',K2);
   const pos=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,hrs=Math.floor(S.t/HOUR),mins=Math.floor(S.t%HOUR*60/HOUR);
-  const rows=S.npcs.filter(n=>n.named).map(n=>`<tr><td>${n.name} <span class="lbl">N.${n.bibN}</span></td><td style="color:${relColor(n.rel)}">${relLabel(n.rel)}</td><td class="lbl">${n.alive&&!n.leaving?'in marcia':'morto'}</td></tr>`).join('');
+  const rows=S.npcs.filter(n=>n.named).map(n=>`<div>${n.name} <span class="lbl">N.${n.bibN}</span> · <span style="color:${relColor(n.rel)}">${relLabel(n.rel)}</span> <span class="lbl">${n.alive&&!n.leaving?'· vivo':'· morto'}</span></div>`).join('');
   const t=S.tr,trait=v=>v>=62?'alto':v<=38?'basso':'medio';
   show(`<h1 style="color:${win?'var(--green)':'var(--red)'}">${win?'LA GRAZIA':'FINE'}</h1><h2>${win?'Sei l\'ultimo rimasto sulla strada.':S.cause}</h2>${!win&&S.warnLog&&S.warnLog.length?'<p class="lbl">Richiami ricevuti: '+S.warnLog.slice(-3).map((w,i)=>(i+1)+') '+w).join(' · ')+'</p>':''}
   <p>Marcia del ${YEAR} (${ROUTE.c[0]} → ${ROUTE.c[ROUTE.c.length-1]}) · N.${S.bib} · <b>${hrs} ore ${mins} min</b> · <b>${fmt(S.km)} km</b> · posizione <b>${pos}ª</b>/${TOTAL}${S.t>best?' · <span style="color:var(--amber)">record</span>':''}</p>
-  ${unlockMsg}${tipMsg}<table>${rows}</table>
+  ${unlockMsg}${tipMsg}<div class="ptab">${rows}</div>
   <p class="lbl" style="font-size:11px">Profilo nascosto — fisico ${trait(t.f)}, nervi ${trait(t.n)}, stomaco ${trait(t.s)}, carisma ${trait(t.c)}</p>
-  <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`);
+  <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`,'endsc');
   $('go').addEventListener('click',quiz);
   $('home').addEventListener('click',()=>{const c=$('chatb'),d=$('chatd');if(c)c.style.display='none';if(d)d.style.display='none';titleScreen();});
 }
