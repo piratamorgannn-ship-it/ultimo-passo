@@ -408,14 +408,21 @@ const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 const MUS={next:0,step:0,timer:null};
 /* [DEV] jukebox di debug — da togliere nella versione pubblica */
 let JUKE=null;
-const TRACKS=()=>ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r}]:[])]);
-function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=JUKE||((S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4;
+let _TR=null;const TRACKS=()=>_TR||(_TR=ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r},{n:e.from+' · radio guasta a metà',m:{...e.r,dist:.5}},{n:e.from+' · radio guasta (finale)',m:{...e.r,dist:1}}]:[])]));
+function radioDist(m){if(m&&m.dist!=null)return m.dist;if(!S||!S.radio||!ERA.r||m!==ERA.r||(S.mode!=='play'&&S.mode!=='dying'))return 0;return clamp((progress()-.15)/.85,0,1);}
+function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const m=JUKE||((S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4*(1+.55*radioDist(m));
   if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+.05;
   let guard=0;while(MUS.next<AC.currentTime+.25&&guard++<16){playStep(MUS.step,MUS.next,m,spb);MUS.next+=spb;MUS.step++;}}catch(e){}},60);}
 function playStep(i,t,m,spb){
   if(MUTE||(!JUKE&&(!S||S.mode!=='play')))return;
-  const bar=Math.floor(i/16)%4,s=i%16,root=m.root*Math.pow(2,m.prog[bar]/12);
-  if(m.drums){const kick=()=>tone(80,.1,'sine',.12,40,0,t),hat=v=>noise(v,.04,t,7000),snare=(v,d)=>noise(v,d,t,2800),B=(f,d)=>tone(f,d,m.bass,.045,null,0,t);
+  /* radio che si guasta: più la marcia è disperata (filtro grigio), più la musica si stona, rallenta, scende e diventa inquietante */
+  const D=radioDist(m);
+  const tn=(f,d,w,v,f2,dl,tt)=>{if(D>0){if(Math.random()<D*.35)return;const det=Math.pow(2,(Math.random()-.5)*D*1.4/12);f*=det;d*=1+D*.8;if(D>.55)w='sawtooth';v*=1-D*.25;if(D>.25&&!f2)f2=f*(1-D*.14);}tone(f,d,w,v,f2,dl,tt);};
+  const nz=(v,d,tt,fr)=>{if(D>0){if(Math.random()<D*.3)return;fr=(fr||1800)*(1-D*.75);d*=1+D;}noise(v,d,tt,fr);};
+  const bar=Math.floor(i/16)%4,s=i%16,root=m.root*Math.pow(2,(m.prog[bar]-D*5)/12);
+  if(D>.45&&s===0){tone(root/4*1.414,spb*16*(1+D),'sawtooth',.025*D,root/4*1.33,0,t);tone(root*2.12,spb*12,'sine',.012*D,root*1.9,0,t+spb*4);}
+  if(D>.7&&s===8&&Math.random()<.5)noise(.12*D,1.2,t,400);
+  if(m.drums){const kick=()=>tn(80,.1,'sine',.12,40,0,t),hat=v=>nz(v,.04,t,7000),snare=(v,d)=>nz(v,d,t,2800),B=(f,d)=>tn(f,d,m.bass,.045,null,0,t);
     if(m.drums==='four'){if(s%4===0)kick();if(s%4===2)hat(.06);if(s%8===4)snare(.1,.08);}
     else if(m.drums==='gated'){if(s===0||s===10)kick();if(s%8===4)snare(.2,.22);if(s%2===0)hat(.03);}
     else if(m.drums==='back'){if(s===0||s===6||s===8)kick();if(s%8===4)snare(.12,.1);if(s%2===0)hat(.035);}
@@ -425,11 +432,11 @@ function playStep(i,t,m,spb){
     else if(m.bm==='off'){if(s%4===2)B(root/2,spb*1.8);}
     else if(m.bm==='pump'){if(s%4!==0)B(root/4,spb*.8);}
     else if(m.bm==='root'){if(s%8===0)B(root/4,spb*6);}
-    else if(m.bm==='long'){if(s%8===0)tone(root/4,spb*7,m.bass,.05,root/3,0,t);}}
-  else if(m.dirge){if(s%8===0)tone(root/2,spb*7,m.bass,.045,null,0,t);if(s===0||s===8)tone(55,.35,'sine',.09,40,0,t);}
-  else if(s%4===0)tone(root/2,spb*3,m.bass,.05,null,0,t);
-  const p=m.pat[s];if(p!=null){const oct=Math.floor(p/m.scale.length);tone(root*Math.pow(2,(m.scale[p%m.scale.length]+12*oct)/12),m.dirge?spb*3.5:spb*.9,m.wave,m.dirge?.014:.018,null,0,t);}
-  if(m.drum&&!m.drums){if(s%8===4)noise(.08,.06,t,4000);if(s%8===0)tone(70,.08,'sine',.08,40,0,t);}
+    else if(m.bm==='long'){if(s%8===0)tn(root/4,spb*7,m.bass,.05,root/3,0,t);}}
+  else if(m.dirge){if(s%8===0)tn(root/2,spb*7,m.bass,.045,null,0,t);if(s===0||s===8)tn(55,.35,'sine',.09,40,0,t);}
+  else if(s%4===0)tn(root/2,spb*3,m.bass,.05,null,0,t);
+  const p=m.pat[s];if(p!=null){const oct=Math.floor(p/m.scale.length);tn(root*Math.pow(2,(m.scale[p%m.scale.length]+12*oct)/12),m.dirge?spb*3.5:spb*.9,m.wave,m.dirge?.014:.018,null,0,t);}
+  if(m.drum&&!m.drums){if(s%8===4)nz(.08,.06,t,4000);if(s%8===0)tn(70,.08,'sine',.08,40,0,t);}
 }
 
 /* ================= FONT PIXEL 3x5 ================= */
