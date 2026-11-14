@@ -340,13 +340,14 @@ function villainAct(){
   const meChance=S.infame?0:S.paladin?.6:.3;
   if(Math.random()<meChance){log(v.name+' ti si avvicina alle spalle...','var(--red)');startQTE('sgambetto',v.name);return true;}
   const vic=pick(S.npcs.filter(n=>n.alive&&!n.leaving&&!n.villain&&n!==S.dyingNpc&&n!==S.saving));if(!vic)return false;
+  const fr=vic.named&&vic.rel>=40,vn=fr?`<span style="color:var(--green)">${vic.name}${vic.rel>=80?' (fraterno)':' (amico)'}</span>`:vic.name;
   const opts=[
-   {l:'Difendi '+vic.name,f:()=>{S.karma++;S.st=Math.max(0,S.st-6);S.mh=Math.min(100,S.mh+3);vic.elimAt+=rand(60,120);v.rel=-80;if(vic.named)relUp(vic,15);
+   {l:'Difendi '+vn,f:()=>{S.karma++;S.st=Math.max(0,S.st-6);S.mh=Math.min(100,S.mh+3);vic.elimAt+=rand(60,120);v.rel=-80;if(vic.named)relUp(vic,15);
       S.npcs.filter(n=>n.named&&n.alive&&n!==vic).forEach(n=>relUp(n,4));log('Ti metti in mezzo. '+vic.name+' resta in piedi; '+v.name+' ti guarda con odio.','var(--green)');karmaCheck();}},
    {l:'Aiuti '+v.name,f:()=>{S.karma--;S.st=Math.min(S.maxSt,S.st+8);vic.elimAt=Math.min(vic.elimAt,S.t+rand(2,6));if(vic.named)relUp(vic,-60);
       S.npcs.filter(n=>n.named&&n.alive&&n!==vic).forEach(n=>relUp(n,-15));log('Dai una spinta a '+vic.name+'. Cade. '+v.name+' ti strizza l\'occhio: «Bravo, socio.»','var(--red)');karmaCheck();}},
    {l:'Non ti immischi',f:()=>{vic.elimAt=Math.min(vic.elimAt,S.t+rand(20,60));S.mh=Math.max(0,S.mh-3);log('Guardi altrove. '+vic.name+' barcolla.','var(--dim)');}}];
-  choice(v.name+' VUOLE FAR FUORI '+vic.name.toUpperCase(),v.name+' si avvicina a '+vic.name+' per fargli lo sgambetto, ghignando. Nessun soldato guarda.',opts,8,2);return true;
+  choice(v.name+' VUOLE FAR FUORI '+(fr?`<span style="color:var(--green)">${vic.name.toUpperCase()}</span>`:vic.name.toUpperCase()),v.name+' si avvicina a '+vn+' per fargli lo sgambetto, ghignando. Nessun soldato guarda.',opts,8,2);return true;
 }
 function karmaCheck(){
   if(!S.infame&&S.karma<=-2){S.infame=true;S.paladin=false;S.npcs.filter(n=>n.named).forEach(n=>{n.rel=Math.min(n.rel,-45);n.buddy=0;});log('Ormai tutti sanno cosa sei. Nessuno ti rivolge più la parola.','var(--red)');}
@@ -873,9 +874,10 @@ function update(dt){
      if(n.tempW&&S.t-n.tempW>60&&w>40){n.warns=0;n.tempW=0;}}
     n.v+=(rand(6.5,7.3)-n.v)*dt*.3;
     let tgt=n.named?(n.home=(n.home==null?rand(-14,14):clamp(n.home+rand(-3,3)*dt,-16,16))):(S.groups[n.g]?S.groups[n.g].a:0)+n.jit;if(n.warns>=1&&!n.tempW)tgt=Math.min(tgt,lo*.8+n.jit);if(n.appT>S.t)tgt=n.off>=0?4:-4;
-    let tv=S.speed+(tgt-n.off)*.25+(n.v-6.9)*.3;if(S.dlg&&S.dlg.npc===n)tv=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)tv=S.speed+(n.buddy-n.off)*.5;
-    if(S.collapsed||S.fainted)n.off+=n.v*2*dt;  // tu sei a terra: gli altri proseguono e si allontanano
-    else n.off=n.off>hi?Math.max(hi,n.off-5*dt):clamp(n.off+(tv-S.speed)*dt*.9,lo,hi);
+    // velocità assoluta del PNG (km/h): segue il suo posto nella fila ma non scende sotto ~6,5 né sale oltre ~8,2
+    let va=n.v+(tgt-n.off)*.25;if(S.dlg&&S.dlg.npc===n)va=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)va=S.speed+(n.buddy-n.off)*.5;
+    va=clamp(va,6.5,8.2);
+    n.off=clamp(n.off+(va-S.speed)*dt*1.6,lo-90,hi+90);  // se rallenti o ti fermi gli altri proseguono (anche fuori schermo)
     if(n.savePending&&S.t-(n.saveAskT||0)>12&&!(S.dlg&&S.dlg.choice)){n.savePending=false;n.leaving=1;}  // la scelta è stata chiusa da un crollo
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=80&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
       else{n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}}
