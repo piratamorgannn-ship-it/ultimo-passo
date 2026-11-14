@@ -1227,7 +1227,7 @@ Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stes
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
-  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button>
+  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="copy">© cpt_morgannn</div>
   <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="did"><option value="">identità casuale</option>${[['none','né nero né gay'],['black','nero'],['gay','gay'],['both','nero + gay']].map(([v,l])=>`<option value="${v}" ${DEBUG_ID===v?'selected':''}>${l}</option>`).join('')}</select><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
@@ -1254,7 +1254,7 @@ function openJuke(){
   render();
 }
 function intro(){
-  show(`<div class="crawl" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div><div class="copy">© cpt_morgannn</div>`,'intro');
+  show(`<div class="crawl" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div>`,'intro');
   const el=$('itx');el.textContent=INTRO;
   el.addEventListener('animationend',()=>{const k=sc.querySelector('.skip');if(k)k.textContent='tocca lo schermo per continuare';});
   sc.onclick=()=>quiz();
