@@ -16,6 +16,8 @@
 html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;overflow:hidden;touch-action:none;overscroll-behavior:none}
 #app{position:relative;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #stage{position:relative;flex:1;min-height:0}
+#chatb{position:absolute;display:none;transform:translate(-50%,-100%);background:#f4f4f0;color:#111;border:2px solid #000;padding:3px 6px;font-size:10px;line-height:1.25;max-width:170px;text-align:center;pointer-events:none;z-index:2;box-shadow:2px 2px 0 #000}
+#chatb:after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-3px;border:3px solid transparent;border-top-color:#000}
 #scene{position:absolute;left:0;top:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
 #hud{position:absolute;top:0;left:0;padding:4px 8px 5px;background:rgba(22,18,28,.82);border:2px solid #000;border-width:0 2px 2px 0;font-size:11px;width:min(300px,60%)}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -119,7 +121,7 @@ button:disabled{opacity:.35}
 <body>
 <div id="app">
   <div id="stage">
-    <canvas id="scene"></canvas>
+    <canvas id="scene"></canvas><div id="chatb"></div>
     <div id="hud">
       <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
       <div class="bars">
@@ -158,7 +160,7 @@ const $=id=>document.getElementById(id);
 const cv=$('scene'),cx=cv.getContext('2d');
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), pick=a=>a[Math.floor(Math.random()*a.length)];
 const fmt=(n,d=1)=>n.toFixed(d).replace('.',',');
-let DEBUG=false,DEBUG_YEAR=null,DEBUG_ID=''; /* [DEV] DEBUG_ID: ''=casuale, 'none','black','gay','both' */
+let DEBUG=false,DEBUG_YEAR=null,DEBUG_RUN0=0,DEBUG_ID=''; /* [DEV] DEBUG_ID: ''=casuale, 'none','black','gay','both' */
 const MEM={};const store={get(k,d){if(k in MEM)return MEM[k];try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){MEM[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 function fit(){const r={width:cv.clientWidth,height:cv.clientHeight};if(r.width<10||r.height<10)return;const w=clamp(Math.round(H*r.width/r.height),110,560);if(cv.width!==w||cv.height!==H){cv.width=w;cv.height=H;}W=w;PX=Math.round(W*.3);cx.imageSmoothingEnabled=false;}
 const offMin=()=>-(PX-40)/SPR, offMax=()=>(W-PX-10)/SPR;
@@ -167,22 +169,22 @@ const offMin=()=>-(PX-40)/SPR, offMax=()=>(W-PX-10)/SPR;
 const ERAS=[
  {from:1980,name:'Anni \'80 · I',shirts:['#e84a7a','#3ac8c8','#f0c838','#8a5ad8','#e86a2a','#4ab84a','#e8e8e8'],pants:'#2a3a6a',band:true,veh:'apc',vc:'#4a5a34',helm:'#2e3a24',poster:['#b83a2a','#e8d8a0'],
   r:{label:'un pezzo disco',bpm:120,wave:'square',bass:'square',root:220,scale:[0,2,4,7,9],prog:[0,5,-3,-5],pat:[4,null,3,4,null,2,null,3,4,null,5,4,3,null,2,null],drums:'four',bm:'oct'},
-  m:{bpm:118,wave:'square',bass:'triangle',root:220,scale:[0,3,5,7,10],prog:[0,0,-4,-2],pat:[0,null,2,null,4,null,2,null,5,null,4,null,2,null,1,null],drum:true}},
+  m:{bpm:62,wave:'square',bass:'triangle',root:196,scale:[0,2,3,5,7,8,10],prog:[0,-4,-7,-5],pat:[4,null,null,null,3,null,null,null,2,null,null,1,0,null,null,null],dirge:true}},
  {from:1985,name:'Anni \'80 · II',shirts:['#d8d8d8','#c83a3a','#3a5ab8','#e8a838','#2a2a2a','#5ac8e8','#e85ab8'],pants:'#3a4a7a',veh:'apc',vc:'#5a5a3a',helm:'#3a3a2a',poster:['#2a4ab8','#e8e8e8'],
   r:{label:'un pezzo synth-pop',bpm:112,wave:'square',bass:'sawtooth',root:196,scale:[0,2,3,7,10],prog:[0,-4,-2,-7],pat:[4,null,null,4,null,null,3,null,2,null,null,2,null,3,null,null],drums:'gated',bm:'eighth'},
-  m:{bpm:126,wave:'square',bass:'square',root:196,scale:[0,2,3,7,8],prog:[0,-4,-7,-5],pat:[0,2,4,2,5,4,2,0,0,2,4,2,6,4,2,1],drum:true}},
+  m:{bpm:60,wave:'square',bass:'square',root:175,scale:[0,2,3,5,7,8,10],prog:[0,-2,-4,-5],pat:[0,null,null,2,3,null,null,null,2,null,1,null,0,null,null,null],dirge:true}},
  {from:1990,name:'Anni \'90 · I',shirts:['#8a2a2a','#2a5a3a','#5a4a2a','#3a3a5a','#6a6a6a','#8a6a2a','#4a2a4a'],pants:'#4a5a7a',veh:'car',vc:'#8a7a5a',helm:'#5a4e3a',poster:['#2a2a2a','#c8c0a0'],
   r:{label:'un pezzo eurodance',bpm:134,wave:'sawtooth',bass:'square',root:175,scale:[0,3,5,7,10],prog:[0,-4,-2,-5],pat:[null,null,4,null,null,null,4,null,null,null,5,null,4,null,3,null],drums:'four',bm:'off'},
-  m:{bpm:96,wave:'triangle',bass:'triangle',root:165,scale:[0,3,5,7,10],prog:[0,-2,-4,-5],pat:[0,null,null,2,null,null,1,null,0,null,null,4,null,3,null,null],drum:false}},
+  m:{bpm:56,wave:'triangle',bass:'triangle',root:165,scale:[0,2,3,5,7,8,10],prog:[0,-4,-2,-7],pat:[4,null,null,null,null,null,3,null,2,null,null,null,1,null,null,null],dirge:true}},
  {from:1995,name:'Anni \'90 · II',shirts:['#5ab8a8','#a83a8a','#e8e8e8','#3a3a3a','#c8b838','#3a6ab8','#e86a3a'],pants:'#2a2a2a',veh:'car',vc:'#3a3a34',helm:'#2a2a2a',poster:['#e8c838','#1a1a1a'],
   r:{label:'una canzone pop',bpm:100,wave:'triangle',bass:'triangle',root:262,scale:[0,2,4,7,9],prog:[0,-5,-3,-7],pat:[2,null,2,3,4,null,null,null,4,null,3,2,1,null,null,null],drums:'back',bm:'root'},
-  m:{bpm:132,wave:'sawtooth',bass:'square',root:147,scale:[0,3,7,10,12],prog:[0,0,-2,-5],pat:[0,0,null,2,0,null,3,null,0,0,null,2,4,null,3,1],drum:true}},
+  m:{bpm:64,wave:'sawtooth',bass:'triangle',root:147,scale:[0,2,3,5,7,8,10],prog:[0,-5,-3,-7],pat:[2,null,null,3,4,null,null,null,3,null,2,null,1,null,null,null],dirge:true}},
  {from:2000,name:'Anni 2000',shirts:['#5a5a6a','#8a8a9a','#2a2a3a','#b83a3a','#3a5a8a','#c8c8c8','#4a6a4a'],pants:'#3a4a5a',veh:'jeep',vc:'#2a2a2a',helm:'#1a1a1a',poster:['#3a3a4a','#e84a3a'],
   r:{label:'un pezzo dance-pop',bpm:128,wave:'sawtooth',bass:'sawtooth',root:208,scale:[0,2,3,7,10],prog:[0,-4,-7,-2],pat:[0,null,2,null,3,null,2,null,0,null,2,null,4,null,3,null],drums:'four',bm:'pump'},
-  m:{bpm:100,wave:'square',bass:'sine',root:130,scale:[0,2,3,7,10],prog:[0,-4,-2,-5],pat:[0,null,2,null,null,3,null,null,4,null,2,null,null,1,null,null],drum:true}},
+  m:{bpm:58,wave:'square',bass:'sine',root:130,scale:[0,2,3,5,7,8,10],prog:[0,-4,-2,-5],pat:[0,null,null,null,2,null,1,null,0,null,null,null,6,null,null,null],dirge:true}},
  {from:2030,name:'Futuro',shirts:['#38e8f8','#f838c8','#e8f8f8','#a8f838','#8838f8','#f8a838','#e8e8f0'],pants:'#d8d8e8',visor:true,veh:'drone',vc:'#7a7a94',helm:'#f83838',poster:['#1a1a2a','#38e8f8'],
   r:{label:'musica elettronica che non hai mai sentito',bpm:140,wave:'sawtooth',bass:'sawtooth',root:147,scale:[0,1,3,7,8],prog:[0,1,-4,-2],pat:[0,null,null,null,3,null,null,4,null,null,3,null,null,null,1,null],drums:'half',bm:'long'},
-  m:{bpm:140,wave:'sawtooth',bass:'sawtooth',root:110,scale:[0,1,5,7,8],prog:[0,1,0,-2],pat:[0,null,0,3,null,0,4,null,0,null,0,3,null,2,1,null],drum:true}},
+  m:{bpm:66,wave:'sawtooth',bass:'sawtooth',root:110,scale:[0,1,3,5,7,8,10],prog:[0,1,-4,-2],pat:[4,null,null,3,null,null,1,null,0,null,null,null,1,null,null,null],dirge:true}},
 ];
 const eraFor=y=>{let e=ERAS[0];ERAS.forEach(x=>{if(y>=x.from)e=x;});return e;};
 let YEAR=1980,ERA=ERAS[0];
@@ -252,7 +254,23 @@ const SLUR={
  black:["Che ci fai tu qui, ne**o? Questa marcia è per gente della Federazione vera.","Spero che i soldati sparino prima ai ne**i come te.","Tornatene da dove sei venuto, sporco ne**o. Ah, già: non puoi.","Ehi, ne**o, non starmi così vicino."],
  gay:["Ho visto come guardi gli altri ragazzi, fr***o. Stammi lontano.","I fr***i come te portano sfortuna. Cammina più in là.","Mi fai schifo, {N}. Lo sanno tutti che sei un fr***o.","Cammina dritto, fr***o, se ci riesci."],
 };
-const SLUR_O=[Q("«Cammino come te. Anzi, meglio di te.»",{r:-10,m:3}),Q("Fai finta di niente.",{r:0,m:-3}),Q("Abbassi lo sguardo.",{r:0,m:-7})];
+const SLUR_ALL=[
+ Q("«Cammino come te. Anzi, meglio di te.»",{r:-10,m:2,f:'Lo guardi dritto negli occhi. Lui sputa per terra.',good:1}),
+ Q("Fai finta di niente.",{r:0,m:-2,f:'Fai finta di niente. Brucia lo stesso.',def:1}),
+ Q("«Risparmia il fiato. Ti servirà.»",{r:-6,m:-1,f:'Ride, ma smette di guardarti.'}),
+ Q("Acceleri per allontanarti.",{r:0,m:-3,s:-4,f:'Lo lasci indietro. Le gambe protestano.'}),
+ Q("Abbassi lo sguardo.",{r:0,m:-5,f:'Le sue parole ti restano addosso.'}),
+ Q("Gli dai una spinta.",{r:-15,m:-4,f:'Barcolla e ti maledice. Un soldato vi fissa.'}),
+];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const slurOpts=()=>{const base=SLUR_ALL.filter(o=>o.good||o.def),rest=shuffle(SLUR_ALL.filter(o=>!o.good&&!o.def)).slice(0,2);return shuffle([...base,...rest]);};
+/* frasi dei marciatori nei balloon bianchi: 0=inizio (battute), 1=metà (sofferenza), 2=fine (disperazione) */
+const CHAT=[
+ ["Qualcuno ha una gomma da masticare?","Scommetto che arrivo a Natale.","Mia madre mi ha messo il maglione sbagliato.","Chi vince offre da bere a tutti!","Ho già fame.","Bel tempo per una passeggiata, eh?","Ehi, ti si è slacciata una scarpa. Scherzo.","Al mio paese questa la chiamano gita."],
+ ["Non sento più le gambe.","Quanto manca? Qualcuno lo sa?","Ho sete. Ho sempre sete.","Smettetela di parlare, mi gira la testa.","Voglio solo sedermi un minuto.","Mamma...","Avete visto quello con la maglia rossa? Non c'è più.","Non ridete. Non c'è niente da ridere."],
+ ["Non voglio morire qui.","Sparatemi e basta.","Non ricordo più la faccia di mia madre.","Siamo rimasti in pochi. Troppo pochi.","Perdonatemi.","La strada si muove. La vedete anche voi?","Non ce la faccio. Non ce la faccio.","Chiunque vinca... si ricordi di noi."],
+];
+const progress=()=>{const al=S.npcs.filter(n=>n.alive&&!n.leaving).length;return clamp(Math.max(S.t/700,(S.npcs.length-al)/(S.npcs.length-1)),0,1);};
 const DEFEND=["«Lascialo stare.»","«Un'altra parola e inciampi tu.»","«Siamo tutti sulla stessa strada, idiota.»","«Se hai fiato per questo, cammina più forte.»"];
 /* dialoghi extra dopo i 3 di base: con gli amici si diventa fratelli, con i rivali ci si odia a morte */
 const BOND=[
@@ -377,8 +395,9 @@ function playStep(i,t,m,spb){
     else if(m.bm==='pump'){if(s%4!==0)B(root/4,spb*.8);}
     else if(m.bm==='root'){if(s%8===0)B(root/4,spb*6);}
     else if(m.bm==='long'){if(s%8===0)tone(root/4,spb*7,m.bass,.05,root/3,0,t);}}
+  else if(m.dirge){if(s%8===0)tone(root/2,spb*7,m.bass,.045,null,0,t);if(s===0||s===8)tone(55,.35,'sine',.09,40,0,t);}
   else if(s%4===0)tone(root/2,spb*3,m.bass,.05,null,0,t);
-  const p=m.pat[s];if(p!=null){const oct=Math.floor(p/m.scale.length);tone(root*Math.pow(2,(m.scale[p%m.scale.length]+12*oct)/12),spb*.9,m.wave,.018,null,0,t);}
+  const p=m.pat[s];if(p!=null){const oct=Math.floor(p/m.scale.length);tone(root*Math.pow(2,(m.scale[p%m.scale.length]+12*oct)/12),m.dirge?spb*3.5:spb*.9,m.wave,m.dirge?.014:.018,null,0,t);}
   if(m.drum&&!m.drums){if(s%8===4)noise(.08,.06,t,4000);if(s%8===0)tone(70,.08,'sine',.08,40,0,t);}
 }
 
@@ -515,7 +534,7 @@ function bigotTalk(){
   const bg=S.npcs.filter(n=>n.bigot&&n.alive&&!n.leaving);if(!bg.length)return false;
   const pool=[...(S.black?SLUR.black:[]),...(S.outed?SLUR.gay:[])];if(!pool.length)return false;
   S.mh=Math.max(0,S.mh-6);sfx.bad();
-  openDlg(pick(bg),{t:pick(pool),o:SLUR_O},'bigot');return true;
+  openDlg(pick(bg),{t:pick(pool),o:slurOpts()},'bigot');return true;
 }
 function openDlg(npc,d,kind){
   d={...d,o:d.o.filter(o=>!o.g||S.gay)};
@@ -527,8 +546,8 @@ function openDlg(npc,d,kind){
 }
 function answer(i){
   const g=S.dlg;if(!g)return;S.dlg=null;hideBox();const npc=g.npc;
-  if(g.kind==='bigot'){const o=g.d.o[i<0?1:i];npc.rel=clamp((npc.rel||0)+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
-    log(o.m>0?'Lo guardi dritto negli occhi. Lui sputa per terra.':o.m<-5?'Le sue parole ti restano addosso.':'Fai finta di niente. Brucia lo stesso.',o.m>0?'var(--green)':'var(--red)');
+  if(g.kind==='bigot'){const o=i<0?g.d.o.find(x=>x.def):g.d.o[i];npc.rel=clamp((npc.rel||0)+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);
+    log(o.f,o.m>0?'var(--green)':o.m>=-1?'var(--dim)':'var(--red)');
     const fr=friends();if(fr.length&&Math.random()<.65){const f=pick(fr);setTimeout(()=>{if(!S||S.mode!=='play')return;S.mh=Math.min(100,S.mh+8);f.rel=Math.min(100,f.rel+4);log(f.name+' si mette in mezzo: '+pick(DEFEND),'var(--green)');sfx.good();},1800);}
     return;}
   if(i>=0&&g.d.o[i].out&&!S.outed){S.outed=true;setTimeout(()=>{if(S&&S.mode==='play')log('Qualcuno ha sentito. La voce corre lungo la fila.','var(--dim)');},2500);}
@@ -598,6 +617,10 @@ function update(dt){
   if(S.underT>.5){S.heartT-=dt;if(S.heartT<=0){sfx.heart();S.heartT=.9-S.underT*.2;}}
   if(S.warn>0&&S.t-S.lastWarnT>60){S.warn--;S.lastWarnT=S.t;log('È passata un\'ora: un richiamo cancellato.','var(--green)');}
   if(S.balloon){S.balloon.t-=dt;if(S.balloon.t<=0)S.balloon=null;}
+  if(S.chat){S.chat.t-=dt;if(S.chat.t<=0||!S.chat.n.alive)S.chat=null;}
+  S.chatT=(S.chatT==null?4:S.chatT)-dt;
+  if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
+    if(vis.length){const tier=pr<.34?0:pr<.67?1:2;S.chat={n:pick(vis),s:pick(CHAT[tier]),t:3.6};}S.chatT=rand(6,12)*(1-.35*pr);}
   const lo=offMin(),hi=offMax();
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
@@ -714,6 +737,8 @@ function drawScene(){
   if(S.thunder>.9){cx.fillStyle='rgba(255,255,240,.6)';cx.fillRect(0,0,W,H);}
   if(S.underT>1&&S.mode==='play'&&Math.floor(S.t*4)%2)ptext('!',S.truckX+4,fut?66:82,'#e0483a');
   if(S.balloon)balloon(S.balloon.s,PX+4,76,'#b81a10');
+  {const el=$('chatb');if(S.chat&&S.mode==='play'){const n=S.chat.n,k=cv.clientWidth/W;el.textContent=S.chat.s;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3)*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
+  {const pr=S.mode==='play'||S.mode==='dying'?progress():S.greyP||0;S.greyP=pr;const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})`;if(cv.style.filter!==f)cv.style.filter=f;}
 }
 function drawVehicle(x,y,hh){
   const bob=Math.floor(S.t*6)%2,c=ERA.vc,hc=ERA.helm,night=hh>18||hh<6;
@@ -801,7 +826,7 @@ function drawTitleArt(c){
   // pali vicini
   for(let i=0;i<3;i++){const t=.2+i*.3,y=c1+t*(TH_-c1),w=3+t*TW*.32,x=TW*.52+Math.sin(t*2.2)*TW*.05+w/2+4+t*10,h=10+t*30;P(x,y-h,1+t*2,h,'#140810');P(x-3-t*4,y-h+2,7+t*8,1,'#140810');}
   // corpo abbandonato sulla strada, in una pozza di sangue
-  const by=TH_-37,tb=(by-c1)/(TH_-c1),bx=Math.round(TW*.52+Math.sin(tb*2.2)*TW*.05-16);
+  const by=TH_-19,tb=(by-c1)/(TH_-c1),bx=Math.round(TW*.52+Math.sin(tb*2.2)*TW*.05-16);
   for(let dy=-6;dy<=6;dy++){const w=Math.round(22*Math.sqrt(1-(dy/6.5)**2))+((dy*7)%3);P(bx+14-w,by+3+dy,w*2,1,'#4a0606');}
   for(let dy=-4;dy<=4;dy++){const w=Math.round(15*Math.sqrt(1-(dy/4.5)**2));P(bx+12-w,by+3+dy,w*2,1,'#6a0a0a');}
   P(bx+34,by+6,5,1,'#4a0606');P(bx+38,by+7,3,1,'#4a0606');
@@ -877,7 +902,7 @@ function titleScreen(){
   t.addEventListener('transitionend',done);setTimeout(done,5600);
   sc.onclick=e=>{if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target===go)return;done();};
   $('jkT').addEventListener('click',e=>{e.stopPropagation();initAudio();openJuke();});
-  $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;});
+  $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;DEBUG_RUN0=store.get('up_runs',0);});
   $('did').addEventListener('change',()=>{DEBUG_ID=$('did').value;});
   $('fsT').addEventListener('click',e=>{e.stopPropagation();window.__goFull();});
   $('rtT').addEventListener('click',e=>{e.stopPropagation();rotOk=!rotOk;checkRot();});
@@ -900,7 +925,7 @@ function intro(){
   sc.onclick=()=>{clearInterval(tm);mapScreen();};
 }
 function mapScreen(){
-  setYear(DEBUG_YEAR||1980+store.get('up_runs',0));
+  setYear(DEBUG_YEAR?DEBUG_YEAR+store.get('up_runs',0)-DEBUG_RUN0:1980+store.get('up_runs',0));
   ROUTE=pick(ROUTES);const wx=WX[ROUTE.wx];
   show(`<div class="mapwrap"><canvas id="mcv" width="${MW}" height="${MH}"></canvas><div class="minfo"><h2>LA MARCIA DEL</h2><div class="yr">${YEAR}</div><h2 style="margin-top:6px">${ERA.name.toUpperCase()} · VIA ${ROUTE.n.toUpperCase()}</h2>
   <p class="rt">${ROUTE.c.join(' → ')}</p><p>≈ ${routeKm(ROUTE)} km di strada</p><p><span class="lbl">Meteo previsto:</span><br>${wx.label}</p><button class="main" id="go">AL TEST ATTITUDINALE</button></div></div>`);
