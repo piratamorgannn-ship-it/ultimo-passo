@@ -104,6 +104,10 @@ button:disabled{opacity:.35}
 #screen.title .dbg{position:absolute;right:6px;bottom:4px;font-size:10px;color:#8a7a8a;text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end}
 #screen select{font:inherit;background:#3a3248;color:var(--ink);border:2px solid #000;padding:2px;font-size:10px}
 #screen.intro{background:#0a080c;cursor:pointer}
+.crawl{position:absolute;left:50%;top:100%;width:min(640px,86%);transform:translateX(-50%);text-align:center;font-size:15px;line-height:1.75;white-space:pre-wrap;color:#e8dcc0;animation:crawl 36s linear forwards}
+.crawl::first-line{color:var(--amber);font-weight:800}
+@keyframes crawl{from{top:100%;transform:translate(-50%,0)}to{top:0;transform:translate(-50%,-100%)}}
+#screen.intro{overflow:hidden}
 .intro-tx{max-width:640px;text-align:left;font-size:14px;line-height:1.6;white-space:pre-wrap;color:#e8dcc0}
 .skip{position:absolute;bottom:10px;right:14px;font-size:11px;animation:blink 1.2s steps(2) infinite}
 @keyframes blink{50%{opacity:.2}}
@@ -129,7 +133,7 @@ button:disabled{opacity:.35}
   <div id="stage">
     <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="chatb"></div><div id="chatd">Sto morendo...</div><canvas id="cdn" class="ttl"></canvas>
     <div id="hud">
-      <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">50</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
+      <div class="row"><b id="bib">N.47</b><span class="lbl" id="yr">1980</span><span><span class="lbl">IN GARA</span> <b id="alive">99</b></span><div id="warns"><i></i><i></i><i></i></div><button id="jukeHud">🎵</button><button id="mute">🔊</button><button class="fsb" id="fsHud" title="schermo intero">⛶</button></div>
       <div class="bars">
         <span class="lbl">STAMINA</span><div class="bar"><div class="fill" id="bST"></div><div class="cap" id="bCAP"></div></div>
         <span class="lbl">ACQUA</span><div class="bar"><div class="fill" id="bHY"></div></div>
@@ -160,7 +164,7 @@ button:disabled{opacity:.35}
 <script>
 (()=>{
 'use strict';
-const H=128,LIMIT=6.4,K=4.6,TOTAL=50,QPER=7,SPR=2;
+const H=128,LIMIT=6.4,K=4.6,TOTAL=99,QPER=7,SPR=2;
 let W=320,PX=96;
 const $=id=>document.getElementById(id);
 const cv=$('scene');let cx=cv.getContext('2d');let OFF=null,OCX=null;
@@ -274,6 +278,16 @@ const DEEP={
  morte3:{t:"Allora, se arrivo prima io, ti aspetto. Promesso.",o:[Q("Non avere fretta. Ci vediamo tra cent'anni.",D(10,8)),Q("Tienimi un posto vicino al fuoco.",D(10,6))]},
 };
 const DEEP_START=['vita','amore','amicizia','morte'];
+/* deliri verso la fine (quando restano in pochi, tutto grigio e la radio guasta) */
+const MAD=[
+ {t:"Sono tornati a marciare con noi dalla morte. Li vedi anche tu?",o:[Q("«Sì... li vedo anch'io.»",{r:6,m:-6}),Q("«Non c'è nessuno. Guardami negli occhi.»",{r:-2,m:2}),Q("Gli stringi il braccio senza dire niente.",{r:4,m:-1})]},
+ {t:"Ho contato i passi. Sono sempre lo stesso numero. Sempre. Lo. Stesso.",o:[Q("«Quale numero?»",{r:4,m:-5}),Q("«Smetti di contare. Respira.»",{r:0,m:2}),Q("Inizi a contare anche tu.",{r:5,m:-7})]},
+ {t:"Il soldato sul cingolato... è mio padre. Mi ha fatto l'occhiolino.",o:[Q("«Allora salutalo.»",{r:4,m:-5}),Q("«È solo un soldato. Non guardarlo.»",{r:0,m:1}),Q("Ridi con lui, finché fa male.",{r:6,m:-4})]},
+ {t:"Sento cantare i morti nei fossi. Cantano il mio nome. E anche il tuo.",o:[Q("«Smettila.»",{r:-4,m:0}),Q("Tendi l'orecchio. Li senti anche tu.",{r:5,m:-8}),Q("«Allora cantiamo più forte noi.»",{r:6,m:2})]},
+ {t:"E se fossimo già tutti morti, e questa fosse la strada per l'inferno?",o:[Q("«Allora l'inferno ha le salite.»",{r:6,m:2}),Q("«Forse hai ragione.»",{r:3,m:-6}),Q("Non rispondi.",{r:-3,m:-2})]},
+ {t:"Ho mangiato una pietra. Sapeva di pane. Ne vuoi una?",o:[Q("«No. Tienila tu.»",{r:0,m:0}),Q("Fai finta di mangiarla.",{r:6,m:-4}),Q("Gli togli la pietra di mano.",{r:-2,m:1})]},
+];
+function madTalk(){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving);if(!c.length)return false;openDlg(pick(c),pick(MAD),'mad');return true;}
 /* domanda curiosa (solo se il giocatore è gay e non l'ha ancora detto): la risposta può rivelarlo */
 const LOVEQ={t:"Ce l'hai la ragazza, a casa? Scommetto di sì.",o:[Q("«Sì, certo.»",{r:2,m:-3}),Q("«Non ho una ragazza. Ho un ragazzo.»",{r:0,m:5,out:1}),Q("«Non sono affari tuoi.»",{r:-6,m:0})]};
 /* insulti dei marciatori razzisti/omofobi (parole offensive censurate con asterischi) */
@@ -297,6 +311,7 @@ const CHAT=[
  ["Non sento più le gambe.","Quanto manca? Qualcuno lo sa?","Ho sete. Ho sempre sete.","Smettetela di parlare, mi gira la testa.","Voglio solo sedermi un minuto.","Mamma...","Avete visto quello con la maglia rossa? Non c'è più.","Non ridete. Non c'è niente da ridere."],
  ["Non voglio morire qui.","Sparatemi e basta.","Non ricordo più la faccia di mia madre.","Siamo rimasti in pochi. Troppo pochi.","Perdonatemi.","La strada si muove. La vedete anche voi?","Non ce la faccio. Non ce la faccio.","Chiunque vinca... si ricordi di noi."],
 ];
+const CHAT_MAD=["Sono tornati a marciare con noi dalla morte. Li vedi anche tu?","Il cingolato mi parla. Dice che sono stato bravo.","Mamma è lì, a bordo strada. Ciao mamma! CIAO!","Contate con me: uno, uno, uno, uno, uno...","Hihihi. Hihihihihi.","Le ombre camminano più veloci di noi.","Io sono già morto. Aspetto solo che se ne accorgano.","Mi hanno chiamato per nome! Ho un nome!","La strada respira. Senti come respira?","Non siamo noi a camminare. È la strada che ci tira."];
 const CHAT_HILL=["Un'altra salita? Ma chi l'ha disegnata questa strada?","Maledetta collina.","Le gambe mi bruciano.","Chi ha messo una montagna proprio qui?","Non finisce più, questa salita!","Se arrivo in cima giuro che non cammino più in vita mia."];
 const CHAT_RAIN=["Perfetto. Ci mancava solo la pioggia.","Ho l'acqua anche nelle mutande.","Le scarpe fanno ciac ciac a ogni passo.","Almeno adesso non ho sete.","Questa pioggia mi entra nelle ossa."];
 const CHAT_COLD=["Non sento più le dita.","Fa un freddo cane.","Datemi una coperta, vi prego.","Mi battono i denti più forte dei passi.","Se mi fermo congelo. Se mi fermo mi sparano."];
@@ -463,7 +478,7 @@ function newRun(shoe,tr){
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
-     mode:'count',cd:0,cdStep:-1,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
+     mode:'count',cd:0,cdStep:-1,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
      bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
@@ -612,6 +627,8 @@ function answer(i){
     const fr=friends();if(fr.length&&Math.random()<.65){const f=pick(fr);setTimeout(()=>{if(!S||S.mode!=='play')return;S.mh=Math.min(100,S.mh+8);f.rel=Math.min(100,f.rel+4);log(f.name+' si mette in mezzo: '+pick(DEFEND),'var(--green)');sfx.good();},1800);}
     return;}
   if(i>=0&&g.d.o[i].out&&!S.outed){S.outed=true;setTimeout(()=>{if(S&&S.mode==='play')log('Qualcuno ha sentito. La voce corre lungo la fila.','var(--dim)');},2500);}
+  if(g.kind==='mad'){if(i<0){S.mh=Math.max(0,S.mh-2);log('Lo lasci parlare da solo. Continua lo stesso.','var(--dim)');return;}const o=g.d.o[i];relUp(npc,o.r);S.mh=clamp(S.mh+o.m,0,100);
+    log(o.m>0?npc.name+' sbatte le palpebre, come se si svegliasse.':o.m<-4?'Per un attimo ci credi anche tu.':npc.name+' sorride a qualcuno che non c\'è.',o.m>0?'var(--green)':o.m<-4?'var(--red)':'var(--dim)');return;}
   if(g.kind==='loveq'){if(i<0){log(npc.name+' alza le spalle.','var(--dim)');return;}const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
     if(o.out){const ok=npc.rel>=0&&Math.random()<.75;npc.rel=clamp(npc.rel+(ok?8:-18),-100,100);log(npc.name+(ok?' sorride: «Allora spero che ti aspetti.»':' fa una smorfia e si allontana.'),ok?'var(--green)':'var(--red)');}
     else log(npc.name+(o.r<0?' alza le mani: «Scusa.»':' annuisce.'),'var(--dim)');return;}
@@ -681,8 +698,8 @@ function update(dt){
   if(S.chat){S.chat.t-=dt;if(S.chat.t<=0||!S.chat.n.alive)S.chat=null;}
   S.chatT=(S.chatT==null?4:S.chatT)-dt;
   if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n!==S.dyingNpc&&n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
-    if(vis.length){const tier=pr<.34?0:pr<.67?1:2,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&hourNow()>=20;
-      const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:CHAT[tier];
+    if(vis.length){const tier=pr<.34?0:pr<.67?1:2,mad=pr>.8&&Math.random()<.6,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&hourNow()>=20;
+      const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:mad?CHAT_MAD:CHAT[tier];
       S.chat={n:pick(vis),s:pick(pool),t:3.6};}S.chatT=rand(6,12)*(1-.35*pr)*(S.hill>0||S.rain>0?.65:1);}
   const lo=offMin(),hi=offMax();
   S.npcs.forEach(n=>{
@@ -704,6 +721,7 @@ function update(dt){
     if(S.dlg.t>=S.dlg.dur){if(S.dlg.choice){const g=S.dlg;S.dlg=null;hideBox();g.opts[g.def].f();}else answer(-1);}}
   else{if(S.t>=S.nextEvent){randomEvent();S.nextEvent=S.t+rand(13,22);}else if(S.t>=S.nextBigot&&(S.black||S.outed)&&bigotTalk()){S.nextBigot=S.t+rand(70,120);}
     else if(S.gay&&!S.outed&&!S.loveAsked&&S.t>=S.nextLoveQ&&loveQ()){S.loveAsked=true;}
+    else if(progress()>.8&&S.t>=S.nextMad&&madTalk()){S.nextMad=S.t+rand(25,40);}
     else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(35,55);}
     else if(S.t>=S.nextDlg){startDialog();S.nextDlg=S.t+rand(18,28);}}
   if(S.hill>0){S.hill-=dt;if(S.hill<=0){S.desc=7;log('In cima. Ora si scende.','var(--green)');}}if(S.desc>0)S.desc-=dt;if(S.rain>0)S.rain-=dt;
@@ -1031,7 +1049,7 @@ function show(html,cls=''){sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.in
 const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
-Cinquanta ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
+Novantanove ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
 L'ultimo rimasto in piedi ottiene la Grazia: salva la propria vita e libera la sua terra dalle requisizioni per dieci anni.
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
@@ -1062,10 +1080,10 @@ function openJuke(){
   render();
 }
 function intro(){
-  show(`<div class="intro-tx" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div>`,'intro');
-  const el=$('itx');let i=0;
-  const tm=setInterval(()=>{i+=2;el.textContent=INTRO.slice(0,i);if(i%6===0)sfx.type();if(i>=INTRO.length){clearInterval(tm);sc.querySelector('.skip').textContent='tocca lo schermo per continuare';}},32);
-  sc.onclick=()=>{clearInterval(tm);mapScreen();};
+  show(`<div class="crawl" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div>`,'intro');
+  const el=$('itx');el.textContent=INTRO;
+  el.addEventListener('animationend',()=>{const k=sc.querySelector('.skip');if(k)k.textContent='tocca lo schermo per continuare';});
+  sc.onclick=()=>mapScreen();
 }
 function mapScreen(){
   setYear(DEBUG_YEAR?DEBUG_YEAR+store.get('up_runs',0)-DEBUG_RUN0:1980+store.get('up_runs',0));
