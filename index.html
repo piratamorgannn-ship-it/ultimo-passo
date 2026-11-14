@@ -735,8 +735,10 @@ function askItem(){
 function startDialog(){
   if(progress()>.75){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n!==S.lastTalk);if(!c.length)return;const near=c.filter(isNear);const npc=near.length?pick(near):pick(c);if(!nearOr(npc))return false;openDlg(npc,freshPick(LATE),'mad');return true;}
   const extra=n=>n.stage>=DLG[n.id].length&&n.stage<DLG[n.id].length+5&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
-  const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<DLG[n.id].length||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
-  const near=cands.filter(isNear),app=cands.find(n=>n.appT>S.t);const npc=near.length?pick(near):(app||pick(cands));if(!nearOr(npc))return false;const d=npc.stage<DLG[npc.id].length?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
+  const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<DLG[n.id].length||extra(n)||arcReady(n))&&n!==S.lastTalk);if(!cands.length)return;
+  const near=cands.filter(isNear),app=cands.find(n=>n.appT>S.t);const npc=near.length?pick(near):(app||pick(cands));if(!nearOr(npc))return false;
+  if(arcReady(npc)&&(Math.random()<.65||!(npc.stage<DLG[npc.id].length||extra(npc)))){const a=npc.arc||0;npc.arc=a+1;S.lastTalk=npc;openDlg(npc,DEEP[`arc_${npc.id}${a}_x1`],'deep');return true;}
+  const d=npc.stage<DLG[npc.id].length?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
   openDlg(npc,d,'base');
 }
 function deepTalk(){
@@ -1718,6 +1720,82 @@ function betray(n){
   S.npcs.forEach(o=>{if(o.named&&o!==n&&o.alive&&!o.leaving)o.rel=clamp(o.rel-10,-100,100);});
   setTimeout(()=>{if(S&&S.mode==='play')log('Gli altri hanno visto. Nessuno ti guarda più negli occhi.','var(--dim)');},2500);
 }
+/* ---- archi degli amici: conversazioni a più battute con chi ti è amico (2 per personaggio: da Amico e da amicizia forte) ---- */
+const ARCS={
+ marek:[{
+  x1:{t:"Sai perché ho le mani così, {N}? Non è il porto. È una cima che ho tenuto per sei ore, una notte d'inverno.",o:[Q("«Chi c'era dall'altra parte?»",D(6,2,'x2')),Q("«Sei ore? Impossibile.»",D(2,0,'x2'))]},
+  x2:{t:"Mio padre. Era caduto tra la banchina e lo scafo. Io tenevo, lui parlava. Poi ha smesso di parlare. E io ho continuato a tenere.",o:[Q("Non dici niente. Cammini più vicino a lui.",D(10,3,'x3')),Q("«Non è stata colpa tua.»",D(8,2,'x3')),Q("«Perché me lo racconti adesso?»",D(4,0,'x3'))]},
+  x3:{t:"Perché è la stessa cosa, qui. Tengo. Non so più per chi. Forse per te, adesso.",o:[Q("«Allora tieni. Io tengo te.»",D(14,6)),Q("«Tieni per te stesso, Marek.»".replace('Marek','{ME}'),D(8,4)),Q("«Non voglio che nessuno tenga per me.»",D(-6,-2))]}},
+ {x1:{t:"Ti devo dire una cosa che non ho detto a nessuno. A Danzica... ho nascosto una ragazza nella stiva. Scappava dal Consiglio.".replace('Danzica','{CITY}'),o:[Q("«E poi?»",D(6,0,'x2')),Q("«Sei stato coraggioso.»",D(8,3,'x2'))]},
+  x2:{t:"L'hanno trovata. Per colpa mia: ho parlato nel sonno, in branda, con un collega che faceva la spia. Lei aveva quindici anni.",o:[Q("«Non potevi saperlo.»",D(8,2,'x3')),Q("Gli metti una mano sulla spalla.",D(10,3,'x3')),Q("«Per questo sei qui. Te la sei cercata.»",D(-14,-4))]},
+  x3:{t:"Quando mi hanno estratto ho pensato: giusto così. Poi ho conosciuto te. E adesso ho paura di morire. È una cosa brutta, avere di nuovo paura.",o:[Q("«È una cosa bella. Vuol dire che vuoi vivere.»",D(14,7)),Q("«La paura ci tiene svegli. Usala.»",D(10,5))]}}],
+ ilse:[{
+  x1:{t:"Tu mi credi fredda. Lo credono tutti. Vuoi sapere perché non piango?",o:[Q("«Sì. Dimmelo.»",D(6,1,'x2')),Q("«Non devi spiegarmi niente.»",D(8,2,'x2'))]},
+  x2:{t:"Perché ho finito le lacrime a dodici anni. Il giorno che hanno preso mia madre per la requisizione dei medici. Non è più tornata.",o:[Q("«Mi dispiace, {ME}.»",D(8,2,'x3')),Q("«Io avrei pianto per anni.»",D(4,0,'x3')),Q("Le cammini accanto in silenzio.",D(10,3,'x3'))]},
+  x3:{t:"Da allora mi sono costruita un muro. Tu ci hai fatto un buco. Non so se ringraziarti o odiarti.",o:[Q("«Ringraziami al traguardo.»",D(12,6)),Q("«Odiami pure, ma non chiudere il buco.»",D(14,5))]}},
+ {x1:{t:"{N}... io non sono stata estratta.",o:[Q("«Cosa vuol dire?»",D(4,0,'x2')),Q("Ti fermi quasi, poi riprendi il passo.",D(4,-1,'x2'))]},
+  x2:{t:"Era uscito il nome di mia sorella. Ha nove anni meno di me. Sono andata dal funzionario con tutti i miei risparmi. Ha cambiato il foglio.",o:[Q("«Hai preso il suo posto.»",D(10,2,'x3')),Q("«Sei la persona più coraggiosa che conosco.»",D(12,4,'x3')),Q("«Sei pazza. Potevi vivere.»",D(-4,-2,'x3'))]},
+  x3:{t:"Se muoio, lei non saprà mai perché. Promettimi che se vinci tu, glielo racconti. Si chiama Liv.",o:[Q("«Te lo prometto. Ma lo racconterai tu.»",D(16,6)),Q("«Glielo racconterò ogni anno.»",D(14,4))]}}],
+ ennio:[{
+  x1:{t:"Ehi, {N}, vuoi sentire la barzelletta più bella del mondo? ...No, aspetta. Oggi non mi viene.",o:[Q("«Che succede, {ME}?»",D(8,1,'x2')),Q("«Dai, raccontala lo stesso.»",D(4,2,'x2'))]},
+  x2:{t:"Mia madre sta morendo. Tumore. Le hanno dato due mesi a settembre. Io faccio il buffone perché se smetto di ridere, crollo qui per terra.",o:[Q("«Allora ridiamo insieme. Per lei.»",D(10,5,'x3')),Q("«Puoi crollare con me. Ti tengo io.»",D(12,3,'x3')),Q("«Non è il momento di pensarci.»",D(-6,-2,'x3'))]},
+  x3:{t:"Se vinco, la Grazia porta medicine al paese. Medicine vere. Capisci perché non posso fermarmi? Anche se mi sanguinano i piedi.",o:[Q("«Allora non fermarti. Io cammino con te.»",D(14,6)),Q("«Arriverai. Te lo giuro.»",D(12,5))]}},
+ {x1:{t:"Lo sai qual è la cosa che mi fa più paura? Non morire. È morire senza aver fatto ridere nessuno nell'ultimo minuto.",o:[Q("«Allora fai ridere me. Adesso.»",D(8,5,'x2')),Q("«Smettila di pensare all'ultimo minuto.»",D(4,2,'x2'))]},
+  x2:{t:"Mio padre è morto sotto un camion militare. Stava raccontando una barzelletta, giuro. Gli mancava solo la battuta finale. Nessuno l'ha mai saputa.",o:[Q("«Inventiamola noi, la battuta finale.»",D(12,7,'x3')),Q("Ridi e piangi insieme, senza riuscire a smettere.",D(12,3,'x3'))]},
+  x3:{t:"Ecco... ho trovato la battuta. Te la dico solo se arriviamo entrambi in fondo. Affare fatto?",o:[Q("«Affare fatto, {ME}.»",D(14,8)),Q("«Dimmela adesso. Non si sa mai.»",D(6,-2))]}}],
+ dragan:[{
+  x1:{t:"Non parlo molto, {N}. Ma con te sì. Durante la guerra avevo undici anni. Il mio villaggio, {CITY}, l'hanno bruciato in una notte.",o:[Q("«E tu dov'eri?»",D(6,0,'x2')),Q("«Non devi raccontarmelo.»",D(6,2,'x2'))]},
+  x2:{t:"Nel pozzo. Mi ci ha calato mia sorella. Lei non c'entrava. Ho sentito tutto, da là sotto. Tutto.",o:[Q("Gli prendi il braccio, forte.",D(12,2,'x3')),Q("«Adesso sei fuori dal pozzo, Dragan.»".replace('Dragan','{ME}'),D(10,4,'x3')),Q("«Io non ce l'avrei fatta a vivere dopo.»",D(2,-4,'x3'))]},
+  x3:{t:"Ho promesso a me stesso che non mi sarei più nascosto da niente. Per questo cammino in testa. Se vuoi, cammina dietro di me. Ti copro io.",o:[Q("«Cammino accanto a te. Non dietro.»",D(14,6)),Q("«Grazie, fratello.»",D(14,5))]}},
+ {x1:{t:"C'è una cosa che devo dire a qualcuno prima di morire. Tu vai bene.",o:[Q("«Dimmi.»",D(4,0,'x2')),Q("«Non morirai.»",D(6,2,'x2'))]},
+  x2:{t:"Dopo la guerra avevamo fame. Ho denunciato il vicino per un sacco di farina. Lo hanno portato via. Suo figlio è qui. Il numero ventitré. Lui non lo sa.",o:[Q("«Devi dirglielo.»",D(6,-2,'x3')),Q("«Eri un bambino affamato.»",D(10,4,'x3')),Q("«Sei un mostro.»",D(-16,-4))]},
+  x3:{t:"Se cede, lo aiuterò io. Anche se mi costa un richiamo. Così forse il conto si chiude. Tu che dici?",o:[Q("«Dico che sei un uomo migliore di quanto credi.»",D(14,6)),Q("«Il conto non si chiude mai. Ma è un inizio.»",D(10,3))]}}],
+ pieter:[{
+  x1:{t:"Avevo un piano, {N}. Sedermi al primo chilometro. Senza drammi. Un gesto filosofico.",o:[Q("«E perché non l'hai fatto?»",D(6,1,'x2')),Q("«Che piano idiota.»",D(-4,-1,'x2'))]},
+  x2:{t:"Perché al primo chilometro mi hai chiesto dell'acqua. Una cosa stupida. E io ho pensato: se mi siedo, chi gli risponde?",o:[Q("«Allora devo chiederti acqua più spesso.»",D(10,5,'x3')),Q("«Non camminare per me. Cammina per te.»",D(8,3,'x3'))]},
+  x3:{t:"Non ho mai creduto in niente. Né Dio, né Stato, né amore. Adesso credo in una cosa sola: nel prossimo passo che facciamo insieme.",o:[Q("«È già una filosofia.»",D(14,6)),Q("«Il prossimo passo, allora. E quello dopo.»",D(14,7))]}},
+ {x1:{t:"Ho scritto un libro, sai. Trecento pagine sul senso della vita. L'ho bruciato la notte prima della Marcia.",o:[Q("«Perché?»",D(4,0,'x2')),Q("«Peccato. L'avrei letto.»",D(8,3,'x2'))]},
+  x2:{t:"Perché era tutto sbagliato. Il senso non si scrive. Si cammina. Ci sono arrivato a trecento chilometri da casa, con le scarpe rotte.",o:[Q("«E qual è il senso?»",D(6,2,'x3')),Q("«Scrivilo di nuovo, quando torni.»",D(10,4,'x3'))]},
+  x3:{t:"Il senso è che qualcuno ti cammini accanto mentre crolli. Tutto qui. Trecento pagine per una riga. Non è ridicolo?",o:[Q("«È la riga più bella che abbia mai sentito.»",D(16,7)),Q("«Ridicolo. E vero.»",D(12,5))]}}],
+ sofia:[{
+  x1:{t:"Ho curato soldati, durante la guerra. Avevo sedici anni. Quello che guida il blindato... credo di averlo ricucito io. Una ferita qui, sul collo.",o:[Q("«Ne sei sicura?»",D(4,0,'x2')),Q("«Che scherzo crudele.»",D(8,2,'x2'))]},
+  x2:{t:"Sicura. Ha la cicatrice a forma di esse. L'ho fatta storta, avevo le mani che tremavano. Gli ho salvato la vita. Adesso lui deciderà la mia.",o:[Q("«Diglielo. Forse si ricorda.»",D(4,-2,'x3')),Q("«Non dargli questa soddisfazione.»",D(10,3,'x3')),Q("Non sai cosa dire. Le stringi la mano.",D(12,3,'x3'))]},
+  x3:{t:"Non me ne pento, sai. Anche se mi sparasse. Si cura chi sanguina. Punto. Promettimi che rimarrai una persona che cura, {N}.",o:[Q("«Te lo prometto.»",D(14,6)),Q("«Qui dentro è difficile, Sofia.»".replace('Sofia','{ME}'),D(8,2))]}},
+ {x1:{t:"Posso dirti una cosa da infermiera? Hai le labbra bianche e cammini storto. Fra poco i tuoi piedi ti tradiranno.",o:[Q("«Lo so. Cosa faccio?»",D(8,3,'x2')),Q("«Pensa ai tuoi piedi.»",D(-6,0,'x2'))]},
+  x2:{t:"Ascolta il corpo. Bevi prima di avere sete. Mangia prima della fame. E quando la testa ti dice di sederti... guardami. Io ti dirò di no.",o:[Q("«E chi dirà di no a te?»",D(12,4,'x3')),Q("«Grazie. Davvero.»",D(10,5,'x3'))]},
+  x3:{t:"Nessuno. Per questo te lo chiedo. Se mi vedi rallentare, chiamami per nome. Il mio vero nome. Non lo dico a nessuno da anni.",o:[Q("«Dimmelo. Lo terrò stretto.»",D(16,6)),Q("«Ti chiamerò con quello che preferisci.»",D(12,4))]}}],
+ aleksej:[{
+  x1:{t:"Stanotte non sono riuscito a pregare, {N}. Le parole non uscivano. È la prima volta in vita mia.",o:[Q("«Forse Dio sta zitto anche lui.»",D(4,-2,'x2')),Q("«Prega con me, allora. A modo mio.»",D(10,3,'x2'))]},
+  x2:{t:"Mio fratello era seminarista. L'hanno fucilato perché suonava le campane il giorno della Vittoria. Io ho continuato a pregare per tutti e due.",o:[Q("«Allora prega per tre, adesso. Anche per me.»",D(12,4,'x3')),Q("«E Dio dov'era?»",D(2,-3,'x3'))]},
+  x3:{t:"Forse Dio cammina qui, in mezzo a noi. Con le vesciche anche Lui. Ti va bene un Dio con le vesciche?",o:[Q("«Mi va benissimo.»",D(14,7)),Q("«Mi basta un amico con le vesciche.»",D(16,6))]}},
+ {x1:{t:"Ho un segreto, {N}. Non voglio diventare monaco. Lo dico per non dover spiegare.",o:[Q("«E cosa vorresti, davvero?»",D(8,2,'x2')),Q("«Non devi spiegare niente a me.»",D(8,3,'x2'))]},
+  x2:{t:"Vorrei sposarmi. Avere una casa sul Volga e un figlio che non dovrà mai marciare. È un desiderio piccolo, vero? Troppo piccolo per Dio.",o:[Q("«È il desiderio più grande che esista.»",D(14,6,'x3')),Q("«Dio fa il tifo per i desideri piccoli.»",D(12,7,'x3'))]},
+  x3:{t:"Allora, se arrivo, mio figlio avrà il tuo nome. Non dire di no. È deciso.",o:[Q("«Allora devi arrivare.»",D(16,8)),Q("Ti si chiude la gola. Annuisci soltanto.",D(16,5))]}}],
+ colette:[{
+  x1:{t:"Ti ho mentito, {N}. Non sono qui solo per sputare in faccia al generale.",o:[Q("«E per cosa, allora?»",D(6,1,'x2')),Q("«Lo sapevo.»",D(4,0,'x2'))]},
+  x2:{t:"Mio fratello Julien è in prigione per colpa delle mie poesie. Le firmavo con le sue iniziali per scherzo. Hanno preso lui.",o:[Q("«Non potevi immaginarlo.»",D(8,2,'x3')),Q("«Che cosa terribile.»",D(8,0,'x3')),Q("«Le poesie valevano tanto?»",D(-8,-3,'x3'))]},
+  x3:{t:"Se vinco, chiedo la Grazia per lui invece che per il paese. Lo so, è egoista. Dimmi che non sono egoista.",o:[Q("«Non sei egoista. Sei sua sorella.»",D(14,6)),Q("«Lo sei. E farei lo stesso.»",D(12,5))]}},
+ {x1:{t:"Ti scrivo una poesia, {N}. Adesso, a voce. Vuoi sentirla?",o:[Q("«Sì. Ti prego.»",D(8,5,'x2')),Q("«Dopo. Ho bisogno di fiato.»",D(-2,0))]},
+  x2:{t:"«Camminiamo sul nostro nome / ogni passo una lettera / quando arriveremo in fondo / sapremo come ci chiamiamo.» ...È brutta, vero?",o:[Q("«È bellissima.»",D(12,6,'x3')),Q("«Rifalla con me, una riga a testa.»",D(14,5,'x3'))]},
+  x3:{t:"È la prima poesia che scrivo senza paura. Non la firmerò. Sarà tua. Se muoio, è tua.",o:[Q("«Allora non morire, che non so cosa farmene.»",D(14,7)),Q("«La imparerò a memoria.»",D(14,5))]}}],
+ seamus:[{
+  x1:{t:"Te l'ho detto che facevo a pugni per soldi. Non ti ho detto come ho smesso.",o:[Q("«Come hai smesso?»",D(6,0,'x2')),Q("«Non serve che me lo dica.»",D(6,2,'x2'))]},
+  x2:{t:"Un ragazzo, a {CITY}. Diciassette anni. Un pugno solo. Non si è più alzato. Io ho preso la borsa e sono andato a bere.",o:[Q("«Era un incontro. Lo sapevate tutti e due.»",D(8,2,'x3')),Q("Gli cammini accanto senza dire niente.",D(10,1,'x3')),Q("«Te lo porterai dietro per sempre.»",D(-2,-3,'x3'))]},
+  x3:{t:"Quando mi hanno estratto ho riso. Ho pensato: finalmente qualcuno mi presenta il conto. Ma tu... tu mi fai venire voglia di arrivare in fondo e fare qualcosa di buono.",o:[Q("«Allora arriviamo in fondo e facciamolo.»",D(14,6)),Q("«Il conto si paga vivendo, non morendo.»",D(14,7))]}},
+ {x1:{t:"Il sasso che ti ho dato. Ce l'hai ancora?",o:[Q("«Sempre in tasca.»",D(10,4,'x2')),Q("«L'ho perso. Scusa.»",D(-6,-2,'x2'))]},
+  x2:{t:"L'ho raccolto il giorno che mia madre è morta. Sulla spiaggia, avevo sei anni. È l'unica cosa che ho tenuto in vita mia.",o:[Q("«Allora riprenditelo.»",D(8,2,'x3')),Q("«Perché l'hai dato a me?»",D(10,3,'x3'))]},
+  x3:{t:"Perché tu sei la prima persona da anni che non ha paura di me. Tienilo tu. Io ho le mani troppo grosse per le cose piccole.",o:[Q("«Lo terrò finché non me lo richiedi.»",D(16,6)),Q("«Le tue mani sono giuste così.»",D(14,7))]}}],
+ zsofia:[{
+  x1:{t:"Posso confessarti una cosa? Mio padre lavora per il Consiglio. Fa le visite mediche per l'idoneità alla Marcia.",o:[Q("«Quindi...?»",D(4,0,'x2')),Q("«Non lo dirò a nessuno.»",D(8,2,'x2'))]},
+  x2:{t:"Poteva scrivere che avevo il cuore debole. Una riga. Non l'ha fatto. Ha detto che non poteva fare eccezioni per sua figlia.",o:[Q("«Che razza di padre...»",D(6,-2,'x3')),Q("«Forse aveva paura anche lui.»",D(8,1,'x3')),Q("«Forse voleva salvare qualcun altro.»",D(8,0,'x3'))]},
+  x3:{t:"Ho deciso che non lo odierò. Se odio, conto peggio i passi. E se conto male, sbaglio il ritmo. Mi aiuti a contare?",o:[Q("«Uno, due. Uno, due. Insieme.»",D(14,7)),Q("«Conto io per te finché vuoi.»",D(14,6))]}},
+ {x1:{t:"Ricordi la mia lista? Le cose mai fatte? Ne ho fatta una, adesso.",o:[Q("«Quale?»",D(6,2,'x2')),Q("«Senza di me? Tradimento.»",D(8,4,'x2'))]},
+  x2:{t:"Avere un amico vero. Era in fondo alla lista, la più difficile. Pensavo che non l'avrei mai fatta.",o:[Q("«Anche per me, sai.»",D(12,5,'x3')),Q("Le sorridi e ti si inumidiscono gli occhi.",D(12,4,'x3'))]},
+  x3:{t:"Allora adesso ne scriviamo una nuova. Insieme. Prima cosa: arrivare. Seconda: ballare. Terza... la terza la decidi tu.",o:[Q("«Terza: non lasciarci mai.»",D(16,7)),Q("«Terza: mangiare finché scoppiamo.»",D(14,8))]}}],
+};
+const ARC_REL=[40,65];
+for(const id in ARCS)ARCS[id].forEach((arc,a)=>{for(const k in arc){const nd=arc[k];DEEP[`arc_${id}${a}_${k}`]={t:nd.t,o:nd.o.map(o=>({...o,n:o.n?`arc_${id}${a}_${o.n}`:o.n}))};}});
+const arcReady=n=>ARCS[n.id]&&(n.arc||0)<ARCS[n.id].length&&n.rel>=ARC_REL[n.arc||0]&&!S.alone;
 const BRO_SICK=['m_ombre','m_morto','m_strada','m_soldato','m_nome','m_neve'];
 /* urla di chi sta per crollare */
 const DYING_SCREAM=["AAAAAAH! AIUTATEMI! NON CE LA FACCIO!","NO! NO! VOGLIO TORNARE A CASA!","MAMMA! MAMMAAA!","LE GAMBE! NON SENTO PIÙ LE GAMBE!","ASPETTATEMI! VI PREGO, ASPETTATEMI!","NON SPARATE! MI ALZO! MI ALZO!","DIO, PRENDIMI TU, NON LORO!","VEDO LA LUCE... È CALDA... È COSÌ CALDA...","CI VEDIAMO DALL'ALTRA PARTE, RAGAZZI!","AH AH AH! HO VINTO IO! HO VINTO IO!","È TUTTO UN SOGNO! SVEGLIATEMI!","LA STRADA MI TIRA GIÙ! MI TIRA GIÙ!","NON VOGLIO MORIRE COSÌ! NON COSÌ!","QUALCUNO MI DIA LA MANO! UNA MANO SOLA!","LI SENTO! I MORTI MI CHIAMANO PER NOME!","VI MALEDICO TUTTI! VOI E LA VOSTRA GRAZIA!","PADRE NOSTRO... PADRE NOSTRO... NON MI RICORDO...","DITE A MIA MADRE CHE HO CAMMINATO FINO ALLA FINE!","NON ERA LA MIA ESTRAZIONE! NON ERO IO!","SONO STANCO... LASCIATEMI DORMIRE UN MINUTO...","GLI ANGELI HANNO GLI STIVALI! LI VEDO!","ANCORA UN PASSO! UNO SOLO! ASPETTATE!","FERMATE IL MONDO! VOGLIO SCENDERE!","PERDONATEMI! PERDONATEMI TUTTI!"];
