@@ -95,6 +95,10 @@ button:disabled{opacity:.35}
 #tcv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 .ttl{position:absolute;left:50%;top:-25%;transform:translateX(-50%);margin:0;image-rendering:pixelated;image-rendering:crisp-edges;transition:top 5s steps(16,end)}
 #screen.title #go{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);white-space:nowrap}
+#screen .pcard{display:flex;gap:22px;align-items:center;max-width:620px;margin:6px 0 14px;text-align:left}
+#pspr{width:96px;height:144px;image-rendering:pixelated;image-rendering:crisp-edges;flex:none;background:#1a1620;border:2px solid #4a405a}
+.pinfo .pname{font-size:20px;font-weight:800;color:var(--amber)}.pinfo .pbib{display:inline-block;background:#f0f0e8;color:#b83a2a;font-weight:800;padding:1px 8px;margin:4px 0}
+.pinfo p{font-size:13px;line-height:1.5;margin:8px 0 0}
 #juke{position:absolute;inset:6% 8%;background:#120e16f2;border:2px solid #4a405a;padding:8px;overflow:auto;z-index:5;text-align:left}
 #juke .jh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
 #juke .jh button{padding:3px 8px;font-size:10px}
@@ -517,7 +521,7 @@ function newRun(shoe,tr){
   $('jukeHud').style.display=DEBUG?'inline':'none';
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
-  const usedN=new Set(),bib=Math.floor(rand(1,TOTAL+1)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);return n;};
+  const usedN=new Set(),bib=PLAYER?PLAYER.bib:Math.floor(rand(1,TOTAL+1)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);return n;};
   CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);
@@ -526,7 +530,7 @@ function newRun(shoe,tr){
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
-     mode:'count',cd:0,cdStep:-1,calls:[],callCur:null,shoutCd:0,groups:[],regroupT:8,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
+     mode:'count',cd:0,cdStep:-1,calls:[],callCur:null,shoutCd:0,groups:[],regroupT:8,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:PLAYER?PLAYER.black:Math.random()<.2,gay:PLAYER?PLAYER.gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
      bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,cig:RUN_ITEMS.includes('sigarette')?5:0,smoked:0,pneumonia:false,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
@@ -535,7 +539,7 @@ function newRun(shoe,tr){
   if(DEBUG_ID){S.black=DEBUG_ID==='black'||DEBUG_ID==='both';S.gay=DEBUG_ID==='gay'||DEBUG_ID==='both';}
   {const lo=offMin(),hi=offMax();for(let k=0;k<6;k++)S.groups.push({a:rand(lo*.7,hi*.85),v:rand(-1.2,1.2)});S.npcs.forEach(n=>{n.g=Math.floor(rand(0,6));n.jit=rand(-3.5,3.5);n.warns=0;});}
   S.zplan=buildPlan();S.zi=0;S.zNext=S.zplan[0].dur;S.zones=[{z:S.zplan[0].z,s:0}];log(zoneMsg(S.zplan[0],true),'var(--dim)');
-  S.skin=S.black?pick(['#6a4028','#5a3420','#7a4a2a']):'#e8b896';
+  S.skin=PLAYER?PLAYER.skin:S.black?pick(['#6a4028','#5a3420','#7a4a2a']):'#e8b896';S.me=PLAYER?{shirt:PLAYER.shirt,hair:PLAYER.hair,skin:PLAYER.skin,band:PLAYER.band}:null;
   {const gs=S.npcs.filter(n=>!n.named&&!n.bigot);for(let k=0;k<2;k++){const v=pick(gs.filter(x=>!x.villain));v.villain=true;v.rel=-20;v.from=pick(['Kassel','Odessa','Linz','Lilla','Cracovia','Bilbao']);v.elimAt=Math.max(v.elimAt,rand(450,950));}}
   if(S.black||S.gay){const gs=S.npcs.filter(n=>!n.named&&!n.villain);for(let k=0;k<2;k++){const b=pick(gs);b.bigot=true;b.rel=-30;b.from=pick(['Vienna','Lione','Breslavia','Graz','Brno','Tolosa']);b.elimAt=Math.max(b.elimAt,rand(300,700));}}
   if(S.gay)log('“Penso a lui, che mi ha salutato alla stazione senza potermi abbracciare.”','var(--dim)','th');
@@ -956,7 +960,7 @@ function drawScene(){
   drawVehicle(S.truckX,92,hh);
   const list=S.npcs.filter(n=>n.alive).map(n=>({n,x:PX+n.off*SPR,y:86+n.lane*5}));
   list.push({p:true,x:PX,y:98});list.sort((a,b)=>a.y-b.y);
-  const me={shirt:'#d8d0b8',hair:S.black?'#1a1210':'#3a2418',skin:S.skin||'#e8b896'};
+  const me=S.me||{shirt:'#d8d0b8',hair:S.black?'#1a1210':'#3a2418',skin:S.skin||'#e8b896'};
   list.forEach(o=>{
     if(o.p){if(S.dead)drawCorpse(o.x,o.y+10,me);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
     else{if(o.x<-10||o.x>W+10)return;drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,o.n.leaving);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
@@ -1000,7 +1004,7 @@ function drawWalker(x,y,c,f,isP,leaving){
   R(x+2,y+1+bob,4,4,c.skin);R(x+2,y+bob,4,2,c.hair);R(x+5,y+3+bob,1,1,'#1a1410');
   if(c.band)R(x+2,y+1+bob,4,1,'#e83a3a');
   if(ERA.visor)R(x+3,y+3+bob,3,1,'#38e8f8');
-  if(isP){R(x+3,y+7+bob,3,2,'#f0f0e8');R(x+4,y+7+bob,1,1,'#b83a2a');R(x+3,y-3+bob,1,2,'#f4dca0');if(S.peeing>0&&Math.floor(S.t*6)%2)R(x+5,y+11,1,3,'#e8d860');}
+  if(isP){R(x+3,y+7+bob,3,2,'#f0f0e8');R(x+4,y+7+bob,1,1,'#b83a2a');R(x+3,y-3+bob,1,2,'#f4dca0');if(S&&S.peeing>0&&Math.floor(S.t*6)%2)R(x+5,y+11,1,3,'#e8d860');}
   if(leaving){cx.fillStyle='rgba(20,10,20,.35)';cx.fillRect(x,y,8,16);}
 }
 function drawCorpse(x,y,c){x=Math.round(x);y=Math.round(y);R(x-2,y+3,14,2,'rgba(0,0,0,.35)');R(x+6,y,4,3,c.skin);R(x+9,y,1,3,c.hair);R(x,y,6,3,c.shirt);R(x-4,y+1,4,2,ERA.pants);R(x+4,y+3,3,1,'#6a1a14');}
@@ -1231,8 +1235,52 @@ function pickItem(shoe){
     sc.querySelectorAll('.choices button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;
       if(sel.includes(k))sel=sel.filter(x=>x!==k);else{sel.push(k);if(sel.length>slots)sel.shift();}render();}));
     $('back').addEventListener('click',equip);
-    $('go').addEventListener('click',()=>{RUN_ITEMS=sel.slice();loading(shoe);});};
+    $('go').addEventListener('click',()=>{RUN_ITEMS=sel.slice();presentPlayer(shoe);});};
   render();
+}
+/* ================= SCHEDA DEL GIOCATORE ================= */
+const P_FIRST=['Luca','Marco','Andrea','Tomas','Jakub','Erik','Pavel','Mathis','Jonas','Diego','Nico','Viktor','Elias','Hugo','Milo','Teo','Sami','Aleks','Dario','Leon','Bruno','Oskar','Ivan','Felix','Matteo','Rafael','Stefan','Adam','Kai','Nils'];
+const P_LAST=['Rossi','Kowalski','Novák','Müller','Dubois','García','Petrov','Jansen','Lindqvist','Horvat','Popescu','Nagy','Ferreira','Costa','Bianchi','Schmidt','Moreau','Ivanov','Kovač','Andersen','De Vries','Papadopoulos','Marino','Fischer','Lambert','Silva','Wójcik','Varga','Olsen','Ricci'];
+const P_CITY=['Lisbona','Porto','Madrid','Siviglia','Valencia','Barcellona','Marsiglia','Lione','Parigi','Bruxelles','Amsterdam','Amburgo','Berlino','Praga','Vienna','Budapest','Varsavia','Danzica','Riga','Tallinn','Stoccolma','Oslo','Copenaghen','Milano','Torino','Bologna','Roma','Napoli','Spalato','Belgrado','Sofia','Atene','Bucarest','Kiev','Minsk','Mosca','Zurigo','Monaco'];
+const P_TRAIT={f:['Fisico asciutto e resistente: ha sempre lavorato all\'aria aperta.','Gracile e magro: si stanca presto, ma non lo ammetterebbe mai.'],
+ n:['Nervi d\'acciaio: niente sembra scalfirlo.','Ansioso: dorme poco e si mangia le unghie fino al sangue.'],
+ s:['Stomaco di ferro: mangerebbe anche i sassi.','Stomaco delicato: basta un niente per farlo stare male.'],
+ c:['Simpatico e chiacchierone, si fa voler bene da chiunque.','Chiuso e diffidente, con gli sconosciuti non spreca parole.']};
+const P_RAND=['Faceva l\'apprendista meccanico.','Studiava da geometra, prima dell\'estrazione.','Lavorava nella panetteria di famiglia, all\'alba.','Suona la chitarra. Male, ma con passione.','Ha una sorella più piccola che lo aspetta alla finestra.','Colleziona francobolli di paesi che non esistono più.','Tifa per una squadra che non vince da vent\'anni.','Non ha mai visto il mare.','Ha lasciato la scuola per lavorare in fabbrica.','Sogna di fare il fotografo.','Sa cucinare solo le uova, ma le fa benissimo.','Prima di oggi non aveva mai preso un treno.','Scrive poesie che non fa leggere a nessuno.','Ripara biciclette nel cortile di casa.','Ha promesso a sua madre che sarebbe tornato.','Porta sempre in tasca un sasso portafortuna.'];
+const P_NAT=[
+ {c:['Milano','Torino','Bologna','Roma','Napoli','Genova','Firenze','Bari'],f:['Luca','Marco','Andrea','Matteo','Dario','Nico','Teo','Bruno','Pietro','Simone'],l:['Rossi','Bianchi','Ricci','Marino','Greco','Conti','Esposito','Gallo','Romano','Ferri']},
+ {c:['Berlino','Amburgo','Monaco','Lipsia','Dresda','Colonia','Brema'],f:['Felix','Jonas','Leon','Elias','Oskar','Lukas','Paul','Emil','Max','Moritz'],l:['Müller','Schmidt','Fischer','Weber','Becker','Wagner','Hoffmann','Koch','Richter','Braun']},
+ {c:['Parigi','Lione','Marsiglia','Lilla','Bordeaux','Nantes'],f:['Hugo','Mathis','Louis','Jules','Lucas','Théo','Antoine','Rémi','Victor','Bastien'],l:['Dubois','Moreau','Lambert','Laurent','Girard','Bernard','Roux','Fournier','Mercier','Blanc']},
+ {c:['Madrid','Siviglia','Valencia','Barcellona','Bilbao','Granada'],f:['Diego','Rafael','Pablo','Javier','Mateo','Álvaro','Iker','Sergio','Hugo','Rubén'],l:['García','López','Martínez','Sánchez','Pérez','Romero','Navarro','Torres','Ruiz','Gil']},
+ {c:['Lisbona','Porto','Coimbra','Braga'],f:['Tiago','João','Rui','Duarte','Nuno','Afonso','Diogo','Miguel'],l:['Silva','Ferreira','Costa','Santos','Pereira','Oliveira','Sousa','Almeida']},
+ {c:['Varsavia','Danzica','Cracovia','Breslavia','Poznań'],f:['Jakub','Kuba','Piotr','Tomasz','Kamil','Szymon','Marek','Adam'],l:['Kowalski','Nowak','Wójcik','Lewandowski','Zieliński','Kamiński','Mazur','Krawczyk']},
+ {c:['Amsterdam','Rotterdam','Utrecht','Bruxelles','Anversa','Gand'],f:['Daan','Bram','Sem','Lars','Jesse','Thijs','Ruben','Milan'],l:['Jansen','De Vries','Bakker','Visser','Smit','Peeters','Maes','Mulder']},
+ {c:['Praga','Brno','Vienna','Budapest','Bratislava'],f:['Tomáš','Jakub','Ondřej','Bence','Tibor','Lukas','Stefan','Ádám'],l:['Novák','Svoboda','Dvořák','Nagy','Kovács','Varga','Gruber','Huber']},
+ {c:['Belgrado','Spalato','Zagabria','Sarajevo','Sofia','Bucarest'],f:['Stefan','Nikola','Luka','Ivan','Dragan','Mihai','Andrei','Petar'],l:['Horvat','Kovač','Petrović','Jovanović','Popescu','Ionescu','Dimitrov','Ivanov']},
+ {c:['Atene','Salonicco','Patrasso'],f:['Nikos','Yannis','Kostas','Dimitris','Alexis','Giorgos'],l:['Papadopoulos','Pappas','Nikolaidis','Georgiou','Vlachos','Karras']},
+ {c:['Oslo','Stoccolma','Copenaghen','Göteborg','Bergen'],f:['Erik','Nils','Lars','Olav','Sven','Mats','Aksel','Kai'],l:['Andersen','Lindqvist','Olsen','Johansson','Nilsson','Larsen','Berg','Holm']},
+ {c:['Mosca','Kiev','Minsk','Riga','Tallinn','Vilnius'],f:['Ivan','Pavel','Viktor','Dmitri','Sergej','Oleg','Aleks','Yuri'],l:['Petrov','Ivanov','Smirnov','Volkov','Sokolov','Kuznetsov','Berzins','Tamm']},
+];
+let PLAYER=null;
+function makePlayer(){
+  const black=DEBUG_ID?(DEBUG_ID==='black'||DEBUG_ID==='both'):Math.random()<.2,gay=DEBUG_ID?(DEBUG_ID==='gay'||DEBUG_ID==='both'):Math.random()<.2;
+  /* descrizione: metà dal test (i due tratti più marcati), metà casuale */
+  const t=PROFILE||{f:50,n:50,s:50,c:50},ks=['f','n','s','c'].sort((a,b)=>Math.abs(t[b]-50)-Math.abs(t[a]-50)).slice(0,2);
+  const tr=ks.map(k=>P_TRAIT[k][t[k]>=50?0:1]),rn=shuffle(P_RAND).slice(0,2);
+  const N=pick(P_NAT);
+  return {first:pick(N.f),last:pick(N.l),bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,
+    shirt:pick(['#d8d0b8','#c8553d','#4a78a8','#6a9a5a','#d89a30','#a05a90','#3a3a4a','#e8e8e8','#8a2a2a','#3ac8c8',...ERA.shirts]),
+    hair:black?pick(['#1a1210','#2a1a10']):pick(['#3a2418','#1a1410','#c8a060','#8a5a30','#d8c890','#5a3a20']),
+    skin:black?pick(['#6a4028','#5a3420','#7a4a2a']):pick(['#e8b896','#f0c8a8','#d8a880','#c89870']),band:Math.random()<.25,
+    desc:shuffle([...tr,...rn]).join(' ')};
+}
+function presentPlayer(shoe){
+  PLAYER=makePlayer();const P=PLAYER;
+  show(`<h2>IL MARCIATORE · ${YEAR}</h2><div class="pcard"><canvas id="pspr" width="12" height="18"></canvas><div class="pinfo">
+    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city}</div><p>${P.desc}</p></div></div>
+    <button class="main" id="go">AVANTI</button>`);
+  const c=$('pspr'),main=cx;cx=c.getContext('2d');cx.imageSmoothingEnabled=false;try{drawWalker(2,1,P,0,true,false);}finally{cx=main;}
+  $('go').addEventListener('click',()=>loading(shoe));
 }
 function loading(shoe){
   show(`<h2>PARTENZA DA ${ROUTE.c[0].toUpperCase()} · ${YEAR}</h2><p style="font-size:16px;max-width:420px">${pick(TIPS)}</p><p class="lbl">— Manuale del Marciatore, ed. ${YEAR}</p><button class="main" id="go">INIZIA</button>`);
