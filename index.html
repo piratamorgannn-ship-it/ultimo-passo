@@ -431,7 +431,7 @@ const SHOES={
  ginnastica:{n:'Scarpe da ginnastica',pro:'Leggere: fanno risparmiare un po\' di stamina.',con:'Le vesciche arrivano presto.',st:.95,ph:1,mh:1,blister:150},
  tennis:{n:'Scarpe da tennis',pro:'Affidabili, nessuna brutta sorpresa.',con:'Non eccellono in niente; le vesciche arrivano, tardi.',st:1,ph:1,mh:1,blister:480},
  mocassini:{n:'Mocassini',pro:'Comodi: corpo e mente si logorano meno.',con:'Prima o poi la suola si stacca.',st:1,ph:.7,mh:.75,breaks:true},
- trekking:{n:'Scarponi da trekking',pro:'Indistruttibili, niente vesciche.',con:'Pesanti: consumano più stamina.',st:1.18,ph:.9,mh:1,unlock:'Vinci una marcia per sbloccarli.'},
+ trekking:{n:'Scarponi da trekking',pro:'Indistruttibili, niente vesciche.',con:'Pesanti: consumano più stamina.',st:1.18,ph:.9,mh:1},
  running:{n:'Scarpe da corsa',pro:'???',con:'???',unlock:'Si sbloccano giocando.'},
 };
 const BISC=2;
@@ -1364,7 +1364,6 @@ function end(win){
    const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
    U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
    if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
-  if(win){const un=store.get('up_unlock',{});if(!un.trekking){un.trekking=true;store.set('up_unlock',un);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccati: Scarponi da trekking</p>';}}
   const K2=store.get('up_know',{}),un2=store.get('up_unlock',{});let tipMsg='';
   K2[S.shoe]=K2[S.shoe]||{};
   if(!K2[S.shoe].con){K2[S.shoe].con=true;tipMsg+=`<p>👟 Ora conosci il difetto di <b>${SHOES[S.shoe].n}</b>: ${SHOES[S.shoe].con}</p>`;}
