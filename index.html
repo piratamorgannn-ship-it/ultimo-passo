@@ -80,7 +80,8 @@ button:disabled{opacity:.35}
 #screen .choices button{text-align:left;padding:9px}
 #screen .choices button small{display:block;color:var(--dim);font-size:11px;margin-top:3px;line-height:1.35}
 #screen .choices button.sel{box-shadow:inset 0 0 0 2px var(--amber)}
-#screen .choices.pix{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
+#screen .choices.pix{grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+#screen .choices.pix button small{font-size:10px}
 #screen .choices.pix button{text-align:center;display:flex;flex-direction:column;align-items:center}
 #screen .choices.pix button:disabled{opacity:.6}
 #screen img.spr{image-rendering:pixelated;image-rendering:crisp-edges;margin:2px auto 6px;max-width:100%;height:auto}
@@ -152,6 +153,7 @@ button:disabled{opacity:.35}
         <button id="iBisc">🍪 BISCOTTI <span id="nBisc">2</span></button>
         <button id="iPan">🥪 PANINI <span id="nPan">3</span></button>
         <button id="iHam">🥩 HAMBURGER</button>
+        <button id="iCig">🚬 SIGARETTE <span id="nCig">5</span></button>
         <button id="iTub">🥫 TUBETTI <span id="nTub">0</span></button>
         <button id="iPee">🚽 LIBERATI</button>
       </div>
@@ -487,7 +489,7 @@ let S=null,PROFILE=null;
 function newRun(shoe,tr){
   fit();
   $('jukeHud').style.display=DEBUG?'inline':'none';
-  $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';
+  $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
   CAST.forEach(c=>npcs.push({...c,named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0}));
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
@@ -500,7 +502,7 @@ function newRun(shoe,tr){
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
      mode:'count',cd:0,cdStep:-1,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:Math.random()<.2,gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
-     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
+     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,cig:RUN_ITEMS.includes('sigarette')?5:0,smoked:0,pneumonia:false,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
   $('log').innerHTML='';$('bib').textContent='N.'+bib;$('yr').textContent=YEAR;
   log(`Marcia del ${YEAR}: da ${ROUTE.c[0]} a ${ROUTE.c[ROUTE.c.length-1]}. ${S.wx.label}.`,'var(--amber)');
@@ -535,6 +537,9 @@ const onTap=(id,fn)=>$(id).addEventListener('pointerdown',e=>{e.preventDefault()
 onTap('iDrink',()=>{if(S.drinkCd>0)return;S.hy=Math.min(100,S.hy+22);S.bl=Math.min(100,S.bl+16);S.drinkCd=6;sfx.eat();log('Chiedi la borraccia e bevi. La vescica se ne ricorderà.','var(--blue)');});
 onTap('iBisc',()=>{if(S.bisc<=0)return;S.bisc--;eat(10,8,0,'Un biscotto di mamma. Sa di casa.');});
 onTap('iPan',()=>{if(S.pan<=0)return;S.pan--;eat(18,6,0,'Pane, burro e marmellata. Ti torna il fiato.');});
+onTap('iCig',()=>{if(S.cig<=0)return;S.cig--;S.smoked++;S.mh=Math.min(100,S.mh+20);S.st=Math.min(S.maxSt,S.st+25);S.ph=Math.max(0,S.ph-10);tone(200,.3,'sine',.03,160);noise(.08,.4,undefined,900);
+  log(pick(['Accendi una sigaretta. Il mondo rallenta.','Il fumo ti riempie il petto. Ti senti invincibile.','Una boccata lunga. Le gambe tornano a girare.']),'var(--green)');
+  if(!S.pneumonia&&Math.random()<.08*S.smoked)setTimeout(()=>{if(!S||S.mode!=='play'||S.pneumonia)return;S.pneumonia=true;S.st=Math.max(0,S.st-30);S.ph=Math.max(0,S.ph-20);sfx.bad();buzz([200,80,200]);log('Tossisci sangue. Il petto brucia: è polmonite.','var(--red)');},rand(15,35)*1000);});
 onTap('iHam',()=>{if(S.ham<=0)return;S.ham--;eat(35,0,0,'Carne cruda. Ti fa schifo, ma senti la forza tornare.');
   if(Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
 onTap('iTub',()=>{if(S.tub<=0)return;S.tub--;eat(18,0,4,'Un tubetto di concentrato. Disgustoso, ma nutre.');});
@@ -694,7 +699,7 @@ function update(dt){
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
   S.maxSt=Math.max(40,100-S.t*.06);
-  let d=(.12+Math.max(0,S.speed-LIMIT)*.22)*sh.st;if(S.hill>0)d*=1.9;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)*.6);
+  let d=(.12+Math.max(0,S.speed-LIMIT)*.22)*sh.st;if(S.hill>0)d*=1.9;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
@@ -704,7 +709,7 @@ function update(dt){
   if(heat&&S.hy<15&&Math.random()<dt*.08){S.ph-=15;S.mh-=10;S.speed-=2;log('Colpo di calore. Il mondo gira.','var(--red)');sfx.bad();}
   if(!S.blister&&sh.blister&&S.t>sh.blister){S.blister=true;log('Senti le vesciche aprirsi nelle scarpe.','var(--red)');}
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log('La suola dei mocassini si stacca.','var(--red)');}
-  let pd=.03*sh.ph;if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&hour>=20)pd+=.03;
+  let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&hour>=20)pd+=.03;
   S.ph=clamp(S.ph-pd*dt,0,100);
   let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(hour>=20)md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
   S.mh=clamp(S.mh-md*dt,0,100);
@@ -803,7 +808,7 @@ function hud(){
   if(!DEBUG&&S.watch){const m=Math.floor(S.t)+7*60;a='🕐 '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
   if($('alert').textContent!==a)$('alert').textContent=a;
   $('padL').classList.toggle('next',S.nextFoot==='L');$('padR').classList.toggle('next',S.nextFoot==='R');
-  $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nPan').textContent=S.pan;$('iPan').disabled=S.pan<=0;$('iHam').disabled=S.ham<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
+  $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nPan').textContent=S.pan;$('iPan').disabled=S.pan<=0;$('iHam').disabled=S.ham<=0;$('nCig').textContent=S.cig;$('iCig').disabled=S.cig<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
 }
 
 /* ================= GRAFICA DI GIOCO ================= */
@@ -1143,6 +1148,7 @@ const PIXS={
  panini:['............','..oooooooo..','.opppppppppo','opppppppppppo','oyyyyyyyyyyo','oxxxxxxxxxxo','opppppppppo.','.oooooooooo.'],
  hamburger:['............','...oooooo...','..ommmmmmo..','.ommxmmmmmo.','.ommmmmxmmo.','.ommmmmmmmo.','..ommmmmmo..','...oooooo...'],
  orologio:['....oooo....','....onno....','...oooooo...','..owwwwwwo..','..owwoowwo..','..owwowwwo..','..owwwwwwo..','...oooooo...','....onno....','....oooo....'],
+ sigarette:['............','.ooooooooo..','.owwwwwwwo..','.owxxxxxwo..','.owxwwwxwo..','.owxxxxxwo..','.owwwwwwwo..','.ooooooooo..','..ow.ow.ow..','..oy.oy.oy..'],
  radio:['.....o......','......o.....','.oooooooooo.','.okkkkkkkko.','.okwkwkyyko.','.okkkkkyyko.','.okwkwkkkko.','.oooooooooo.'],
  zainetto:['...oooooo...','..ov....vo..','.oooooooooo.','.ovvvvvvvvo.','.ovvoooovvo.','.ovvvvvvvvo.','.ovvvvvvvvo.','.oooooooooo.'],
 };
@@ -1154,7 +1160,8 @@ function sprite(k,dark,sc=5){
 }
 const ITEMS={
  biscotti:{n:'Biscotti di mamma ×'+BISC,d:'Li ha fatti tua madre la sera prima.',always:true},
- radio:{n:'Radio portatile',d:'Una radiolina a pile. Fa compagnia con la musica del momento.',hint:'Si sblocca finendo una marcia in un modo particolare.'},
+ sigarette:{n:'Pacchetto di sigarette ×5',d:'Ti calmano e ti danno la forza di un toro. Per un po\'.'},
+ radio:{n:'Radio portatile',d:'Una radiolina a pile. Fa compagnia con la musica del momento.',hint:'Si sblocca in un modo particolare.'},
  panini:{n:'Panini burro e marmellata ×3',d:'Tre panini avvolti nella carta di giornale.'},
  hamburger:{n:'Hamburger crudo',d:'Carne cruda in un fagotto. Dà forza, se lo stomaco regge.'},
  orologio:{n:'Orologio del padre',d:'Il vecchio orologio di tuo padre. Segna ancora l\'ora giusta.'},
@@ -1176,7 +1183,7 @@ function pickItem(shoe){
   const un=store.get('up_unlock',{}),slots=(un.zainetto||DEBUG)?2:1,runs=store.get('up_runs',0);
   let sel=RUN_ITEMS.filter(itemOpen).slice(0,slots);
   const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">${slots>1?'🎒 Con lo zainetto hai 2 posti liberi.':'Hai un solo posto libero. 🔒 Zainetto (2 posti): finisci '+ZAINO_RUNS+' marce ('+Math.min(runs,ZAINO_RUNS)+'/'+ZAINO_RUNS+').'}</span></p>
-    <div class="choices pix">${Object.entries(ITEMS).map(([k,it])=>{const op=itemOpen(k);return `<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${op?'':'disabled'}>${sprite(k,!op)}<b>${op?it.n:'🔒 ???'}</b><small>${op?it.d:'Si sblocca finendo una marcia in un modo particolare.'}</small></button>`;}).join('')}</div>
+    <div class="choices pix" style="grid-template-columns:repeat(${Object.keys(ITEMS).length},minmax(0,1fr))">${Object.entries(ITEMS).map(([k,it])=>{const op=itemOpen(k);return `<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${op?'':'disabled'}>${sprite(k,!op,4)}<b>${op?it.n:'🔒 ???'}</b><small>${op?it.d:'Si sblocca in un modo particolare.'}</small></button>`;}).join('')}</div>
     <div class="row2"><button class="ghost" id="back">INDIETRO</button><button class="main" id="go">VAI ALLA PARTENZA</button></div>`);
     sc.querySelectorAll('.choices button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;
       if(sel.includes(k))sel=sel.filter(x=>x!==k);else{sel.push(k);if(sel.length>slots)sel.shift();}render();}));
@@ -1198,7 +1205,7 @@ function end(win){
    const unZ=store.get('up_unlock',{});if(runsN>=ZAINO_RUNS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}
    const deadN=S.npcs.filter(n=>!n.alive||n.leaving).length;
    const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
-   U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
+   U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
    if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
   if(win){const un=store.get('up_unlock',{});if(!un.trekking){un.trekking=true;store.set('up_unlock',un);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccati: Scarponi da trekking</p>';}}
   const K2=store.get('up_know',{}),un2=store.get('up_unlock',{});let tipMsg='';
@@ -1212,7 +1219,7 @@ function end(win){
   const t=S.tr,trait=v=>v>=62?'alto':v<=38?'basso':'medio';
   show(`<h1 style="color:${win?'var(--green)':'var(--red)'}">${win?'LA GRAZIA':'FINE'}</h1><h2>${win?'Sei l\'ultimo rimasto sulla strada.':S.cause}</h2>
   <p>Marcia del ${YEAR} (${ROUTE.c[0]} → ${ROUTE.c[ROUTE.c.length-1]}) · N.${S.bib} · <b>${hrs} ore ${mins} min</b> · <b>${fmt(S.km)} km</b> · posizione <b>${pos}ª</b>/${TOTAL}${S.t>best?' · <span style="color:var(--amber)">record</span>':''}</p>
-  ${S.infame?'<p style="color:var(--red)">Sei stato un INFAME.</p>':S.paladin?'<p style="color:var(--green)">Sei stato un PALADINO.</p>':''}${unlockMsg}${tipMsg}<table>${rows}</table>
+  ${unlockMsg}${tipMsg}<table>${rows}</table>
   <p class="lbl" style="font-size:11px">Profilo nascosto — fisico ${trait(t.f)}, nervi ${trait(t.n)}, stomaco ${trait(t.s)}, carisma ${trait(t.c)}</p>
   <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`);
   $('go').addEventListener('click',mapScreen);
