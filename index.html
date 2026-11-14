@@ -266,6 +266,10 @@ const CAST=[
  {id:'dragan',name:'Dragan',from:'Spalato',shirt:'#4a4a4a',hair:'#1a1210',skin:'#c89870'},
  {id:'pieter',name:'Pieter',from:'Rotterdam',shirt:'#6a9a5a',hair:'#c87838',skin:'#f0c8a8'},
  {id:'sofia',name:'Sofia',from:'Lisbona',shirt:'#a05a90',hair:'#2a1a10',skin:'#c89068'},
+ {id:'aleksej',name:'Aleksej',from:'Kazan\'',shirt:'#7a2a2a',hair:'#c8b070',skin:'#f0c8a8'},
+ {id:'colette',name:'Colette',from:'Lione',shirt:'#2a3a6a',hair:'#1a1210',skin:'#f0c8a8'},
+ {id:'seamus',name:'Seamus',from:'Dublino',shirt:'#3a7a4a',hair:'#b8502a',skin:'#f4d0b0'},
+ {id:'zsofia',name:'Zsófia',from:'Budapest',shirt:'#c8a040',hair:'#5a3a20',skin:'#e0b090'},
 ];
 const O=(l,r,s=0)=>({l,r,s});
 /* nomi e città casuali: ogni personaggio con nome mantiene il carattere, ma nome e provenienza cambiano a ogni marcia */
@@ -275,6 +279,10 @@ const CAST_POOL={
  ennio:{n:['Ennio','Gino','Tonino','Bruno','Renzo','Nando','Aldo','Carlo','Franco','Sandro'],c:['Torino','Genova','Bologna','Milano','Bergamo','Verona','Parma','Livorno']},
  dragan:{n:['Dragan','Goran','Zoran','Milan','Vuk','Ante','Dejan','Branko','Stipe','Nikola'],c:['Spalato','Zara','Mostar','Sarajevo','Niš','Skopje','Tirana','Podgorica']},
  pieter:{n:['Pieter','Joost','Bram','Wim','Koen','Jan','Sander','Hendrik','Ruud','Maarten'],c:['Rotterdam','Utrecht','Gand','Anversa','Groninga','Leida','Lovanio','Delft']},
+ aleksej:{n:['Aleksej','Dmitrij','Ivan','Fëdor','Kirill','Lev','Jurij','Saša','Grigorij','Pavel'],c:['Kazan\'','Samara','Volgograd','Saratov','Nižnij Novgorod','Perm\'','Tver\'','Jaroslavl\'']},
+ colette:{n:['Colette','Élise','Margaux','Juliette','Camille','Agnès','Odile','Solène','Manon','Hélène'],c:['Lione','Marsiglia','Lilla','Nantes','Bordeaux','Rennes','Tolosa','Digione']},
+ seamus:{n:['Seamus','Liam','Declan','Ciarán','Rory','Niall','Eoin','Padraig','Fergal','Conor'],c:['Dublino','Cork','Galway','Belfast','Limerick','Glasgow','Cardiff','Derry']},
+ zsofia:{n:['Zsófia','Réka','Anikó','Katalin','Ildikó','Eszter','Noémi','Judit','Erzsébet','Csilla'],c:['Budapest','Debrecen','Seghedino','Pécs','Győr','Cluj','Bratislava','Košice']},
  sofia:{n:['Sofia','Inês','Carmen','Lucía','Marta','Beatriz','Rosa','Teresa','Ana','Pilar'],c:['Lisbona','Porto','Coimbra','Siviglia','Valencia','Bilbao','Granada','Saragozza']},
 };
 const NAMES=['Lukas','Jonas','Felix','Emil','Anton','Oskar','Viktor','Pavel','Ivan','Sergej','Dmitri','Oleg','Yuri','Mikhail','Boris','Stefan','Tibor','László','Bence','Ferenc','Radu','Mihai','Vlad','Andrei','Bogdan','Nikos','Yannis','Kostas','Dimitris','Alexis','Matteo','Luca','Marco','Paolo','Giorgio','Davide','Pietro','Michele','Simone','Fabio','Hugo','Louis','Jules','Marcel','Pierre','Antoine','Lucien','Rémi','Diego','Pablo','Javier','Mateo','Álvaro','Iker','Rui','Tiago','Duarte','João','Nuno','Sean','Liam','Connor','Owen','Rhys','Finn','Lars','Nils','Erik','Olav','Sven','Aksel','Mats','Jakub','Ondřej','Tomáš','Marek','Kamil','Szymon','Arto','Juho','Eero','Ville','Anja','Lena','Mila','Nina','Eva','Klara','Olga','Irina','Vera','Daria','Ivana','Jana','Petra','Zofia','Hanna','Ewa','Elena','Giulia','Chiara','Sara','Marie','Camille','Léa','Chloé','Lucia','Elena','Nuria','Joana','Rita','Sigrid','Maja','Saga','Aino','Kaisa','Ilona','Réka','Ioana','Maria','Katya','Nadia','Tanja','Dunja','Mira'];
@@ -533,10 +541,11 @@ function newRun(shoe,tr){
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
   const usedN=new Set(),bib=PLAYER?PLAYER.bib:Math.floor(rand(1,TOTAL+1)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);return n;};
-  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
+  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(250,760),ph:rand(0,4),leaving:0});});
+  {const nm=npcs.filter(n=>n.named).sort(()=>Math.random()-.5);nm.slice(0,4).forEach(n=>n.elimAt=rand(780,880));}
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);
-    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
+    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,760),ph:rand(0,4),leaving:0});}
   const sh=SHOES[shoe];
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
@@ -551,7 +560,7 @@ function newRun(shoe,tr){
   {const lo=offMin(),hi=offMax();for(let k=0;k<6;k++)S.groups.push({a:rand(lo*.7,hi*.85),v:rand(-1.2,1.2)});S.npcs.forEach(n=>{n.g=Math.floor(rand(0,6));n.jit=rand(-3.5,3.5);n.warns=0;});}
   S.zplan=buildPlan();S.zi=0;S.zNext=S.zplan[0].dur;S.zones=[{z:S.zplan[0].z,s:0}];log(zoneMsg(S.zplan[0],true),'var(--dim)');
   S.skin=PLAYER?PLAYER.skin:S.black?pick(['#6a4028','#5a3420','#7a4a2a']):'#e8b896';S.me=PLAYER?{shirt:PLAYER.shirt,hair:PLAYER.hair,skin:PLAYER.skin,band:PLAYER.band}:null;
-  {const gs=S.npcs.filter(n=>!n.named&&!n.bigot);for(let k=0;k<2;k++){const v=pick(gs.filter(x=>!x.villain));v.villain=true;v.rel=-20;v.from=pick(['Kassel','Odessa','Linz','Lilla','Cracovia','Bilbao']);v.elimAt=Math.max(v.elimAt,rand(450,950));}}
+  {const gs=S.npcs.filter(n=>!n.named&&!n.bigot);for(let k=0;k<2;k++){const v=pick(gs.filter(x=>!x.villain));v.villain=true;v.rel=-20;v.from=pick(['Kassel','Odessa','Linz','Lilla','Cracovia','Bilbao']);v.elimAt=Math.max(v.elimAt,rand(450,770));}}
   if(S.black||S.gay){const gs=S.npcs.filter(n=>!n.named&&!n.villain);for(let k=0;k<2;k++){const b=pick(gs);b.bigot=true;b.rel=-30;b.from=pick(['Vienna','Lione','Breslavia','Graz','Brno','Tolosa']);b.elimAt=Math.max(b.elimAt,rand(300,700));}}
   if(S.gay)log('“Penso a lui, che mi ha salutato alla stazione senza potermi abbracciare.”','var(--dim)','th');
   if(S.radio)log('Accendi la radiolina: c\'è '+(ERA.r?ERA.r.label:'musica')+'. Ti senti meno solo.','var(--green)');
@@ -672,6 +681,7 @@ function choice(title,text,opts,dur,def){
   sfx.tick();
 }
 function startDialog(){
+  if(progress()>.75){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n!==S.lastTalk);if(!c.length)return;const near=c.filter(isNear);const npc=near.length?pick(near):pick(c);if(!nearOr(npc))return false;openDlg(npc,freshPick(LATE),'mad');return true;}
   const extra=n=>n.stage>=DLG[n.id].length&&n.stage<DLG[n.id].length+5&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
   const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<DLG[n.id].length||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
   const near=cands.filter(isNear),app=cands.find(n=>n.appT>S.t);const npc=near.length?pick(near):(app||pick(cands));if(!nearOr(npc))return false;const d=npc.stage<DLG[npc.id].length?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
@@ -1201,7 +1211,8 @@ const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
 Cinquanta ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
-L'ultimo rimasto in piedi ottiene la Grazia: salva la propria vita e libera la sua terra dalle requisizioni per dieci anni.
+L'ultimo rimasto in piedi ottiene la Grazia: ha salva la vita e, per un anno intero, la sua terra riceve ciò che la Federazione nega a tutte le altre: pane, medicine, carbone, e nessuna requisizione.
+Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stessa fame, la stessa possibilità. Una su cinquanta.
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
@@ -1439,6 +1450,48 @@ fit();titleScreen();
 requestAnimationFrame(frame);
 
 /* ================= FRASI E DIALOGHI AGGIUNTIVI ================= */
+
+/* ---- nuovi personaggi: il mistico russo, la ribelle francese, l'attaccabrighe irlandese, l'ansiosa ungherese ---- */
+DLG.aleksej=[
+ {t:"Pace a te, numero {N}. Io sono {ME}. Ho pregato per tutti stanotte. Anche per te, senza conoscerti.",o:[O("Grazie, {ME}. Serve.",14),O("Prega per te, che ne hai bisogno.",-10),O("Non credo in queste cose.",2)]},
+ {t:"A {CITY} mia nonna accende una candela per ogni marciatore. Cinquanta candele. Stasera ne spegnerà tante.",o:[O("Che ne accenda una in più per te.",14),O("Le candele non fermano i proiettili.",-8),O("Rimani in silenzio con lui.",8)]},
+ {t:"Ho digiunato tre giorni prima della Marcia. Pensavo di arrivare puro. Adesso ho solo fame.",o:[O("Gli passi qualcosa da mangiare.",20,-6),O("«Che idea stupida.»",-12),O("«La fame passa. Tieni duro.»",8)]},
+ {t:"Credi che chi muore qui vada in un posto migliore? Oppure resta su questa strada, a camminare per sempre?",o:[O("«In un posto migliore.»",12),O("«Resta qui. Con noi.»",4),O("«Non c'è niente dopo.»",-6)]},
+ {t:"Ho visto un soldato piangere, stamattina. Di nascosto. Anche loro sono anime, {N}.",o:[O("«Allora che smettano di sparare.»",8),O("«Non mi interessa la loro anima.»",-6),O("«Hai un cuore troppo grande.»",14)]},
+ {t:"Se arrivo in fondo, mi faccio monaco. Se arrivi tu, accendimi una candela. Promesso?",o:[O("«Promesso. Una candela grande.»",18),O("«Arriveremo tutti e due.»",12),O("«Non faccio promesse.»",-8)]}];
+DLG.colette=[
+ {t:"Tu. Sì, tu, {N}. Sono {ME}, da {CITY}. Lo sai che questa Marcia è un crimine, vero? Dillo ad alta voce.",o:[O("«È un crimine.»",14),O("«Abbassa la voce, ci senti tutti.»",4),O("«Io cammino e basta.»",-8)]},
+ {t:"Scrivevo poesie sui muri della facoltà. Contro il Consiglio. Indovina perché proprio io sono stata estratta.",o:[O("«Non era a sorte, allora.»",14),O("«Te la sei cercata.»",-14),O("«Recitami una poesia.»",12)]},
+ {t:"Se vinco, salgo sul palco della Grazia e sputo in faccia al generale. Davanti alle telecamere.",o:[O("«Ti tengo il microfono.»",14),O("«Ti ammazzerebbero un secondo dopo.»",4),O("«Sei pazza.»",-6)]},
+ {t:"Ho un fratellino che crede che io sia in vacanza. Ho lasciato una lettera per quando sarà grande.",o:[O("«Gliela leggerai tu.»",16),O("«Cosa c'è scritto?»",10),O("«Non pensarci, cammina.»",-4)]},
+ {t:"Odio il silenzio di questa fila. Cinquanta persone e nessuno urla. Perché non urliamo tutti insieme?",o:[O("«Perché ci sparerebbero.»",4),O("«Urlo con te. Al tre.»",16,-4),O("«Urla da sola.»",-10)]},
+ {t:"Promettimi una cosa: se resto indietro, racconta a qualcuno che ho detto di no. Che non ero d'accordo.",o:[O("«Lo racconterò a tutti.»",18),O("«Lo dirai tu stessa.»",12),O("«Nessuno ascolterebbe.»",-10)]}];
+DLG.seamus=[
+ {t:"Che hai da guardare, {N}? Ah, niente. Sono {ME}. Facevo a pugni per soldi a {CITY}. Qui almeno non mi pagano per prenderle.",o:[O("«Piacere, {ME}.»",10),O("«Stai lontano da me.»",-12),O("«Ne hai prese tante, si vede.»",4)]},
+ {t:"Ho un debito con gente brutta. Se muoio qui, almeno non mi trovano. Ironico, eh?",o:[O("Ridi con lui.",12,2),O("«Non è divertente.»",-4),O("«Se vinci, paghi tutti.»",8)]},
+ {t:"Quel tipo là davanti mi ha guardato storto. Lo stendo alla prossima curva. Mi copri?",o:[O("«Lascia perdere, ti ammoniscono.»",10),O("«Ti copro.»",8,-4),O("«Arrangiati.»",-10)]},
+ {t:"Mia madre è morta quando avevo sei anni. Mi ha cresciuto un pub. Davvero: tutti, al pub.",o:[O("«Allora hai tanti padri.»",14),O("«Mi dispiace.»",10),O("«Si vede.»",-10)]},
+ {t:"Tieni, {N}. È un sasso liscio, della spiaggia di casa. Porta fortuna. Me lo ridai al traguardo.",o:[O("Lo prendi e lo stringi.",18,3),O("«Tienilo tu, ne hai più bisogno.»",12),O("«Non credo alla fortuna.»",-6)]},
+ {t:"Ascolta: io non so parlare. So solo menare. Ma se qualcuno ti tocca, se la vede con me. Chiaro?",o:[O("«Chiaro. Grazie, Seamus.»".replace('Seamus','{ME}'),18),O("«So difendermi da solo.»",2),O("«Non ho bisogno di un cane da guardia.»",-14)]}];
+DLG.zsofia=[
+ {t:"Scusa, {N}... sono {ME}. Hai contato quanti siamo? Io sì. Quarantanove più me. Più te, cioè... scusa. Parlo troppo quando ho paura.",o:[O("«Parla pure. Mi fa compagnia.»",14),O("«Sì, parli troppo.»",-10),O("«Respira, {ME}.»",10)]},
+ {t:"Mio padre è medico a {CITY}. Mi ha insegnato a contare le pulsazioni. La mia è a centoquaranta. È tanto?",o:[O("«È normale, camminiamo da ore.»",12),O("«Smettila di misurarti.»",4),O("«È tantissimo.»",-10)]},
+ {t:"Ho una lista di cose che non ho mai fatto. Ballare. Guidare. Baciare qualcuno. Tu ne hai una?",o:[O("Gliela racconti.",14),O("«Le farai tutte.»",12),O("«Che lista inutile.»",-12)]},
+ {t:"Se svengo, mettimi le gambe in alto. Me l'ha detto mio padre. Tu lo farai? Anche se ci sparano?",o:[O("«Lo farò.»",16),O("«Non svenirai.»",8),O("«Non posso fermarmi per te.»",-12)]},
+ {t:"Ho calcolato che ci sono due possibilità su cento che io arrivi in fondo. Due. Non è zero, vero?",o:[O("«Non è zero. È tantissimo.»",16),O("«I numeri non contano qui.»",8),O("«È quasi zero.»",-12)]},
+ {t:"Grazie di avermi ascoltata, {N}. Nessuno mi ascolta mai fino alla fine.",o:[O("«Ti ascolterò fino alla fine.»",18),O("«Sei una persona bella.»",14),O("«Non ti ho ascoltata, in realtà.»",-14)]}];
+/* ---- dialoghi personali della parte finale (restano in pochi): malati, depressi, deliri, mistici ---- */
+const LATE=[
+ {t:"Non ho più niente da dire, {N}. Neanche a me stesso. Cammino perché le gambe non sanno fare altro.",o:[Q("«Allora parlo io per tutti e due.»",{r:8,m:2}),Q("«Neanche io.»",{r:4,m:-6}),Q("Gli batti una mano sulla spalla.",{r:6,m:0})]},
+ {t:"Stanotte ho visto Dio. Era un vecchio seduto sul guardrail. Ci contava, uno a uno, e sorrideva.",o:[Q("«Che numero ha detto per me?»",{r:5,m:-5}),Q("«Era un soldato, non Dio.»",{r:-2,m:3}),Q("«Speriamo che sappia contare bene.»",{r:6,m:-1})]},
+ {t:"Mi sono morso la lingua per sentire qualcosa. Sa di ferro. Vuoi provare anche tu?",o:[Q("«Smettila. Ti fai male.»",{r:2,m:2}),Q("Ti mordi la lingua anche tu.",{r:6,m:-8}),Q("Ti allontani di un passo.",{r:-6,m:-2})]},
+ {t:"Mia madre cammina davanti a noi. Ha il grembiule della cucina. Perché nessuno la ferma?",o:[Q("«Non c'è nessuno, guarda bene.»",{r:-1,m:3}),Q("«Salutala da parte mia.»",{r:7,m:-6}),Q("Guardi avanti e per un attimo la vedi.",{r:5,m:-9})]},
+ {t:"Ho fatto due conti: anche se vinco, chi mi aspetta è già morto dentro. Che senso ha?",o:[Q("«Il senso sei tu che cammini.»",{r:8,m:3}),Q("«Nessuno.»",{r:2,m:-7}),Q("«Chiedimelo all'arrivo.»",{r:5,m:0})]},
+ {t:"La strada è una preghiera. Ogni passo una parola. Se sbagli il passo, sbagli la preghiera.",o:[Q("«Allora preghiamo bene.»",{r:7,m:-2}),Q("«È solo asfalto.»",{r:-3,m:3}),Q("Reciti qualcosa sottovoce, a tempo coi passi.",{r:6,m:-4})]},
+ {t:"Ho deciso: quando cado, rido. Così si spaventano loro, per una volta. Ti piace il piano?",o:[Q("«È un bel piano.»",{r:6,m:-4}),Q("«Non cadrai.»",{r:4,m:2}),Q("«Fai schifo, lo sai?»",{r:-8,m:-2})]},
+ {t:"Il blindato è un animale. Ha fame. Se gli diamo qualcuno, forse si addormenta.",o:[Q("«Non diamo niente a nessuno.»",{r:4,m:3}),Q("«Chi gli diamo?»",{r:3,m:-8}),Q("Guardi il blindato: respira davvero.",{r:4,m:-6})]},
+ {t:"Ti ho odiato per ore. Adesso non ho più forza neanche per quello. Che tristezza, eh?",o:[Q("«Allora riposiamoci dall'odio.»",{r:10,m:3}),Q("«Io invece ti odio ancora.»",{r:-10,m:-2}),Q("Non rispondi.",{r:0,m:-3})]},
+ {t:"Quando moriamo diventiamo strada. Per questo è così dura: è fatta di tutti quelli venuti prima di noi.",o:[Q("«Allora camminiamo piano. Con rispetto.»",{r:7,m:-3}),Q("«È fatta di catrame. Basta.»",{r:-2,m:3}),Q("Abbassi gli occhi sull'asfalto e chiedi scusa.",{r:6,m:-6})]}];
 DLG.marek.push(
  {t:"Sai cosa faremo, se usciamo vivi? Una barca. Io e te. Aringhe fino alla vecchiaia.",o:[O("Io tengo il timone.",14),O("Odio il pesce.",2),O("Smettila di sognare.",-10)]},
  {t:"Ho una ragazza, Agata. Le ho detto che tornavo per Natale. Ho mentito, vero?",o:[O("Non hai mentito. Hai sperato.",16),O("Forse sì.",-4),O("Non pensarci adesso.",6)]},
@@ -1529,7 +1582,7 @@ Object.assign(DEEP,{
 });
 /* ---- rimorso: un fraterno ti aveva salvato e tu l'hai lasciato morire ---- */
 const GUILT=["“{X} mi ha rimesso in piedi. E io l'ho lasciat{o} crepare.”","“Sono un assassino. Non serve un fucile per esserlo.”","“Ingrato. Ecco cosa sono. Un ingrato con le gambe.”","“Era {mio} {FR}. {Mio} {FR}! E io ho guardato altrove.”","“Mi sento una merda. Ogni passo è un passo che gli ho rubato.”","“Perché sono ancora vivo? Non me lo merito.”","“Sento ancora la sua mano sotto il braccio. Mi ha tirato su. Io no.”","“Se ci fosse un dio, mi fermerebbe adesso.”","“Smettila di guardarmi, {X}. Sei mort{o}. Smettila.”","“Ho scambiato la sua vita con la mia. Pessimo affare, {X}.”"];
-const isFem=n=>n.id==='ilse'||n.id==='sofia';
+const isFem=n=>['ilse','sofia','colette','zsofia'].includes(n.id);
 function guiltFill(t,n){const f=isFem(n);return t.replace(/\{X\}/g,n.name).replace(/\{o\}/g,f?'a':'o').replace(/\{FR\}/g,f?'sorella':'fratello').replace(/\{mio\}/g,f?'mia':'mio').replace(/\{Mio\}/g,f?'Mia':'Mio');}
 function betray(n){
   S.mh=Math.max(0,S.mh-30);S.guiltN=n;S.guiltT=S.t+120;S.guiltNext=S.t+4;sfx.bad();buzz([300,100,300]);
