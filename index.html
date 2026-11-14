@@ -420,8 +420,13 @@ const QUIZ=[
 const TR='fnsc';
 function makeProfile(ans){
   const tr={f:50,n:50,s:50,c:50};
-  ans.forEach(([qi,a])=>{const[,k,sg]=QUIZ[qi],k2=TR[(qi*7+3)%4];
-    if(a===0){tr[k]+=sg*7;tr[k2]+=(qi%2?3:-3);}else if(a===1){tr[k]-=sg*4;tr[k2]-=(qi%2?3:-3);}else{tr.n-=2;tr[k2]+=2;}});
+  /* ogni risposta dà sempre un PRO su un tratto e un CONTRO su un altro tratto */
+  const other=(k,qi,sh)=>{const o=[...TR].filter(x=>x!==k);return o[(qi*7+sh)%3];};
+  ans.forEach(([qi,a])=>{const[,k,sg]=QUIZ[qi];let pro,con,pv,cv;
+    if(a===0){pv=7;cv=4;if(sg>0){pro=k;con=other(k,qi,1);}else{con=k;pro=other(k,qi,1);}}
+    else if(a===1){pv=4;cv=4;if(sg>0){con=k;pro=other(k,qi,2);}else{pro=k;con=other(k,qi,2);}}
+    else{pv=3;cv=3;con='n';pro=k!=='n'?k:other('n',qi,0);}
+    tr[pro]+=pv;tr[con]-=cv;});
   for(const k in tr)tr[k]=clamp(tr[k],10,90);
   return tr;
 }
@@ -1221,26 +1226,27 @@ function intro(){
   show(`<div class="crawl" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div>`,'intro');
   const el=$('itx');el.textContent=INTRO;
   el.addEventListener('animationend',()=>{const k=sc.querySelector('.skip');if(k)k.textContent='tocca lo schermo per continuare';});
-  sc.onclick=()=>mapScreen();
+  sc.onclick=()=>quiz();
 }
 function mapScreen(){
   MENU_MUSIC=true;
   setYear(DEBUG_YEAR?DEBUG_YEAR+store.get('up_runs',0)-DEBUG_RUN0:1980+store.get('up_runs',0));
   ROUTE=pick(ROUTES);const wx=WX[ROUTE.wx];
   show(`<div class="mapwrap"><canvas id="mcv" width="${MW}" height="${MH}"></canvas><div class="minfo"><h2>LA MARCIA DEL</h2><div class="yr">${YEAR}</div><h2 style="margin-top:6px">${ERA.name.toUpperCase()} · VIA ${ROUTE.n.toUpperCase()}</h2>
-  <p class="rt">${ROUTE.c.join(' → ')}</p><p>≈ ${routeKm(ROUTE)} km di strada</p><p><span class="lbl">Meteo previsto:</span><br>${wx.label}</p><button class="main" id="go">AL TEST ATTITUDINALE</button></div></div>`);
+  <p class="rt">${ROUTE.c.join(' → ')}</p><p>≈ ${routeKm(ROUTE)} km di strada</p><p><span class="lbl">Meteo previsto:</span><br>${wx.label}</p><button class="main" id="go">ALL'EQUIPAGGIAMENTO</button></div></div>`);
   const c=$('mcv');let p=0;const t0=performance.now();
   const an=()=>{if(!document.body.contains(c))return;p=Math.min(1,(performance.now()-t0)/1800);drawMap(c,p);if(p<1)requestAnimationFrame(an);};an();
-  $('go').addEventListener('click',quiz);
+  $('go').addEventListener('click',equip);
 }
 function quiz(){
+  MENU_MUSIC=true;
   const pool=QUIZ.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0,QPER),ans=[];let i=0;
-  const finish=()=>{PROFILE=makeProfile(ans);equip();};
+  const finish=()=>{PROFILE=makeProfile(ans);mapScreen();};
   const ask=()=>{
     if(i>=pool.length)return finish();
     show(`<h2>TEST ATTITUDINALE · ${i+1}/${QPER}</h2><p style="font-size:18px;font-weight:700;min-height:54px;max-width:620px">${QUIZ[pool[i]][0]}</p>
     <div class="row3">${['VERO','FALSO','NON SO'].map((l,j)=>`<button data-j="${j}">${l}</button>`).join('')}</div>
-    <button class="ghost" id="skip">SALTA IL TEST</button><p class="lbl" style="font-size:11px;margin-top:10px">Le risposte influenzano caratteristiche che non vedrai.</p>`);
+    <button class="ghost" id="skip">SALTA IL TEST</button><p class="lbl" style="font-size:11px;margin-top:10px">Ogni risposta ti dà un pregio e un difetto nascosti.</p>`);
     sc.querySelectorAll('.row3 button').forEach(b=>b.addEventListener('click',()=>{ans.push([pool[i],+b.dataset.j]);i++;ask();}));
     $('skip').addEventListener('click',()=>{for(;i<pool.length;i++)ans.push([pool[i],Math.floor(Math.random()*3)]);finish();});
   };ask();
@@ -1378,7 +1384,7 @@ function end(win){
   ${unlockMsg}${tipMsg}<table>${rows}</table>
   <p class="lbl" style="font-size:11px">Profilo nascosto — fisico ${trait(t.f)}, nervi ${trait(t.n)}, stomaco ${trait(t.s)}, carisma ${trait(t.c)}</p>
   <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`);
-  $('go').addEventListener('click',mapScreen);
+  $('go').addEventListener('click',quiz);
   $('home').addEventListener('click',()=>{const c=$('chatb'),d=$('chatd');if(c)c.style.display='none';if(d)d.style.display='none';titleScreen();});
 }
 
