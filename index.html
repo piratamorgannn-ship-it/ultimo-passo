@@ -332,7 +332,7 @@ const SHOUT_F=["Tieni duro, {N}!","Non mollare!","Ci vediamo al traguardo!","Asp
 const SHOUT_N=["Ehi, {N}! Quanto manca?","Qualcuno ha dell'acqua?","Non rallentare, {N}!","Occhio al cingolato!","Ehi tu! Numero {N}!"];
 const SHOUT_H=["Spero che tu cada, {N}!","Ti vedo zoppicare!","Sei il prossimo, {N}!","Rallenta, dai, rallenta!"];
 function shout(n,txt){if(!txt){const r=n.rel||0;txt=pick(r>=15?SHOUT_F:r<=-15?SHOUT_H:SHOUT_N).replace(/\{N\}/g,S.bib);}S.chat={n,s:txt.toUpperCase(),t:3.2,shout:true};log(n.name+' urla da lontano: «'+txt+'»','var(--dim)');}
-const isNear=n=>Math.abs(n.off)<=14;
+const isNear=n=>Math.abs(n.off)<=18;
 function nearOr(n){if(isNear(n))return true;n.appT=S.t+25;if(S.shoutCd<=S.t){S.shoutCd=S.t+8;shout(n);}return false;}
 function madTalk(){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving);if(!c.length)return false;const n=pick(c);if(!nearOr(n))return true;openDlg(n,pick(MAD),'mad');return true;}
 /* domanda curiosa (solo se il giocatore è gay e non l'ha ancora detto): la risposta può rivelarlo */
@@ -523,7 +523,7 @@ function newRun(shoe,tr){
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
   const usedN=new Set(),bib=PLAYER?PLAYER.bib:Math.floor(rand(1,TOTAL+1)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);return n;};
-  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
+  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);
     let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
@@ -531,7 +531,7 @@ function newRun(shoe,tr){
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
-     mode:'count',cd:0,cdStep:-1,calls:[],callCur:null,shoutCd:0,groups:[],regroupT:8,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:PLAYER?PLAYER.black:Math.random()<.2,gay:PLAYER?PLAYER.gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
+     mode:'count',cd:0,cdStep:-1,collapsed:false,collapses:0,calls:[],callCur:null,shoutCd:0,groups:[],regroupT:8,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:PLAYER?PLAYER.black:Math.random()<.2,gay:PLAYER?PLAYER.gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
      bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,cig:RUN_ITEMS.includes('sigarette')?5:0,smoked:0,pneumonia:false,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
@@ -607,6 +607,7 @@ function startQTE(type,who){
    isteria:{dur:4,need:7,title:'PANICO',sub:'Il cuore impazzisce. Respira.',btn:'RESPIRA'},
    blocco:{dur:4,need:10,title:'LE GAMBE NON SI MUOVONO',sub:'Tutti partono. Tu no. Sbloccati!',btn:'MUOVITI'},
    sgambetto:{dur:1.6,title:(who||'').toUpperCase()+' TI FA LO SGAMBETTO!',sub:'Salta quando il segno è nel verde',btn:'SALTA',timing:true},
+   rialzati:{dur:3,need:Math.min(45,25+5*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca il più veloce possibile!',btn:'RIALZATI'},
    salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
   if(q.timing){q.z0=rand(.45,.65);q.z1=q.z0+.17;}
@@ -621,6 +622,11 @@ function qteHit(){const q=S.qte;if(!q)return;
 const friends=()=>S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=40);
 function endQTE(ok){
   const q=S.qte;S.qte=null;hideBox();const G='var(--green)',Rd='var(--red)';
+  if(q.type==='rialzati'){
+    if(ok){sfx.good();const k=S.collapsed;S.collapsed=false;if(k==='mh')S.mh=Math.max(S.mh,30);else S.ph=Math.max(S.ph,30);S.st=Math.max(S.st,30);S.mh=Math.max(S.mh,5);S.ph=Math.max(S.ph,5);S.underT=0;
+      log(k==='mh'?'Ti rialzi tremando. Il respiro torna, a fatica.':'Ti rialzi barcollando. Le gambe reggono, per ora.','var(--green)');}
+    else{sfx.bad();log('Non riesci ad alzarti.','var(--red)');S.rT=0;}
+    return;}
   if(q.type==='salva'){const n=S.saving;if(!n)return;
     if(ok){sfx.good();log('Lo tieni su. Un passo, poi un altro.',G);}else{sfx.bad();buzz(120);n.saveFail=true;log('Rallenti per reggerlo.',Rd);addWarn();}
     n.saveLeft--;
@@ -657,7 +663,7 @@ function choice(title,text,opts,dur,def){
 function startDialog(){
   const extra=n=>n.stage>=DLG[n.id].length&&n.stage<DLG[n.id].length+5&&Math.abs(n.rel)>=40&&Math.abs(n.rel)<80;
   const cands=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&(n.stage<DLG[n.id].length||extra(n))&&n!==S.lastTalk);if(!cands.length)return;
-  const npc=pick(cands);if(!nearOr(npc))return;const d=npc.stage<DLG[npc.id].length?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
+  const near=cands.filter(isNear),app=cands.find(n=>n.appT>S.t);const npc=near.length?pick(near):(app||pick(cands));if(!nearOr(npc))return false;const d=npc.stage<DLG[npc.id].length?DLG[npc.id][npc.stage]:pick(npc.rel>0?BOND:FEUD);
   openDlg(npc,d,'base');
 }
 function deepTalk(){
@@ -731,6 +737,7 @@ function update(dt){
   let cap=5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100);
   if(S.peeing>0){cap=Math.min(cap,6.9);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
+  if(S.collapsed)cap=0;
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?.94:1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
@@ -777,7 +784,7 @@ function update(dt){
     {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;}
      if(n.tempW&&S.t-n.tempW>60&&w>40){n.warns=0;n.tempW=0;}}
     n.v+=(rand(6.5,7.3)-n.v)*dt*.3;
-    let tgt=(S.groups[n.g]?S.groups[n.g].a:0)+n.jit;if(n.warns>=1&&!n.tempW)tgt=Math.min(tgt,lo*.8+n.jit);if(n.appT>S.t)tgt=n.off>=0?4:-4;
+    let tgt=n.named?(n.home=(n.home==null?rand(-14,14):clamp(n.home+rand(-3,3)*dt,-16,16))):(S.groups[n.g]?S.groups[n.g].a:0)+n.jit;if(n.warns>=1&&!n.tempW)tgt=Math.min(tgt,lo*.8+n.jit);if(n.appT>S.t)tgt=n.off>=0?4:-4;
     let tv=S.speed+(tgt-n.off)*.25+(n.v-6.9)*.3;if(S.dlg&&S.dlg.npc===n)tv=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)tv=S.speed+(n.buddy-n.off)*.5;
     n.off=clamp(n.off+(tv-S.speed)*dt*.9,lo,hi);
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=80&&!n.saveAsked&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
@@ -792,12 +799,13 @@ function update(dt){
   if(S.qte){const q=S.qte;q.t+=dt;const tb=$('qt');if(tb)tb.style.width=(100-q.t/q.dur*100)+'%';if(q.timing){const mk=$('mk');if(mk)mk.style.left=(clamp(q.t/q.dur,0,1)*100)+'%';}if(q.t>=q.dur)endQTE(false);}
   else if(S.dlg){S.dlg.t+=dt;const tb=$('dt');if(tb)tb.style.width=(100-S.dlg.t/S.dlg.dur*100)+'%';
     if(S.dlg.t>=S.dlg.dur){if(S.dlg.choice){const g=S.dlg;S.dlg=null;hideBox();g.opts[g.def].f();}else answer(-1);}}
+  else if(S.collapsed){S.rT=(S.rT||0)+dt;if(S.rT>1.2){S.rT=0;startQTE('rialzati');}}
   else{if(S.t>=S.nextEvent){randomEvent();S.nextEvent=S.t+rand(13,22);}else if(S.t>=S.nextBigot&&(S.black||S.outed)&&bigotTalk()){S.nextBigot=S.t+rand(70,120);}
     else if(S.gay&&!S.outed&&!S.loveAsked&&S.t>=S.nextLoveQ&&loveQ()){S.loveAsked=true;}
     else if(S.t>=S.nextVillain&&villainAct()){S.nextVillain=S.t+rand(55,95);}
     else if(progress()>.8&&S.t>=S.nextMad&&madTalk()){S.nextMad=S.t+rand(25,40);}
     else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(35,55);}
-    else if(S.t>=S.nextDlg){startDialog();S.nextDlg=S.t+rand(18,28);}}
+    else if(S.t>=S.nextDlg){S.nextDlg=S.t+(startDialog()===false?5:rand(14,22));}}
   if(S.hill>0){S.hill-=dt;if(S.hill<=0){S.desc=7;log('In cima. Ora si scende.','var(--green)');}}if(S.desc>0)S.desc-=dt;if(S.rain>0)S.rain-=dt;
   if(S.infame){S.swT-=dt;if(S.swT<=0){S.swT=rand(4,9);const d=rand(-9,6);S.mh=clamp(S.mh+d,0,100);if(d<-5)log(pick(['“Cosa ho fatto?”','“Non guardatemi così.”','“Ho fatto quello che dovevo. Vero?”','“Li sento ridere di me.”']),'var(--red)','th');}}
   if(!S.dyingNpc&&S.npcs.filter(n=>n.alive&&!n.leaving).length+1<=6){const c=S.npcs.filter(n=>n.alive&&!n.leaving);if(c.length){S.dyingNpc=pick(c);if(S.dlg&&S.dlg.npc===S.dyingNpc){S.dlg=null;hideBox();}if(S.chat&&S.chat.n===S.dyingNpc)S.chat=null;}}
@@ -811,10 +819,9 @@ function update(dt){
   if(S.rain>0)for(let i=0;i<4;i++)S.drops.push({x:rand(0,W+40),y:-4});
   S.drops.forEach(p=>{p.x-=60*dt;p.y+=180*dt;});S.drops=S.drops.filter(p=>p.y<H);
   if(S.mode!=='play')return;
-  if(S.ph<=0)return die('Sincope: il tuo fisico (PH) è arrivato a zero. Crolli sull\'asfalto e non ti rialzi.',false);
+  if(!S.collapsed&&S.ph<=0)return collapse('ph');
   if(S.mh<15&&!S.mhWarned){S.mhWarned=true;log('“Non ce la faccio più. Sto per crollare.” (la mente è al limite)','var(--red)','th');buzz([80,80,80]);}else if(S.mh>30)S.mhWarned=false;
-  if(S.mh<=0){S.panicDeath=true;S.balloon={s:'CROLLO MENTALE',t:3};log('LA MENTE CEDE. Ti siedi in mezzo alla strada. Non è un richiamo: i soldati sparano a chi si ferma.','var(--red)');
-    return die('Crisi di panico: la tua mente (MH) è arrivata a zero. Ti sei seduto in mezzo alla strada e hanno sparato. Non sono stati i richiami.',true);}
+  if(!S.collapsed&&S.mh<=0)return collapse('mh');
   if(S.npcs.every(n=>!n.alive))end(true);
 }
 const gunPos=()=>ERA.veh==='drone'?[S.truckX+20,76]:[S.truckX+27,93];
@@ -842,7 +849,17 @@ function addWarn(){
   S.warn++;S.lastWarnT=S.t;S.mh-=6;sfx.warn();buzz([120,60,120,60,120]);
   S.balloon={s:'N.'+S.bib+' RICHIAMO!',t:2.6};
   log(`RICHIAMO ${S.warn}/3 — "Numero ${S.bib}!"`,'var(--red)');
-  if(S.warn>=3)die('Terzo richiamo (3/3). Non avvisano più.',true);
+  if(S.warn>=3){if(S.collapsed==='mh'){S.panicDeath=true;die('Crisi di panico: eri crollato a terra e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);}
+    else if(S.collapsed==='ph')die('Sincope: il corpo ha ceduto e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);
+    else die('Terzo richiamo (3/3). Non avvisano più.',true);}
+}
+/* crollo mentale o fisico: ti accasci; non ti uccidono subito, ma restando fermo arrivano i richiami */
+function collapse(kind){
+  S.collapsed=kind;S.collapses=(S.collapses||0)+1;S.speed=0;S.steps=[];
+  if(S.dlg){S.dlg=null;hideBox();}S.qte=null;
+  S.balloon={s:kind==='mh'?'CROLLO MENTALE':'CROLLO FISICO',t:2.5};sfx.bad();buzz([200,100,200]);
+  log(kind==='mh'?'La mente cede. Ti accasci in mezzo alla strada.':'Il corpo cede. Ti accasci sull\'asfalto.','var(--red)');
+  S.rT=.5;
 }
 function die(cause,shot){
   S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;hideBox();
@@ -976,8 +993,8 @@ function drawScene(){
   list.push({p:true,x:PX,y:98});list.sort((a,b)=>a.y-b.y);
   const me=S.me||{shirt:'#d8d0b8',hair:S.black?'#1a1210':'#3a2418',skin:S.skin||'#e8b896'};
   list.forEach(o=>{
-    if(o.p){if(S.dead)drawCorpse(o.x,o.y+10,me);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
-    else{if(o.x<-10||o.x>W+10)return;drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,o.n.leaving);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
+    if(o.p){if(S.dead)drawCorpse(o.x,o.y+10,me);else if(S.collapsed)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
+    else{if(o.x<-10||o.x>W+10)return;if(o.n.leaving)drawSlump(o.x,o.y,o.n,false);else drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,false);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
   });
   if(S.flash){const f=S.flash;cx.strokeStyle=fut?'#f83838':'#f8e8a0';cx.lineWidth=1;cx.beginPath();cx.moveTo(f.x0,f.y0);cx.lineTo(f.x1,f.y1);cx.stroke();R(f.x0-1,f.y0-2,4,4,fut?'#ff8080':'#f8f0c0');}
   if(S.rain>0){cx.fillStyle='rgba(170,190,220,.6)';S.drops.forEach(p=>cx.fillRect(Math.round(p.x),Math.round(p.y),1,3));}
@@ -1021,6 +1038,12 @@ function drawWalker(x,y,c,f,isP,leaving){
   if(isP){R(x+3,y+7+bob,3,2,'#f0f0e8');R(x+4,y+7+bob,1,1,'#b83a2a');R(x+3,y-3+bob,1,2,'#f4dca0');if(S&&S.peeing>0&&Math.floor(S.t*6)%2)R(x+5,y+11,1,3,'#e8d860');}
   if(leaving){cx.fillStyle='rgba(20,10,20,.35)';cx.fillRect(x,y,8,16);}
 }
+function drawSlump(x,y,c,isP){x=Math.round(x);y=Math.round(y);const p=ERA.pants;
+  R(x-1,y+15,11,1,'rgba(0,0,0,.35)');
+  R(x+4,y+13,6,2,p);R(x+9,y+13,2,2,'#1a1410');R(x+4,y+11,3,2,p);
+  R(x+1,y+8,5,5,c.shirt);R(x+5,y+10,3,1,c.skin);
+  R(x+1,y+4,4,4,c.skin);R(x+1,y+4,4,2,c.hair);R(x+4,y+6,1,1,'#1a1410');if(c.band)R(x+1,y+5,4,1,'#e83a3a');
+  if(isP){R(x+2,y+9,3,2,'#f0f0e8');R(x+3,y+9,1,1,'#b83a2a');}}
 function drawCorpse(x,y,c){x=Math.round(x);y=Math.round(y);R(x-2,y+3,14,2,'rgba(0,0,0,.35)');R(x+6,y,4,3,c.skin);R(x+9,y,1,3,c.hair);R(x,y,6,3,c.shirt);R(x-4,y+1,4,2,ERA.pants);R(x+4,y+3,3,1,'#6a1a14');}
 function drawFace(g,c){
   g.imageSmoothingEnabled=false;const P=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h);};
