@@ -811,8 +811,10 @@ function update(dt){
   if(S.rain>0)for(let i=0;i<4;i++)S.drops.push({x:rand(0,W+40),y:-4});
   S.drops.forEach(p=>{p.x-=60*dt;p.y+=180*dt;});S.drops=S.drops.filter(p=>p.y<H);
   if(S.mode!=='play')return;
-  if(S.ph<=0)return die('Sincope. Crolli sull\'asfalto e non ti rialzi.',false);
-  if(S.mh<=0){S.panicDeath=true;return die('Crisi di panico. La mente cede e ti siedi in mezzo alla strada.',true);}
+  if(S.ph<=0)return die('Sincope: il tuo fisico (PH) è arrivato a zero. Crolli sull\'asfalto e non ti rialzi.',false);
+  if(S.mh<15&&!S.mhWarned){S.mhWarned=true;log('“Non ce la faccio più. Sto per crollare.” (la mente è al limite)','var(--red)','th');buzz([80,80,80]);}else if(S.mh>30)S.mhWarned=false;
+  if(S.mh<=0){S.panicDeath=true;S.balloon={s:'CROLLO MENTALE',t:3};log('LA MENTE CEDE. Ti siedi in mezzo alla strada. Non è un richiamo: i soldati sparano a chi si ferma.','var(--red)');
+    return die('Crisi di panico: la tua mente (MH) è arrivata a zero. Ti sei seduto in mezzo alla strada e hanno sparato. Non sono stati i richiami.',true);}
   if(S.npcs.every(n=>!n.alive))end(true);
 }
 const gunPos=()=>ERA.veh==='drone'?[S.truckX+20,76]:[S.truckX+27,93];
@@ -840,7 +842,7 @@ function addWarn(){
   S.warn++;S.lastWarnT=S.t;S.mh-=6;sfx.warn();buzz([120,60,120,60,120]);
   S.balloon={s:'N.'+S.bib+' RICHIAMO!',t:2.6};
   log(`RICHIAMO ${S.warn}/3 — "Numero ${S.bib}!"`,'var(--red)');
-  if(S.warn>=3)die('Terzo richiamo. Non avvisano più.',true);
+  if(S.warn>=3)die('Terzo richiamo (3/3). Non avvisano più.',true);
 }
 function die(cause,shot){
   S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;hideBox();
@@ -880,8 +882,8 @@ function drawWorld(){
   const sl=S.slope||0;if(Math.abs(sl)<.004){drawScene();drawOverlays();return;}
   if(!OFF||OFF.width!==cv.width||OFF.height!==cv.height){OFF=document.createElement('canvas');OFF.width=cv.width;OFF.height=cv.height;OCX=OFF.getContext('2d');}
   const main=cx;cx=OCX;cx.imageSmoothingEnabled=false;try{drawScene();}finally{cx=main;}
-  cx.drawImage(OFF,0,0);
-  for(let x=0;x<W;x++){const dy=Math.round(sl*(x-PX));if(dy)cx.drawImage(OFF,x,0,1,H,x,-dy,1,H);}
+  for(let x=0;x<W;x++){const dy=Math.round(sl*(x-PX));cx.drawImage(OFF,x,0,1,H,x,-dy,1,H);
+    if(dy>0)cx.drawImage(OFF,x,H-1,1,1,x,H-dy,1,dy);else if(dy<0)cx.drawImage(OFF,x,0,1,1,x,0,1,-dy);}
   drawOverlays();
 }
 /* partenza: il blindato chiama i marciatori, poi 3-2-1 e fischio */
