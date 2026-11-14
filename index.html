@@ -157,7 +157,7 @@ button:disabled{opacity:.35}
 const H=128,LIMIT=6.4,K=4.6,TOTAL=50,QPER=7,SPR=2;
 let W=320,PX=96;
 const $=id=>document.getElementById(id);
-const cv=$('scene'),cx=cv.getContext('2d');
+const cv=$('scene');let cx=cv.getContext('2d');let OFF=null,OCX=null;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), pick=a=>a[Math.floor(Math.random()*a.length)];
 const fmt=(n,d=1)=>n.toFixed(d).replace('.',',');
 let DEBUG=false,DEBUG_YEAR=null,DEBUG_RUN0=0,DEBUG_ID=''; /* [DEV] DEBUG_ID: ''=casuale, 'none','black','gay','both' */
@@ -270,6 +270,9 @@ const CHAT=[
  ["Non sento più le gambe.","Quanto manca? Qualcuno lo sa?","Ho sete. Ho sempre sete.","Smettetela di parlare, mi gira la testa.","Voglio solo sedermi un minuto.","Mamma...","Avete visto quello con la maglia rossa? Non c'è più.","Non ridete. Non c'è niente da ridere."],
  ["Non voglio morire qui.","Sparatemi e basta.","Non ricordo più la faccia di mia madre.","Siamo rimasti in pochi. Troppo pochi.","Perdonatemi.","La strada si muove. La vedete anche voi?","Non ce la faccio. Non ce la faccio.","Chiunque vinca... si ricordi di noi."],
 ];
+const CHAT_HILL=["Un'altra salita? Ma chi l'ha disegnata questa strada?","Maledetta collina.","Le gambe mi bruciano.","Chi ha messo una montagna proprio qui?","Non finisce più, questa salita!","Se arrivo in cima giuro che non cammino più in vita mia."];
+const CHAT_RAIN=["Perfetto. Ci mancava solo la pioggia.","Ho l'acqua anche nelle mutande.","Le scarpe fanno ciac ciac a ogni passo.","Almeno adesso non ho sete.","Questa pioggia mi entra nelle ossa."];
+const CHAT_COLD=["Non sento più le dita.","Fa un freddo cane.","Datemi una coperta, vi prego.","Mi battono i denti più forte dei passi.","Se mi fermo congelo. Se mi fermo mi sparano."];
 const progress=()=>{const al=S.npcs.filter(n=>n.alive&&!n.leaving).length;return clamp(Math.max(S.t/700,(S.npcs.length-al)/(S.npcs.length-1)),0,1);};
 const DEFEND=["«Lascialo stare.»","«Un'altra parola e inciampi tu.»","«Siamo tutti sulla stessa strada, idiota.»","«Se hai fiato per questo, cammina più forte.»"];
 /* dialoghi extra dopo i 3 di base: con gli amici si diventa fratelli, con i rivali ci si odia a morte */
@@ -574,7 +577,7 @@ function randomEvent(){
   const heat=isHeat(),wx=S.wx;
   const ev=[['crampo',2+(S.hy<40?3:0)],['caduta',2+(S.st<30?2:0)],['sasso',1.6],['acqua',1.4+(heat?1.5:0)],['salita',1.1*wx.hill],['pioggia',.9*wx.rain],['isteria',S.mh<35?3.5:0]];
   let r=Math.random()*ev.reduce((a,e)=>a+e[1],0),ch='crampo';for(const e of ev){r-=e[1];if(r<=0){ch=e[0];break;}}
-  if(ch==='salita'){S.hill=25;log('Inizia una lunga salita.','var(--amber)');}
+  if(ch==='salita'){S.hillLen=Math.random()<.5?rand(12,18):rand(28,42);S.hill=S.hillLen;log(S.hillLen>25?'Inizia una lunga salita.':'Una salita.','var(--amber)');}
   else if(ch==='pioggia'){S.rain=35;S.thunder=1.2;sfx.thunder();log('Un tuono. Poi la pioggia.','var(--amber)');}
   else if(ch==='sasso')choice('SASSO NELLA SCARPA','Un sasso ti si è infilato nella scarpa. Ogni passo è una lama.',[
      {l:'Fermati a toglierlo (richiamo sicuro)',f:()=>{addWarn();log('Togli il sasso. Il soldato prende nota.','var(--red)');}},
@@ -589,7 +592,7 @@ function update(dt){
   let cap=5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100);
   if(S.peeing>0){cap=Math.min(cap,6.9);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
-  const k=K*(S.hill>0?.9:1)*(S.rain>0?.94:1)*(S.injury?.95:1);
+  const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?.94:1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
   S.maxSt=Math.max(40,100-S.t*.06);
@@ -620,7 +623,9 @@ function update(dt){
   if(S.chat){S.chat.t-=dt;if(S.chat.t<=0||!S.chat.n.alive)S.chat=null;}
   S.chatT=(S.chatT==null?4:S.chatT)-dt;
   if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
-    if(vis.length){const tier=pr<.34?0:pr<.67?1:2;S.chat={n:pick(vis),s:pick(CHAT[tier]),t:3.6};}S.chatT=rand(6,12)*(1-.35*pr);}
+    if(vis.length){const tier=pr<.34?0:pr<.67?1:2,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&hourNow()>=20;
+      const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:CHAT[tier];
+      S.chat={n:pick(vis),s:pick(pool),t:3.6};}S.chatT=rand(6,12)*(1-.35*pr)*(S.hill>0||S.rain>0?.65:1);}
   const lo=offMin(),hi=offMax();
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
@@ -642,7 +647,8 @@ function update(dt){
     else if(S.gay&&!S.outed&&!S.loveAsked&&S.t>=S.nextLoveQ&&loveQ()){S.loveAsked=true;}
     else if(S.t>=S.nextDeep&&deepTalk()){S.nextDeep=S.t+rand(35,55);}
     else if(S.t>=S.nextDlg){startDialog();S.nextDlg=S.t+rand(18,28);}}
-  if(S.hill>0)S.hill-=dt;if(S.rain>0)S.rain-=dt;
+  if(S.hill>0){S.hill-=dt;if(S.hill<=0){S.desc=7;log('In cima. Ora si scende.','var(--green)');}}if(S.desc>0)S.desc-=dt;if(S.rain>0)S.rain-=dt;
+  {const tg=S.hill>0?(S.hillLen>25?.16:.11):S.desc>0?-.07:0;S.slope=(S.slope||0)+(tg-(S.slope||0))*Math.min(1,dt*.7);}
   if(S.rain>0)for(let i=0;i<4;i++)S.drops.push({x:rand(0,W+40),y:-4});
   S.drops.forEach(p=>{p.x-=60*dt;p.y+=180*dt;});S.drops=S.drops.filter(p=>p.y<H);
   if(S.mode!=='play')return;
@@ -699,6 +705,20 @@ function skyAt(h){h=((h%24)+24)%24;for(let i=0;i<KEYS.length-1;i++){const[a,t1,b
 function darkness(h){h=((h%24)+24)%24;if(h<5)return .55;if(h<7)return .55-(h-5)*.27;if(h<18)return 0;if(h<21)return (h-18)*.17;return .55;}
 const R=(x,y,w,h,c)=>{cx.fillStyle=c;cx.fillRect(Math.round(x),Math.round(y),w,h);};
 const SKY=[];{let x=0;while(x<320){const w=Math.floor(rand(10,26)),h=Math.floor(rand(12,40));SKY.push({x,w,h,broken:Math.random()<.5,cut:Math.floor(rand(2,8))});x+=w+Math.floor(rand(0,4));}}
+/* salite/discese: la scena viene inclinata spostando ogni colonna di pixel (resta pixel art nitida) */
+function drawWorld(){
+  const sl=S.slope||0;if(Math.abs(sl)<.004){drawScene();drawOverlays();return;}
+  if(!OFF||OFF.width!==cv.width||OFF.height!==cv.height){OFF=document.createElement('canvas');OFF.width=cv.width;OFF.height=cv.height;OCX=OFF.getContext('2d');}
+  const main=cx;cx=OCX;cx.imageSmoothingEnabled=false;try{drawScene();}finally{cx=main;}
+  cx.drawImage(OFF,0,0);
+  for(let x=0;x<W;x++){const dy=Math.round(sl*(x-PX));if(dy)cx.drawImage(OFF,x,0,1,H,x,-dy,1,H);}
+  drawOverlays();
+}
+function drawOverlays(){
+  const fut=ERA.veh==='drone',sl=S.slope||0;
+  if(S.underT>1&&S.mode==='play'&&Math.floor(S.t*4)%2)ptext('!',S.truckX+4,(fut?66:82)-Math.round(sl*(S.truckX+4-PX)),'#e0483a');
+  if(S.balloon)balloon(S.balloon.s,PX+4,76,'#b81a10');
+}
 function drawScene(){
   const hour=hourNow(),hh=((hour%24)+24)%24,fut=ERA.veh==='drone';
   const [top,bot]=skyAt(hour);
@@ -735,9 +755,7 @@ function drawScene(){
   const dk=darkness(hour);
   if(dk>0){cx.fillStyle=`rgba(8,6,20,${dk})`;cx.fillRect(0,0,W,H);cx.fillStyle=fut?`rgba(248,60,60,${dk*.25})`:`rgba(240,220,150,${dk*.35})`;cx.beginPath();cx.moveTo(S.truckX+28,100);cx.lineTo(S.truckX+140,88);cx.lineTo(S.truckX+140,122);cx.closePath();cx.fill();}
   if(S.thunder>.9){cx.fillStyle='rgba(255,255,240,.6)';cx.fillRect(0,0,W,H);}
-  if(S.underT>1&&S.mode==='play'&&Math.floor(S.t*4)%2)ptext('!',S.truckX+4,fut?66:82,'#e0483a');
-  if(S.balloon)balloon(S.balloon.s,PX+4,76,'#b81a10');
-  {const el=$('chatb');if(S.chat&&S.mode==='play'){const n=S.chat.n,k=cv.clientWidth/W;el.textContent=S.chat.s;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3)*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
+  {const el=$('chatb');if(S.chat&&S.mode==='play'){const n=S.chat.n,k=cv.clientWidth/W;el.textContent=S.chat.s;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
   {const pr=S.mode==='play'||S.mode==='dying'?progress():S.greyP||0;S.greyP=pr;const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})`;if(cv.style.filter!==f)cv.style.filter=f;}
 }
 function drawVehicle(x,y,hh){
@@ -1063,7 +1081,7 @@ function frame(){
       if(!isFinite(S.speed))S.speed=0;
       if(S.mode==='play'){update(dt);hud();}
       else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}}
-      drawScene();
+      drawWorld();
     }
   }catch(e){showErr(e);}
   requestAnimationFrame(frame);
