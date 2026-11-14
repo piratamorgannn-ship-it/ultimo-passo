@@ -505,12 +505,11 @@ function newRun(shoe,tr){
   $('jukeHud').style.display=DEBUG?'inline':'none';
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
-  const usedN=new Set();
-  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
+  const usedN=new Set(),bib=Math.floor(rand(1,100)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,100));}while(used.has(n));used.add(n);return n;};
+  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-6,Math.min(40,hi)),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(300,860),ph:rand(0,4),leaving:0});});
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
-  const bib=Math.floor(rand(1,100)),used=new Set([bib]);
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,100));}while(used.has(n));used.add(n);
-    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn,bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
+    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,800),ph:rand(0,4),leaving:0});}
   const sh=SHOES[shoe];
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
@@ -659,7 +658,7 @@ function openDlg(npc,d,kind){
   const fill=x=>x.replace(/\{ME\}/g,npc.name).replace(/\{CITY\}/g,npc.from||'casa');
   d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
   S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
-  showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.name} <span class="rl">· ${npc.from||'?'}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
+  showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.named?npc.name+' <span class="rl">N.'+npc.bibN+'</span>':npc.name} <span class="rl">· ${npc.from||'?'}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
   box.querySelectorAll('.opts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);}));
   sfx.tick();
@@ -1235,7 +1234,7 @@ function end(win){
   if(cand.length){const k=pick(cand);K2[k]=K2[k]||{};K2[k].pro=true;tipMsg+=`<p>💡 Suggerimento: <b>${SHOES[k].n}</b> — ${SHOES[k].pro}</p>`;}
   store.set('up_know',K2);
   const pos=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,hrs=Math.floor(S.t/60),mins=Math.floor(S.t%60);
-  const rows=S.npcs.filter(n=>n.named).map(n=>`<tr><td>${n.name}</td><td style="color:${relColor(n.rel)}">${relLabel(n.rel)}</td><td class="lbl">${n.alive&&!n.leaving?'in marcia':'morto'}</td></tr>`).join('');
+  const rows=S.npcs.filter(n=>n.named).map(n=>`<tr><td>${n.name} <span class="lbl">N.${n.bibN}</span></td><td style="color:${relColor(n.rel)}">${relLabel(n.rel)}</td><td class="lbl">${n.alive&&!n.leaving?'in marcia':'morto'}</td></tr>`).join('');
   const t=S.tr,trait=v=>v>=62?'alto':v<=38?'basso':'medio';
   show(`<h1 style="color:${win?'var(--green)':'var(--red)'}">${win?'LA GRAZIA':'FINE'}</h1><h2>${win?'Sei l\'ultimo rimasto sulla strada.':S.cause}</h2>
   <p>Marcia del ${YEAR} (${ROUTE.c[0]} → ${ROUTE.c[ROUTE.c.length-1]}) · N.${S.bib} · <b>${hrs} ore ${mins} min</b> · <b>${fmt(S.km)} km</b> · posizione <b>${pos}ª</b>/${TOTAL}${S.t>best?' · <span style="color:var(--amber)">record</span>':''}</p>
