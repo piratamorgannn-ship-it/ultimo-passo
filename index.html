@@ -50,6 +50,8 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-m
 .pad{flex:1;border:3px solid #000;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--dim);touch-action:none}
 .pad.next{background:#3a3248;color:var(--ink);box-shadow:inset 0 0 0 3px var(--amber)}
 .pad.hit{background:#5a4e6a}.pad.bad{background:#5a1e1a}
+.pad.rise,.pad.rise.next{background:#e0c040;color:#1a1410;box-shadow:inset 0 0 0 3px #fff3a0;animation:risep .5s steps(2) infinite}
+@keyframes risep{50%{background:#b8901a}}.pad.rise.hit{background:#fff3a0}
 .pad svg{width:30px;height:30px;margin-bottom:3px}
 .box{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:min(600px,94%);max-height:calc(100% - 12px);background:var(--panel2);border:2px solid #000;box-shadow:inset 0 0 0 2px #4a405a,0 4px 0 rgba(0,0,0,.5);padding:7px;display:flex;flex-direction:column;gap:5px;z-index:3}
 .box .hd{display:flex;gap:8px;align-items:center;flex:none}
@@ -582,7 +584,7 @@ function think(kind){const v=kind==='mh'?S.mh:S.ph,l=lvl(v);log('“'+pick(TH[ki
 /* ================= INPUT ================= */
 function step(foot){
   if(!S||S.mode!=='play')return;
-  if(S.collapsed){if(S.qte&&S.qte.type==='rialzati')qteHit();else if(!S.downMsgT||S.t-S.downMsgT>4){S.downMsgT=S.t;log('Sei a terra: non puoi camminare finché non ti rialzi.','var(--red)');}return;}
+  if(S.collapsed){if(S.qte&&S.qte.type==='rialzati'){qteHit();flash(foot==='L'?$('padL'):$('padR'),'hit');sfx.step();}else if(!S.downMsgT||S.t-S.downMsgT>4){S.downMsgT=S.t;log('Sei a terra: non puoi camminare finché non ti rialzi.','var(--red)');}return;}
   const pad=foot==='L'?$('padL'):$('padR');
   if(foot!==S.nextFoot){S.speed=Math.max(0,S.speed-1.6);S.st=Math.max(0,S.st-2);S.steps=[];S.tripT=S.t;log('Inciampi! Alterna sinistro e destro.','var(--red)');sfx.bad();buzz(60);flash(pad,'bad');return;}
   S.steps.push(S.t);if(S.steps.length>6)S.steps.shift();
@@ -635,13 +637,13 @@ function startQTE(type,who){
    isteria:{dur:4,need:7,title:'PANICO',sub:'Il cuore impazzisce. Respira.',btn:'RESPIRA'},
    blocco:{dur:4,need:10,title:'LE GAMBE NON SI MUOVONO',sub:'Tutti partono. Tu no. Sbloccati!',btn:'MUOVITI'},
    sgambetto:{dur:1.6,title:(who||'').toUpperCase()+' TI FA LO SGAMBETTO!',sub:'Salta quando il segno è nel verde',btn:'SALTA',timing:true},
-   rialzati:{dur:3,need:Math.min(35,25+5*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca il più veloce possibile!',btn:'RIALZATI'},
+   rialzati:{dur:3,need:Math.min(35,20+5*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca i tasti dei piedi più veloce che puoi!',btn:'',padsOnly:1},
    salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
   if(q.timing){q.z0=rand(.45,.65);q.z1=q.z0+.17;}
   S.qte=q;
-  showBox('box qte',`<div class="big">${q.title}</div><div class="tx">${q.sub}</div>${q.timing?`<div class="track"><div class="zone" style="left:${q.z0*100}%;width:${(q.z1-q.z0)*100}%"></div><div class="mk" id="mk"></div></div>`:''}${q.need?`<div class="tx" id="qn">0 / ${q.need}</div>`:''}<button class="main" id="qb">${q.btn}</button><div class="tm" style="width:80%"><b id="qt"></b></div>`);
-  $('qb').addEventListener('pointerdown',e=>{e.preventDefault();qteHit();});
+  showBox('box qte',`<div class="big">${q.title}</div><div class="tx">${q.sub}</div>${q.timing?`<div class="track"><div class="zone" style="left:${q.z0*100}%;width:${(q.z1-q.z0)*100}%"></div><div class="mk" id="mk"></div></div>`:''}${q.need?`<div class="tx" id="qn">0 / ${q.need}</div>`:''}${q.padsOnly?'':`<button class="main" id="qb">${q.btn}</button>`}<div class="tm" style="width:80%"><b id="qt"></b></div>`);
+  if($('qb'))$('qb').addEventListener('pointerdown',e=>{e.preventDefault();qteHit();});
   sfx.tick();buzz(40);
 }
 function qteHit(){const q=S.qte;if(!q)return;
@@ -953,7 +955,7 @@ function hud(){
   else if(S.mode==='count')a='';else if(S.t<=5)a='PARTENZA — cammina!';else if(S.peeing>0)a='TI STAI LIBERANDO...';else if(S.hill>0)a='SALITA';else if(S.rain>0)a='PIOGGIA';
   if(!DEBUG&&S.watch){const m=Math.floor(S.t*60/HOUR)+9*60;a='🕐 G'+(1+Math.floor((m/60-6)/24))+' '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
   if($('alert').textContent!==a)$('alert').textContent=a;
-  $('padL').classList.toggle('next',S.nextFoot==='L');$('padR').classList.toggle('next',S.nextFoot==='R');
+  $('padL').classList.toggle('next',S.nextFoot==='L');$('padR').classList.toggle('next',S.nextFoot==='R');{const r=!!(S.qte&&S.qte.type==='rialzati');$('padL').classList.toggle('rise',r);$('padR').classList.toggle('rise',r);}
   $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nPan').textContent=S.pan;$('iPan').disabled=S.pan<=0;$('iHam').disabled=S.ham<=0;$('nCig').textContent=S.cig;$('iCig').disabled=S.cig<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
 }
 
