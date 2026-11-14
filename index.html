@@ -534,10 +534,10 @@ function newRun(shoe,tr){
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
      mode:'count',cd:0,cdStep:-1,collapsed:false,collapses:0,calls:[],callCur:null,shoutCd:0,groups:[],regroupT:8,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:PLAYER?PLAYER.black:Math.random()<.2,gay:PLAYER?PLAYER.gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
      npcs,corpses:[],drops:[],flash:null,thunder:0,balloon:null,
-     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,cig:RUN_ITEMS.includes('sigarette')?5:0,smoked:0,pneumonia:false,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:0,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
+     bisc:RUN_ITEMS.includes('biscotti')?BISC:0,radio:RUN_ITEMS.includes('radio'),pan:RUN_ITEMS.includes('panini')?3:0,cig:RUN_ITEMS.includes('sigarette')?5:0,smoked:0,pneumonia:false,ham:RUN_ITEMS.includes('hamburger')?1:0,watch:RUN_ITEMS.includes('orologio'),bro:false,hate:false,tub:5,drinkCd:0,peeing:0,stone:0,injury:false,blister:false,broken:false,breakAt:sh.breaks?rand(280,520):1e9,food9:false,
      cause:'',heartT:0,thT:8,lvPH:lvl(70+tr.f*.3),lvMH:lvl(40+tr.n*.6)};
   $('log').innerHTML='';$('bib').textContent='N.'+bib;$('yr').textContent=YEAR;
-  log(`Marcia del ${YEAR}: da ${ROUTE.c[0]} a ${ROUTE.c[ROUTE.c.length-1]}. ${S.wx.label}.`,'var(--amber)');
+  log('Ore 9. Alla partenza vi hanno allacciato il cinturone: 5 tubetti di cibo.','var(--green)');log(`Marcia del ${YEAR}: da ${ROUTE.c[0]} a ${ROUTE.c[ROUTE.c.length-1]}. ${S.wx.label}.`,'var(--amber)');
   if(DEBUG_ID){S.black=DEBUG_ID==='black'||DEBUG_ID==='both';S.gay=DEBUG_ID==='gay'||DEBUG_ID==='both';}
   {const lo=offMin(),hi=offMax();for(let k=0;k<6;k++)S.groups.push({a:rand(lo*.7,hi*.85),v:rand(-1.2,1.2)});S.npcs.forEach(n=>{n.g=Math.floor(rand(0,6));n.jit=rand(-3.5,3.5);n.warns=0;});}
   S.zplan=buildPlan();S.zi=0;S.zNext=S.zplan[0].dur;S.zones=[{z:S.zplan[0].z,s:0}];log(zoneMsg(S.zplan[0],true),'var(--dim)');
@@ -734,7 +734,7 @@ function randomEvent(){
 
 /* ================= LOGICA ================= */
 const HOUR=42; // secondi reali per 1 ora di gioco (marcia accorciata del 30%)
-const hourNow=()=>7+S.t/HOUR;
+const hourNow=()=>9+S.t/HOUR; // la marcia parte alle 9
 function update(dt){
   S.t+=dt;const sh=S.sh,hour=hourNow(),heat=isHeat(),wx=S.wx;
   let cap=5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100);
@@ -765,7 +765,6 @@ function update(dt){
   if(lp>S.lvPH){think('ph');S.thT=rand(12,18);}else if(lm>S.lvMH){think('mh');S.thT=rand(12,18);}
   else if(S.thT<=0){think(lm>=lp?'mh':'ph');S.thT=rand(14,22);}
   S.lvPH=lp;S.lvMH=lm;
-  if(!S.food9&&hour>=9){S.food9=true;S.tub=5;log('Ore 9: i soldati distribuiscono i cinturoni. 5 tubetti di cibo.','var(--green)');sfx.good();}
   if(S.t>5&&S.speed<LIMIT&&!(S.qte&&S.qte.type==='blocco')){S.underT+=dt;if(S.underT>=3){S.underT=0;addWarn();}}else S.underT=Math.max(0,S.underT-dt*2);
   S.truckX+=((4+S.underT*9)-S.truckX)*Math.min(1,dt*3);
   if(S.underT>.5){S.heartT-=dt;if(S.heartT<=0){sfx.heart();S.heartT=.9-S.underT*.2;}}
@@ -893,9 +892,9 @@ function hud(){
   setBar('bBL',S.bl,S.bl>=85?'var(--red)':S.bl>=60?'var(--amber)':'#8a8070');
   $('bCAP').style.width=(100-S.maxSt)+'%';
   let a='';
-  if(DEBUG){const m=Math.floor(S.t*60/HOUR)+7*60;a=`${fmt(S.speed)} km/h · ${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')} · PH ${Math.round(S.ph)} MH ${Math.round(S.mh)}`;}
+  if(DEBUG){const m=Math.floor(S.t*60/HOUR)+9*60;a=`${fmt(S.speed)} km/h · ${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')} · PH ${Math.round(S.ph)} MH ${Math.round(S.mh)}`;}
   else if(S.mode==='count')a='';else if(S.t<=5)a='PARTENZA — cammina!';else if(S.peeing>0)a='TI STAI LIBERANDO...';else if(S.hill>0)a='SALITA';else if(S.rain>0)a='PIOGGIA';
-  if(!DEBUG&&S.watch){const m=Math.floor(S.t*60/HOUR)+7*60;a='🕐 '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
+  if(!DEBUG&&S.watch){const m=Math.floor(S.t*60/HOUR)+9*60;a='🕐 '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
   if($('alert').textContent!==a)$('alert').textContent=a;
   $('padL').classList.toggle('next',S.nextFoot==='L');$('padR').classList.toggle('next',S.nextFoot==='R');
   $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nPan').textContent=S.pan;$('iPan').disabled=S.pan<=0;$('iHam').disabled=S.ham<=0;$('nCig').textContent=S.cig;$('iCig').disabled=S.cig<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
@@ -1273,7 +1272,9 @@ const ITEMS={
  orologio:{n:'Orologio del padre',d:'Il vecchio orologio di tuo padre. Segna ancora l\'ora giusta.'},
 };
 const itemOpen=k=>{const it=ITEMS[k];return !!(it&&!it.lock&&(it.always||store.get('up_unlock',{})[k]||DEBUG));};
-const ZAINO_RUNS=5;let RUN_ITEMS=['biscotti'];
+const ZAINO_WINS=3;let RUN_ITEMS=['biscotti'];
+/* migrazione v40: lo zainetto ora si sblocca con 3 vittorie di fila; tolto a chi l'aveva con la vecchia regola (5 marce finite) */
+if(!store.get('up_mig40',false)){const u=store.get('up_unlock',{});if(u.zainetto&&store.get('up_streak',0)<ZAINO_WINS){delete u.zainetto;store.set('up_unlock',u);}store.set('up_mig40',true);}
 function equip(){
   const un=store.get('up_unlock',{}),kn=store.get('up_know',{});let sel=store.get('up_lastShoe','tennis');
   const open=k=>!SHOES[k].unlock||un[k]||DEBUG;if(!open(sel))sel='tennis';
@@ -1286,9 +1287,9 @@ function equip(){
   render();
 }
 function pickItem(shoe){
-  const un=store.get('up_unlock',{}),slots=(un.zainetto||DEBUG)?2:1,runs=store.get('up_runs',0);
+  const un=store.get('up_unlock',{}),slots=un.zainetto?2:1,streak=store.get('up_streak',0);
   let sel=RUN_ITEMS.filter(itemOpen).slice(0,slots);
-  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">${slots>1?'🎒 Con lo zainetto hai 2 posti liberi.':'Hai un solo posto libero. 🔒 Zainetto (2 posti): finisci '+ZAINO_RUNS+' marce ('+Math.min(runs,ZAINO_RUNS)+'/'+ZAINO_RUNS+').'}</span></p>
+  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">${slots>1?'🎒 Con lo zainetto hai 2 posti liberi.':'Hai un solo posto libero. 🔒 Zainetto (2 posti): vinci '+ZAINO_WINS+' marce di fila ('+Math.min(streak,ZAINO_WINS)+'/'+ZAINO_WINS+').'}</span></p>
     <div class="choices pix" style="grid-template-columns:repeat(${Object.keys(ITEMS).length},minmax(0,1fr))">${Object.entries(ITEMS).map(([k,it])=>{const op=itemOpen(k);return `<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${op?'':'disabled'}>${sprite(k,!op,4)}<b>${op?it.n:'🔒 ???'}</b><small>${op?it.d:'Si sblocca in un modo particolare.'}</small></button>`;}).join('')}</div>
     <div class="row2"><button class="ghost" id="back">INDIETRO</button><button class="main" id="go">VAI ALLA PARTENZA</button></div>`);
     sc.querySelectorAll('.choices button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;
@@ -1353,7 +1354,8 @@ function end(win){
   let unlockMsg='';
   {const posE=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,ends=store.get('up_ends',{});
    const tags=[win?'vittoria':posE===TOTAL?'primo_morto':posE===2?'penultimo':null,S.panicDeath?'panico':null].filter(Boolean);tags.forEach(tag=>ends[tag]=(ends[tag]||0)+1);store.set('up_ends',ends);
-   const unZ=store.get('up_unlock',{});if(runsN>=ZAINO_RUNS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}
+   const streakN=win?store.get('up_streak',0)+1:0;store.set('up_streak',streakN);
+   const unZ=store.get('up_unlock',{});if(streakN>=ZAINO_WINS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}
    const deadN=S.npcs.filter(n=>!n.alive||n.leaving).length;
    const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
    U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
