@@ -705,9 +705,17 @@ function bigotTalk(){
   S.mh=Math.max(0,S.mh-6);sfx.bad();
   openDlg(b,{t,o:slurOpts()},'bigot');return true;
 }
+/* verso il finale (restano 5 o meno) 1 volta su 3 anche le tue risposte diventano malate: ne resta sempre una sana */
+const SICK_ANS=["«Ah ah. Sì. Sì. Ah ah ah.»","«Ti sento dentro la testa, sai?»","«Contami i denti. Mi sembra che ne manchi uno.»","«Shh. La strada ci ascolta.»","«Io sono già morto ieri, non preoccuparti.»","«Mangerei l'asfalto. È caldo, sembra pane.»","«Il blindato mi ha chiamato per nome. Con la voce di mia madre.»","«Ripeti. Ripeti. Ripeti quello che hai detto.»","Ridi, e non riesci a smettere.","Ti metti a piangere senza motivo.","«Chi sei tu? Ci conosciamo?»","«Lo sapevo. Lo sapevo da sempre.»","Canticchi una ninna nanna a voce altissima.","«Le mie scarpe sono piene di sangue. Che bello, sono calde.»","«Dio ha il fucile. L'ho visto.»","«Non parlare. Ti sentono i morti.»","Annusi l'aria come un cane.","«Se mi tocchi, mi sciolgo.»","«Ho contato le stelle. Sono quarantanove.»","«Le mie gambe sono di un altro. Gliele devo restituire.»"];
+function sickify(d){
+  const alive=S.npcs.filter(n=>n.alive&&!n.leaving).length+1;if(alive>5||Math.random()>=1/3||d.o.length<2)return d;
+  const sc=o=>o.m!=null?o.m*2+(o.r||0)*.1:(o.r||0);let best=0;d.o.forEach((o,i)=>{if(sc(o)>sc(d.o[best]))best=i;});
+  return {...d,o:d.o.map((o,i)=>i===best?o:{...o,l:freshPick(SICK_ANS),sick:1})};
+}
 function openDlg(npc,d,kind){
   const fill=x=>x.replace(/\{ME\}/g,npc.name).replace(/\{CITY\}/g,npc.from||'casa');
   d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
+  if(kind!=='bigot'&&kind!=='loveq')d=sickify(d);
   S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.named?npc.name+' <span class="rl">N.'+npc.bibN+'</span>':npc.name} <span class="rl">· ${npc.from||'?'}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
@@ -716,6 +724,7 @@ function openDlg(npc,d,kind){
 }
 function answer(i){
   const g=S.dlg;if(!g)return;S.dlg=null;hideBox();const npc=g.npc;
+  if(i>=0&&g.d.o[i]&&g.d.o[i].sick){S.mh=Math.max(0,S.mh-4);setTimeout(()=>{if(S&&S.mode==='play')log(pick(['“Perché l\'ho detto?”','“Quella non era la mia voce.”','“Sto perdendo la testa.”','“Chi ha parlato? Io?”']),'var(--red)','th');},900);}
   if(g.kind==='bigot'){const o=i<0?g.d.o.find(x=>x.def):g.d.o[i];npc.rel=clamp((npc.rel||0)+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);
     log(o.f,o.m>0?'var(--green)':o.m>=-1?'var(--dim)':'var(--red)');
     const fr=friends();if(fr.length&&Math.random()<.65){const f=pick(fr);setTimeout(()=>{if(!S||S.mode!=='play')return;S.mh=Math.min(100,S.mh+8);f.rel=Math.min(100,f.rel+4);log(f.name+' si mette in mezzo: '+pick(DEFEND),'var(--green)');sfx.good();},1800);}
