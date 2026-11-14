@@ -19,6 +19,8 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-m
 #cdn{display:none;top:42%!important;transition:none!important;transform:translate(-50%,-50%);z-index:3;pointer-events:none}
 #cdn.pop{animation:cdpop .9s steps(6,end)}
 @keyframes cdpop{0%{transform:translate(-50%,-50%) scale(1.3);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.15}}
+#blackout{position:absolute;inset:0;background:#000;z-index:50;pointer-events:none;opacity:0;transition:opacity .6s}
+#blackout.on{opacity:1}
 #vig{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(150,0,0,.55) 100%)}
 #fx{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;z-index:1}
 #chatd{position:absolute;display:none;transform:translate(-50%,-100%);background:#f4f4f0;color:#7a0a0a;border:2px solid #000;padding:3px 6px;font-size:10px;font-style:italic;pointer-events:none;z-index:2;box-shadow:2px 2px 0 #000;white-space:nowrap}
@@ -152,7 +154,7 @@ button:disabled{opacity:.35}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app"><div id="blackout"></div>
   <div id="stage">
     <canvas id="scene"></canvas><canvas id="fx"></canvas><div id="vig"></div><div id="chatb"></div><div id="chatd">Sto morendo...</div><canvas id="cdn" class="ttl"></canvas>
     <div id="hud">
@@ -560,7 +562,7 @@ function balloon(s,cxp,y,col='#1a1410',bg='#f4ecd0'){const w=s.length*4+5,x=Math
 
 /* ================= STATO ================= */
 let S=null,PROFILE=null;
-function newRun(shoe,tr){
+function newRun(shoe,tr){{const bo=document.getElementById('blackout');if(bo)bo.classList.remove('on');}
   fit();
   $('jukeHud').style.display=DEBUG?'inline':'none';
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
@@ -600,6 +602,7 @@ function think(kind){const v=kind==='mh'?S.mh:S.ph,l=lvl(v);log('“'+pick(TH[ki
 /* ================= INPUT ================= */
 function step(foot){
   if(!S||S.mode!=='play')return;
+  if(S.fainted)return;
   if(S.collapsed){if(S.qte&&S.qte.type==='rialzati'){qteHit();flash(foot==='L'?$('padL'):$('padR'),'hit');sfx.step();}else if(!S.downMsgT||S.t-S.downMsgT>4){S.downMsgT=S.t;log('Sei a terra: non puoi camminare finché non ti rialzi.','var(--red)');}return;}
   const pad=foot==='L'?$('padL'):$('padR');
   if(foot!==S.nextFoot){S.speed=Math.max(0,S.speed-1.6);S.st=Math.max(0,S.st-2);S.steps=[];S.tripT=S.t;log('Inciampi! Alterna sinistro e destro.','var(--red)');sfx.bad();buzz(60);flash(pad,'bad');return;}
@@ -818,9 +821,10 @@ function update(dt){
   let cap=5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100);
   if(S.peeing>0){cap=Math.min(cap,6.9);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
-  if(S.collapsed)cap=0;
+  if(S.collapsed||S.fainted)cap=0;
+  if(!S.fainted&&!S.collapsed&&S.hy<=0.5&&S.t>5){S.faintT=(S.faintT||0)+dt;if(S.faintT>=4){S.faintT=0;if(Math.random()<.5)faint();}}else if(!S.fainted)S.faintT=0;
   S.capNow=cap;
-  if(!S.collapsed&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
+  if(!S.collapsed&&!S.fainted&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.kway?.97:.94):1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
@@ -846,7 +850,7 @@ function update(dt){
   else if(S.thT<=0){think(lm>=lp?'mh':'ph');S.thT=rand(14,22);}
   S.lvPH=lp;S.lvMH=lm;
   if(S.t>5&&S.speed<LIMIT&&!(S.qte&&S.qte.type==='blocco')){S.underT+=dt;if(S.underT>=3){S.underT=0;addWarn();}}else S.underT=Math.max(0,S.underT-dt*2);
-  S.truckX+=((S.collapsed?PX-38:4+S.underT*9)-S.truckX)*Math.min(1,dt*(S.collapsed?1.5:3));
+  S.truckX+=((S.collapsed||S.fainted?PX-38:4+S.underT*9)-S.truckX)*Math.min(1,dt*(S.collapsed||S.fainted?1.5:3));
   if(S.underT>.5){S.heartT-=dt;if(S.heartT<=0){sfx.heart();S.heartT=.9-S.underT*.2;}}
   if(S.warn>0&&S.t-S.lastWarnT>WARN_CLEAR){S.warn--;S.lastWarnT=S.t;log('Hai tenuto il passo a lungo: un richiamo cancellato.','var(--green)');}
   if(S.balloon){S.balloon.t-=dt;if(S.balloon.t<=0)S.balloon=null;}
@@ -870,7 +874,7 @@ function update(dt){
     n.v+=(rand(6.5,7.3)-n.v)*dt*.3;
     let tgt=n.named?(n.home=(n.home==null?rand(-14,14):clamp(n.home+rand(-3,3)*dt,-16,16))):(S.groups[n.g]?S.groups[n.g].a:0)+n.jit;if(n.warns>=1&&!n.tempW)tgt=Math.min(tgt,lo*.8+n.jit);if(n.appT>S.t)tgt=n.off>=0?4:-4;
     let tv=S.speed+(tgt-n.off)*.25+(n.v-6.9)*.3;if(S.dlg&&S.dlg.npc===n)tv=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)tv=S.speed+(n.buddy-n.off)*.5;
-    if(S.collapsed)n.off+=n.v*2*dt;  // tu sei a terra: gli altri proseguono e si allontanano
+    if(S.collapsed||S.fainted)n.off+=n.v*2*dt;  // tu sei a terra: gli altri proseguono e si allontanano
     else n.off=n.off>hi?Math.max(hi,n.off-5*dt):clamp(n.off+(tv-S.speed)*dt*.9,lo,hi);
     if(n.savePending&&S.t-(n.saveAskT||0)>12&&!(S.dlg&&S.dlg.choice)){n.savePending=false;n.leaving=1;}  // la scelta è stata chiusa da un crollo
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=80&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
@@ -885,6 +889,7 @@ function update(dt){
   if(S.qte){const q=S.qte;q.t+=dt;const tb=$('qt');if(tb)tb.style.width=(100-q.t/q.dur*100)+'%';if(q.timing){const mk=$('mk');if(mk)mk.style.left=(clamp(q.t/q.dur,0,1)*100)+'%';}if(q.t>=q.dur)endQTE(false);}
   else if(S.dlg){S.dlg.t+=dt;const tb=$('dt');if(tb)tb.style.width=(100-S.dlg.t/S.dlg.dur*100)+'%';
     if(S.dlg.t>=S.dlg.dur){if(S.dlg.choice){const g=S.dlg;S.dlg=null;hideBox();S.dlgFree=S.t+3.5;g.opts[g.def].f();}else answer(-1);}}
+  else if(S.fainted){}
   else if(S.collapsed){S.rT=(S.rT||0)+dt;if(S.rT>1.2){S.rT=0;startQTE('rialzati');}}
   else if(S.pactAt&&S.t>=S.pactAt){S.pactAt=0;const b=S.npcs.find(n=>n.named&&n.alive&&!n.leaving&&n.rel>=80&&n!==S.dyingNpc);if(b){b.appT=S.t+30;openDlg(b,DEEP.f_patto,'deep');S.alone=true;setTimeout(()=>{if(S&&S.mode==='play')log('Da qui in poi, ognuno per sé.','var(--amber)');},14000);}}
   else{if(S.t>=S.nextEvent){randomEvent();S.nextEvent=S.t+rand(13,22);}else if(S.t<(S.dlgFree||0)){}else if(S.t>=S.nextBigot&&(S.black||S.outed)&&bigotTalk()){S.nextBigot=S.t+rand(70,120);}
@@ -943,10 +948,11 @@ function deathReaction(k,second){
   if(k===1&&!second){log('“Allora è vero. Ci ammazzano davvero.”','var(--red)','th');}
 }
 function slowWhy(){
+  if(S.fainted)return 'eri svenuto per la sete';
   if(S.collapsed)return S.collapsed==='mh'?'eri a terra per un crollo mentale':'eri a terra per un crollo fisico';
   if(S.qte&&S.qte.type==='blocco')return 'avevi le gambe bloccate';
   if(S.peeing>0)return 'ti stavi liberando';
-  if((S.capNow||9)<LIMIT)return S.st<25?'stamina esaurita: le gambe non andavano più veloci':'fisico a pezzi: il corpo non reggeva il passo';
+  if((S.capNow||9)<LIMIT)return S.st<25?'stamina esaurita: le tue gambe non rispondevano più ai tuoi comandi':'fisico a pezzi: il corpo non reggeva il passo';
   if(S.tripT&&S.t-S.tripT<3.5)return 'inciampavi: non alternavi sinistro e destro';
   const st=S.steps;if(st.length<2||S.t-st[st.length-1]>2)return 'avevi smesso di camminare';
   return 'passo troppo lento'+(S.hill>0?' in salita (serve un ritmo più veloce)':'');
@@ -957,11 +963,20 @@ function addWarn(why){
   S.warn++;S.lastWarnT=S.t;S.mh-=6;sfx.warn();buzz([120,60,120,60,120]);
   S.balloon={s:'N.'+S.bib+' RICHIAMO!',t:2.6};
   log(`RICHIAMO ${S.warn}/3 — "Numero ${S.bib}!" (${why})`,'var(--red)');
-  if(S.warn>=3){if(S.collapsed==='mh'){S.panicDeath=true;die('Crisi di panico: eri crollato a terra e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);}
+  if(S.warn>=3){if(S.fainted)die('Colpo di calore: sei svenuto per la sete e nessuno ti ha rialzato. Terzo richiamo (3/3).',true);
+    else if(S.collapsed==='mh'){S.panicDeath=true;die('Crisi di panico: eri crollato a terra e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);}
     else if(S.collapsed==='ph')die('Sincope: il corpo ha ceduto e non ti sei rialzato in tempo. Terzo richiamo (3/3).',true);
     else die('Terzo richiamo (3/3): '+why+'. Non avvisano più.',true);}
 }
 /* crollo mentale o fisico: ti accasci; non ti uccidono subito, ma restando fermo arrivano i richiami */
+/* acqua a zero: svenimento per colpo di calore (schermo nero, si sente solo l'audio); ti salva solo un fraterno, 1 volta su 2 */
+function faint(){
+  S.fainted=true;S.speed=0;S.steps=[];if(S.dlg){S.dlg=null;hideBox();}S.qte=null;if(S.saving){const sv=S.saving;sv.saveFail=true;sv.saveLeft=0;finishSave(sv);}
+  sfx.bad();buzz([300,150,300]);log('La vista si restringe. Il sole ti schiaccia. Svieni per la sete.','var(--red)');$('blackout').classList.add('on');
+  const b=!S.alone&&S.npcs.find(n=>n.named&&n.alive&&!n.leaving&&n.rel>=80&&n!==S.dyingNpc);
+  if(b&&Math.random()<.5)setTimeout(()=>{if(!S||S.mode!=='play'||!S.fainted)return;S.fainted=false;$('blackout').classList.remove('on');S.hy=Math.max(S.hy,45);S.underT=0;relUp(b,6);sfx.good();
+    log(b.name+' ti solleva la testa e ti fa bere dalla sua borraccia. «Su. Su! Cammina con me.» Ti rimette in piedi.','var(--green)');},rand(2500,4000));
+}
 function collapse(kind){
   if(S.saving){const sv=S.saving;sv.saveFail=true;sv.saveLeft=0;finishSave(sv);}
   S.collapsed=kind;S.collapses=(S.collapses||0)+1;S.speed=0;S.steps=[];
@@ -971,6 +986,7 @@ function collapse(kind){
   S.rT=.5;
 }
 function die(cause,shot){
+  {const bo=$('blackout');if(bo)bo.classList.remove('on');}
   S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;hideBox();
   if(shot)setTimeout(()=>{const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:PX+3,y1:103,t:.15};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(400);S.dead=true;},700);
   else{S.dead=true;sfx.bad();}
@@ -1112,7 +1128,7 @@ function drawScene(){
   list.push({p:true,x:PX,y:98});list.sort((a,b)=>a.y-b.y);
   const me=S.me||{shirt:'#d8d0b8',hair:S.black?'#1a1210':'#3a2418',skin:S.skin||'#e8b896'};
   list.forEach(o=>{
-    if(o.p){if(S.dead)drawCorpse(o.x,o.y+10,me);else if(S.collapsed)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
+    if(o.p){if(S.dead)drawCorpse(o.x,o.y+10,me);else if(S.collapsed||S.fainted)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
     else{if(o.x<-10||o.x>W+10)return;if(o.n.leaving)drawSlump(o.x,o.y,o.n,false);else drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,false);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
   });
   if(S.flash){const f=S.flash;cx.strokeStyle=fut?'#f83838':'#f8e8a0';cx.lineWidth=1;cx.beginPath();cx.moveTo(f.x0,f.y0);cx.lineTo(f.x1,f.y1);cx.stroke();R(f.x0-1,f.y0-2,4,4,fut?'#ff8080':'#f8f0c0');}
