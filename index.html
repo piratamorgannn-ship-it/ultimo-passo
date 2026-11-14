@@ -518,7 +518,13 @@ function cadence(){const st=S.steps;if(st.length<2)return 0;const n=Math.min(st.
 const box=$('box'),app=$('app');
 function showBox(cls,html){box.className=cls;box.innerHTML=html;}
 function hideBox(){box.className='box hide';}
+function relUp(n,d){const before=relLabel(n.rel);n.rel=clamp(n.rel+d,-100,100);const after=relLabel(n.rel);
+  if(after!==before&&after==='Fraterno'){S.bro=true;n.buddy=n.buddy||pick([-5,-4,4,5]);n.lane=pick([2,3]);log(n.name+' ora è come un fratello per te.','var(--green)');}
+  else if(after!==before&&after==='Amico')log(n.name+' ora è tuo amico.','var(--green)');}
+const HELP={crampo:'{n} ti massaggia la gamba mentre camminate.',caduta:'{n} ti afferra prima che tu cada.',isteria:'{n} ti stringe la mano: «Respira con me.»',blocco:'{n} ti spinge avanti: «Muoviti, dai!»',spinta:'{n} si mette in mezzo e ti tiene in piedi.'};
 function startQTE(type,who){
+  /* 1 volta su 4 un amico ti aiuta da solo (e l'amicizia cresce) */
+  if(HELP[type]){const fr=friends();if(fr.length&&Math.random()<.25){const f=pick(fr);S.qte={type,who,t:0,n:0};log(HELP[type].replace('{n}',f.name),'var(--green)');endQTE(true);relUp(f,6);return;}}
   const q={type,t:0,who,n:0};
   Object.assign(q,{
    crampo:{dur:3.6,need:8,title:'CRAMPO!',sub:'Massaggia il polpaccio camminando',btn:'MASSAGGIA'},
@@ -527,6 +533,7 @@ function startQTE(type,who){
    spinta:{dur:2.2,need:5,title:(who||'').toUpperCase()+' TI SPINGE!',sub:'Resta in piedi',btn:'RESISTI'},
    isteria:{dur:4,need:7,title:'PANICO',sub:'Il cuore impazzisce. Respira.',btn:'RESPIRA'},
    blocco:{dur:4,need:10,title:'LE GAMBE NON SI MUOVONO',sub:'Tutti partono. Tu no. Sbloccati!',btn:'MUOVITI'},
+   salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
   if(q.timing){q.z0=rand(.45,.65);q.z1=q.z0+.17;}
   S.qte=q;
@@ -540,6 +547,11 @@ function qteHit(){const q=S.qte;if(!q)return;
 const friends=()=>S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=40);
 function endQTE(ok){
   const q=S.qte;S.qte=null;hideBox();const G='var(--green)',Rd='var(--red)';
+  if(q.type==='salva'){const n=S.saving;if(!n)return;
+    if(ok){sfx.good();log('Lo tieni su. Un passo, poi un altro.',G);}else{sfx.bad();buzz(120);n.saveFail=true;log('Rallenti per reggerlo.',Rd);addWarn();}
+    n.saveLeft--;
+    if(n.saveLeft>0&&S.mode==='play')setTimeout(()=>{if(S&&S.mode==='play'&&!S.qte&&n.alive)startQTE('salva',n.name);else finishSave(n);},1200);else finishSave(n);
+    return;}
   if(ok){sfx.good();({acqua:()=>{S.hy=Math.min(100,S.hy+20);S.bl+=8;log('Bevi avidamente.',G);},crampo:()=>log('Il crampo si scioglie.',G),caduta:()=>log('Barcolli ma resti in piedi.',G),
       spinta:()=>log('Resti in piedi. '+q.who+' sbuffa.',G),isteria:()=>{S.mh+=4;log('Il respiro torna regolare.',G);},blocco:()=>log('Le gambe ripartono.',G)})[q.type]();return;}
   sfx.bad();buzz(120);
@@ -553,6 +565,14 @@ function endQTE(ok){
   if(q.type==='isteria'){S.mh-=10;S.speed-=2.5;S.steps=[];log('Urli qualcosa che non ricorderai. I soldati ti guardano.',Rd);}
   S.st=Math.max(0,S.st);S.speed=Math.max(0,S.speed);
 }
+/* un amico fraterno sta per cedere: puoi provare a salvarlo */
+function askSave(n){n.saveAsked=true;n.savePending=true;
+  choice(n.name.toUpperCase()+' STA CEDENDO',n.name+' barcolla, gli occhi rovesciati. Se lo lasci, i soldati lo finiranno.',[
+    {l:'Lo sorreggi',f:()=>{n.savePending=false;S.saving=n;n.saveLeft=Math.random()<.5?1:2;n.saveFail=false;startQTE('salva',n.name);}},
+    {l:'Lo lasci andare',f:()=>{n.savePending=false;n.leaving=1;S.mh-=12;log('Lasci la sua mano. Non ti volti.','var(--red)');}}],8,1);}
+function finishSave(n){S.saving=null;if(!n.alive||n.leaving)return;
+  if(n.saveFail){n.leaving=1;S.mh-=10;log(n.name+' ti scivola via dalle braccia.','var(--red)');}
+  else{n.elimAt=S.t+rand(150,300);S.mh=Math.min(100,S.mh+10);relUp(n,10);log(n.name+' riprende fiato: «Ti devo la vita.»','var(--green)');}}
 function choice(title,text,opts,dur,def){
   S.dlg={choice:true,t:0,dur,def,opts};
   showBox('box',`<div class="nm" style="color:var(--amber);flex:none">${title}</div><div class="tx">${text}</div><div class="tm"><b id="dt"></b></div><div class="opts">${opts.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
@@ -670,7 +690,8 @@ function update(dt){
     if(n.leaving){n.off-=(S.speed*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+30)shoot(n,x);return;}
     n.v+=(rand(6.5,7.3)-n.v)*dt*.3;let tv=n.v;if(S.dlg&&S.dlg.npc===n)tv=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)tv=S.speed+(n.buddy-n.off)*.5;
     n.off=clamp(n.off+(tv-S.speed)*dt*.9,lo,hi);
-    if(S.t>=n.elimAt){n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}
+    if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=80&&!n.saveAsked&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
+      else{n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}}
   });
   S.corpses=S.corpses.filter(c=>c.wx-S.scroll>-20);
   if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
