@@ -719,7 +719,7 @@ function answer(i){
   if(after!==before&&after==='Fraterno'){S.bro=true;npc.buddy=pick([-5,-4,4,5]);npc.lane=pick([2,3]);log(npc.name+' ora è come un fratello per te.','var(--green)');}
   if(after!==before&&after==='Odio mortale'){S.hate=true;log(npc.name+' ti odia a morte.','var(--red)');}
 }
-const isHeat=()=>{const h=hourNow(),w=S.wx.heat;return !!w&&h>=w[0]&&h<w[1];};
+const isHeat=()=>{const h=hourNow()%24,w=S.wx.heat;return !!w&&h>=w[0]&&h<w[1];};
 function randomEvent(){
   const heat=isHeat(),wx=S.wx;
   const ev=[['crampo',2+(S.hy<40?3:0)],['caduta',2+(S.st<30?2:0)],['sasso',1.6],['acqua',1.4+(heat?1.5:0)],['salita',1.1*wx.hill*(S.zplan&&S.zplan[S.zi].z==='montagna'?2.2:1)],['pioggia',.9*wx.rain],['isteria',S.mh<35?3.5:0]];
@@ -733,8 +733,10 @@ function randomEvent(){
 }
 
 /* ================= LOGICA ================= */
-const HOUR=42; // secondi reali per 1 ora di gioco (marcia accorciata del 30%)
-const hourNow=()=>9+S.t/HOUR; // la marcia parte alle 9
+const HOUR=8.5; // secondi reali per 1 ora di gioco: ~10 min reali = fino a ~3 giorni di marcia con le notti
+const WARN_CLEAR=42; // secondi reali dopo cui si cancella un richiamo
+const hourNow=()=>9+S.t/HOUR; // la marcia parte alle 9 del primo giorno
+const isNight=()=>{const h=hourNow()%24;return h>=20||h<6;};
 function update(dt){
   S.t+=dt;const sh=S.sh,hour=hourNow(),heat=isHeat(),wx=S.wx;
   let cap=5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100);
@@ -753,13 +755,15 @@ function update(dt){
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
   if(S.bl>=100){S.bl=0;S.mh-=25;sfx.bad();buzz(300);log('Non ce l\'hai fatta a trattenerla. Ti sei bagnato davanti a tutti.','var(--red)');}
   if(heat&&!S.heatMsg){S.heatMsg=true;log('Il sole picchia. L\'asfalto brucia.','var(--amber)');}
-  if(wx.cold&&hour>=20&&!S.coldMsg){S.coldMsg=true;log('Scende la notte. Fa freddo, molto freddo.','var(--blue)');}
+  {const night=isNight(),day=1+Math.floor((hour-6)/24);
+   if(night&&!S.nightOn){S.nightOn=true;log(wx.cold?'Scende la notte. Fa freddo, molto freddo.':'Scende la notte. Si cammina al buio.','var(--blue)');}
+   if(!night&&S.nightOn){S.nightOn=false;S.heatMsg=false;log(day===2?'Spunta l\'alba del secondo giorno.':day===3?'L\'alba del terzo giorno. Siete ancora in piedi.':'Un\'altra alba. Giorno '+day+'.','var(--amber)');}}
   if(heat&&S.hy<15&&Math.random()<dt*.08){S.ph-=15;S.mh-=10;S.speed-=2;log('Colpo di calore. Il mondo gira.','var(--red)');sfx.bad();}
   if(!S.blister&&sh.blister&&S.t>sh.blister){S.blister=true;log('Senti le vesciche aprirsi nelle scarpe.','var(--red)');}
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log('La suola dei mocassini si stacca.','var(--red)');}
-  let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&hour>=20)pd+=.03;
+  let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&isNight())pd+=.03;
   S.ph=clamp(S.ph-pd*dt,0,100);
-  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(hour>=20)md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
+  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(isNight())md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
   S.mh=clamp(S.mh-md*dt,0,100);
   const lp=lvl(S.ph),lm=lvl(S.mh);S.thT-=dt;
   if(lp>S.lvPH){think('ph');S.thT=rand(12,18);}else if(lm>S.lvMH){think('mh');S.thT=rand(12,18);}
@@ -768,12 +772,12 @@ function update(dt){
   if(S.t>5&&S.speed<LIMIT&&!(S.qte&&S.qte.type==='blocco')){S.underT+=dt;if(S.underT>=3){S.underT=0;addWarn();}}else S.underT=Math.max(0,S.underT-dt*2);
   S.truckX+=((4+S.underT*9)-S.truckX)*Math.min(1,dt*3);
   if(S.underT>.5){S.heartT-=dt;if(S.heartT<=0){sfx.heart();S.heartT=.9-S.underT*.2;}}
-  if(S.warn>0&&S.t-S.lastWarnT>HOUR){S.warn--;S.lastWarnT=S.t;log('È passata un\'ora: un richiamo cancellato.','var(--green)');}
+  if(S.warn>0&&S.t-S.lastWarnT>WARN_CLEAR){S.warn--;S.lastWarnT=S.t;log('Hai tenuto il passo a lungo: un richiamo cancellato.','var(--green)');}
   if(S.balloon){S.balloon.t-=dt;if(S.balloon.t<=0)S.balloon=null;}
   if(S.chat){S.chat.t-=dt;if(S.chat.t<=0||!S.chat.n.alive)S.chat=null;}
   S.chatT=(S.chatT==null?4:S.chatT)-dt;
   if(S.chatT<=0&&!S.chat){const pr=progress(),vis=S.npcs.filter(n=>n!==S.dyingNpc&&n.alive&&!n.leaving&&!n.bigot&&PX+n.off*SPR>25&&PX+n.off*SPR<W-25);
-    if(vis.length){const tier=pr<.34?0:pr<.67?1:2,mad=pr>.8&&Math.random()<.6,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&hourNow()>=20;
+    if(vis.length){const tier=pr<.34?0:pr<.67?1:2,mad=pr>.8&&Math.random()<.6,hillLong=S.hill>0&&S.hillLen>25&&S.hillLen-S.hill>5,cold=S.wx.cold&&isNight();
       const pool=hillLong&&Math.random()<.7?CHAT_HILL:S.rain>0&&Math.random()<.6?CHAT_RAIN:cold&&Math.random()<.5?CHAT_COLD:mad?CHAT_MAD:(()=>{const r=Math.random();
         if(tier===0)return r<.75?CHAT[0]:CHAT_HOME;if(tier===1)return r<.45?CHAT[1]:r<.65?CHAT_PAIN:r<.82?CHAT_LONELY:CHAT_HOME;return r<.45?CHAT[2]:r<.7?CHAT_PAIN:r<.88?CHAT_LONELY:CHAT_HOME;})();
       const who=pick(vis);S.chat={n:who,s:who.villain?(S.infame&&Math.random()<.4?'Bravo, socio. Siamo noi i furbi.':freshPick(VILLAIN_SAY)):freshPick(pool),t:3.6};}S.chatT=rand(4,8)*(1-.35*pr)*(S.hill>0||S.rain>0?.65:1);}
@@ -894,7 +898,7 @@ function hud(){
   let a='';
   if(DEBUG){const m=Math.floor(S.t*60/HOUR)+9*60;a=`${fmt(S.speed)} km/h · ${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')} · PH ${Math.round(S.ph)} MH ${Math.round(S.mh)}`;}
   else if(S.mode==='count')a='';else if(S.t<=5)a='PARTENZA — cammina!';else if(S.peeing>0)a='TI STAI LIBERANDO...';else if(S.hill>0)a='SALITA';else if(S.rain>0)a='PIOGGIA';
-  if(!DEBUG&&S.watch){const m=Math.floor(S.t*60/HOUR)+9*60;a='🕐 '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
+  if(!DEBUG&&S.watch){const m=Math.floor(S.t*60/HOUR)+9*60;a='🕐 G'+(1+Math.floor((m/60-6)/24))+' '+String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(a?' · '+a:'');}
   if($('alert').textContent!==a)$('alert').textContent=a;
   $('padL').classList.toggle('next',S.nextFoot==='L');$('padR').classList.toggle('next',S.nextFoot==='R');
   $('iDrink').disabled=S.drinkCd>0;$('nBisc').textContent=S.bisc;$('iBisc').disabled=S.bisc<=0;$('nPan').textContent=S.pan;$('iPan').disabled=S.pan<=0;$('iHam').disabled=S.ham<=0;$('nCig').textContent=S.cig;$('iCig').disabled=S.cig<=0;$('nTub').textContent=S.tub;$('iTub').disabled=S.tub<=0;$('iPee').disabled=S.bl<35||S.peeing>0;
