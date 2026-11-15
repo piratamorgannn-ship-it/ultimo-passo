@@ -1481,7 +1481,7 @@ function quiz(){
   const finish=()=>{PROFILE=makeProfile(ans);loadThen(mapScreen);};
   const ask=()=>{
     if(i>=pool.length)return finish();
-    show(`<h2>TEST ATTITUDINALE · ${i+1}/${QPER}</h2><p style="font-size:18px;font-weight:700;min-height:54px;max-width:620px">${QUIZ[pool[i]][0]}</p>
+    show(`<h2>TEST ATTITUDINALE DELLA FEDERAZIONE EUROPEA · ${i+1}/${QPER}</h2><p style="font-size:18px;font-weight:700;min-height:54px;max-width:620px">${QUIZ[pool[i]][0]}</p>
     <div class="row3">${['VERO','FALSO','NON SO'].map((l,j)=>`<button data-j="${j}">${l}</button>`).join('')}</div>
     <button class="ghost" id="skip">SALTA IL TEST</button>`);
     sc.querySelectorAll('.row3 button').forEach(b=>b.addEventListener('click',()=>{ans.push([pool[i],+b.dataset.j]);i++;ask();}));
@@ -1621,12 +1621,14 @@ const P_TRAIT={f:['Fisico asciutto e resistente: ha sempre lavorato all\'aria ap
  c:['Simpatico e chiacchierone, si fa voler bene da chiunque.','Chiuso e diffidente, con gli sconosciuti non spreca parole.']};
 const P_RAND=['Faceva l\'apprendista meccanico.','Studiava da geometra, prima dell\'estrazione.','Lavorava nella panetteria di famiglia, all\'alba.','Suona la chitarra. Male, ma con passione.','Ha una sorella più piccola che lo aspetta alla finestra.','Colleziona francobolli di paesi che non esistono più.','Tifa per una squadra che non vince da vent\'anni.','Non ha mai visto il mare.','Ha lasciato la scuola per lavorare in fabbrica.','Sogna di fare il fotografo.','Sa cucinare solo le uova, ma le fa benissimo.','Prima di oggi non aveva mai preso un treno.','Scrive poesie che non fa leggere a nessuno.','Ripara biciclette nel cortile di casa.','Ha promesso a sua madre che sarebbe tornato.','Porta sempre in tasca un sasso portafortuna.'];
 let PLAYER=null;
+const ID_BLACK=["È di seconda generazione: è nato qui, eppure non è mai riuscito a sentirsi a casa nell'Europa del dopoguerra.","Fino a oggi nessuno gli aveva mai fatto pesare il colore della sua pelle. Fino a oggi.","Sua madre è arrivata con l'ultima nave prima della guerra. Lui è nato qui, ma per i documenti resta uno straniero."];
+const ID_GAY=["Vuole solo tornare a casa dal suo compagno.","Se vincerà, si è promesso che si dichiarerà al suo migliore amico.","A casa c'è un ragazzo che lo aspetta. In famiglia nessuno sa chi sia davvero.","In tasca ha la lettera di un ragazzo conosciuto l'estate scorsa. Non l'ha mai fatta leggere a nessuno."];
 function makePlayer(){
   const black=DEBUG_ID?(DEBUG_ID==='black'||DEBUG_ID==='both'):Math.random()<.2,gay=DEBUG_ID?(DEBUG_ID==='gay'||DEBUG_ID==='both'):Math.random()<.2;
   /* descrizione: metà dal test (i due tratti più marcati), metà casuale */
   const bg=pick(BACKGROUNDS),rn=shuffle(P_RAND.filter(x=>!(bg.x&&bg.x.test(x)))).slice(0,1);
   const N=pick(STATES.filter(x=>x.s!=='Ungheria')),li=Math.floor(Math.random()*N.l.length); // l'Ungheria resta all'ansiosa ungherese
-  return {first:pick(N.m),last:N.l[li],state:N.s,bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,
+  return {first:pick(N.m),last:N.l[li],state:N.s,bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,idLine:[black?pick(ID_BLACK.filter(x=>!(bg.x&&bg.x.test(x)))):'',gay?pick(ID_GAY.filter(x=>!(bg.x&&bg.x.test(x)))):''].filter(Boolean).join(' '),
     shirt:pick(['#d8d0b8','#c8553d','#4a78a8','#6a9a5a','#d89a30','#a05a90','#3a3a4a','#e8e8e8','#8a2a2a','#3ac8c8',...ERA.shirts]),
     hair:black?pick(['#1a1210','#2a1a10']):pick(['#3a2418','#1a1410','#c8a060','#8a5a30','#d8c890','#5a3a20']),
     skin:black?pick(['#6a4028','#5a3420','#7a4a2a']):pick(['#e8b896','#f0c8a8','#d8a880','#c89870']),band:Math.random()<.25,
@@ -1642,7 +1644,7 @@ function loadThen(fn){
 function presentPlayer(shoe){
   PLAYER=makePlayer();const P=PLAYER;
   show(`<h2>IL MARCIATORE · ${YEAR}</h2><div class="pcard"><canvas id="pspr" width="12" height="18"></canvas><div class="pinfo">
-    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><div class="pbg">${P.bg.t}</div>${P.black||P.gay?`<div class="pid">${P.black?'<span class="ptag">NERO</span>':''}${P.gay?'<span class="ptag">GAY</span>':''} <span class="lbl">${P.black&&P.gay?'Nero e gay':P.black?'Nero':'Gay'}, in un'Europa che non perdona: qualcuno, in marcia, glielo farà pesare.</span></div>`:''}<p>${P.desc}</p></div></div>
+    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><div class="pbg">${P.bg.t}</div><p>${P.desc}${P.idLine?' '+P.idLine:''}</p></div></div>
     <button class="main" id="go">AVANTI</button>`);
   const c=$('pspr'),main=cx;cx=c.getContext('2d');cx.imageSmoothingEnabled=false;try{drawWalker(2,1,P,0,true,false);}finally{cx=main;}
   $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';newRun(shoe,PROFILE);}));
