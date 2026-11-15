@@ -673,7 +673,7 @@ function startQTE(type,who){
    isteria:{dur:4,need:7,title:'PANICO',sub:'Il cuore impazzisce. Respira.',btn:'RESPIRA'},
    blocco:{dur:4,need:10,title:'LE GAMBE NON SI MUOVONO',sub:'Tutti partono. Tu no. Sbloccati!',btn:'MUOVITI'},
    sgambetto:{dur:1.6,title:(who||'').toUpperCase()+' TI FA LO SGAMBETTO!',sub:'Salta quando il segno è nel verde',btn:'SALTA',timing:true},
-   rialzati:{dur:3,need:Math.min(35,20+5*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca i tasti dei piedi più veloce che puoi!',btn:'',padsOnly:1},
+   rialzati:{dur:3,need:Math.min(32,18+4*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca i tasti dei piedi più veloce che puoi!',btn:'',padsOnly:1},
    salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
   if(q.timing){q.z0=rand(.45,.65);q.z1=q.z0+.17;}
@@ -843,6 +843,7 @@ const hourNow=()=>9+S.t/HOUR; // la marcia parte alle 9 del primo giorno
 const isNight=()=>{const h=hourNow()%24;return h>=20||h<6;};
 function update(dt){
   S.t+=dt;const sh=S.sh,hour=hourNow(),heat=isHeat(),wx=S.wx;
+  if(!(S.st>=0))S.st=0;if(!(S.ph>=0))S.ph=0;  // la stamina negativa dava velocità NaN
   let cap=(5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100))*SR;
   if(S.peeing>0){cap=Math.min(cap,6.9*SR);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
@@ -852,9 +853,9 @@ function update(dt){
   if(!S.collapsed&&!S.fainted&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.kway?.97:.94):1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
-  S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
+  S.speed=Math.max(0,S.speed||0);S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
   S.maxSt=Math.max(40,100-S.t*.06);
-  let d=(.45+Math.max(0,S.speed-LIMIT)/SR*.22)*sh.st;if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=1.4;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
+  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195)*sh.st;  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=1.4;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
@@ -868,7 +869,7 @@ function update(dt){
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log('La suola dei mocassini si stacca.','var(--red)');}
   let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&isNight())pd+=.03;if(S.rain>0&&!S.kway)pd+=.04;
   S.ph=clamp(S.ph-pd*dt,0,100);
-  let md=.05*sh.mh*(1.3-S.tr.n/100);if(S.bl>70)md+=.08;if(isNight())md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
+  let md=.044*sh.mh*(1.3-S.tr.n/100);  // prova più facile (prima .05)if(S.bl>70)md+=.08;if(isNight())md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
   S.mh=clamp(S.mh-md*dt,0,100);
   const lp=lvl(S.ph),lm=lvl(S.mh);S.thT-=dt;
   if(lp>S.lvPH){think('ph');S.thT=rand(12,18);}else if(lm>S.lvMH){think('mh');S.thT=rand(12,18);}
