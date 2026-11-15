@@ -938,6 +938,14 @@ function update(dt){
   if(S.saving&&!S.qte){S.savWait=(S.savWait||0)+dt;if(S.savWait>4){S.savWait=0;finishSave(S.saving);}}else S.savWait=0;  // sicurezza: salvataggio rimasto a metà
   if(!S.barGiven&&!S.alone&&S.st<30&&S.tub<=0&&S.bisc<=0&&S.pan<=0&&S.ham<=0&&!(S.bar>0)){const b=S.npcs.find(n=>n.named&&n.alive&&!n.leaving&&n.rel>=80&&n!==S.dyingNpc);if(b){S.barGiven=1;S.bar=1;sfx.good();log(b.name+' ti mette in mano una barretta: «L\'ho tenuta per te. Mangiala, e non dire niente.»','var(--green)');}}
   S.umb=clamp((S.umb||0)+(S.rain>0?dt:-dt)/2,0,1);  // ombrellone giallo dei cecchini: si apre in 2 s quando piove, si chiude quando smette
+  /* un amico (più spesso un fraterno) ti offre la sua razione quando sei a stamina bassa: massimo 2 volte a marcia */
+  if((S.offers||0)<2&&!S.alone&&S.st<30&&!S.dlg&&!S.qte&&!S.collapsed&&!S.fainted&&S.t>=(S.offerT||0)){S.offerT=S.t+6;
+    const fr=S.npcs.filter(n=>n.named&&n.alive&&!n.leaving&&n.rel>=40&&n!==S.dyingNpc),br=fr.filter(n=>n.rel>=80);
+    const f=br.length&&Math.random()<.35?pick(br):fr.length&&Math.random()<.15?pick(fr):null;
+    if(f){S.offers=(S.offers||0)+1;
+      choice(f.name.toUpperCase()+' TI OFFRE LA SUA RAZIONE','«Hai una faccia da morto. Tieni, mangia. Io ce la faccio.»',[
+        {l:'Accetti',f:()=>{S.st=Math.min(S.maxSt,S.st+22);S.mh=Math.min(100,S.mh+3);relUp(f,4);sfx.eat();log('Mangi il tubetto di '+f.name+'. Ti guarda finché non hai finito.','var(--green)');fxLog(4,3,22,f);}},
+        {l:'«Tienila tu.»',f:()=>{relUp(f,8);S.mh=Math.min(100,S.mh+2);log(f.name+' scuote la testa, poi sorride: «Testardo.»','var(--dim)');fxLog(8,2,0,f);}}],8,0);}}
   if(S.infame){S.swT-=dt;if(S.swT<=0){S.swT=rand(4,9);const d=rand(-9,6);S.mh=clamp(S.mh+d,0,100);if(d<-5)log(pick(['“Cosa ho fatto?”','“Non guardatemi così.”','“Ho fatto quello che dovevo. Vero?”','“Li sento ridere di me.”']),'var(--red)','th');}}
   if(!S.dyingNpc&&S.npcs.filter(n=>n.alive&&!n.leaving).length+1<=6){const c=S.npcs.filter(n=>n.alive&&!n.leaving);if(c.length){S.dyingNpc=pick(c);if(S.dlg&&S.dlg.npc===S.dyingNpc){S.dlg=null;hideBox();}if(S.chat&&S.chat.n===S.dyingNpc)S.chat=null;}}
   if(!S.finale&&S.npcs.filter(n=>n.alive&&!n.leaving).length<=2){S.finale=true;const fin=ROUTE.c[ROUTE.c.length-1];S.zplan.push({z:'finale',dur:1e9,name:fin});S.zi=S.zplan.length-1;S.zNext=1e9;S.zones.push({z:'finale',s:S.scroll-.5*W/.15});
