@@ -108,6 +108,7 @@ button:disabled{opacity:.35}
 #screen .choices.pix button:disabled{opacity:.6}
 #screen img.spr{image-rendering:pixelated;image-rendering:crisp-edges;margin:2px auto 6px;max-width:100%;height:auto}
 #screen .row2{display:flex;gap:10px;justify-content:center}
+.pbg{color:var(--amber);font-size:12px;letter-spacing:1px;margin:4px 0}
 /* centratura che non taglia il contenuto quando è più alto dello schermo (si può scorrere dall'inizio) */
 #screen>:first-child{margin-top:auto}#screen>:last-child{margin-bottom:auto}
 /* fine marcia: tasti sempre visibili in basso, tabella personaggi su due colonne */
@@ -778,14 +779,20 @@ function openDlg(npc,d,kind){
   const fill=x=>x.replace(/\{ME\}/g,npc.name).replace(/\{CITY\}/g,npc.from||'casa');
   d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
   if(kind!=='bigot'&&kind!=='loveq')d=sickify(d);
+  if((kind==='base'||kind==='deep')&&PLAYER&&PLAYER.bg&&Math.random()<.35){S.bgUsed=S.bgUsed||[];const av=PLAYER.bg.a.filter(a=>!S.bgUsed.includes(a[0]));
+    if(av.length){const a=pick(av),o={l:a[0],r:a[1],m:a[2],bg:1},arr=d.o.slice();arr.splice(Math.floor(Math.random()*(arr.length+1)),0,o);d={...d,o:arr};}}
   S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.named?npc.name+' <span class="rl">N.'+npc.bibN+'</span>':npc.name} <span class="rl">· ${npc.from||'?'}${npc.state?' ('+npc.state+')':''}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
   box.querySelectorAll('.opts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);}));
   sfx.tick();
 }
+/* con amici e fraterni la conversazione prosegue su più battute */
+function follow(npc){setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.alive&&!npc.leaving)openDlg(npc,DEEP[freshPick(FOLLOW)],'deep');},1800);}
 function answer(i){
   const g=S.dlg;if(!g)return;S.dlg=null;hideBox();S.dlgFree=S.t+3.5;const npc=g.npc;
+  if(i>=0&&g.d.o[i]&&g.d.o[i].bg){const o=g.d.o[i];(S.bgUsed=S.bgUsed||[]).push(o.l);if(g.kind==='base')npc.stage++;npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
+    log(npc.name+' ti ascolta in silenzio. Poi annuisce piano.','var(--green)');fxLog(o.r,o.m);if(npc.rel>=40&&Math.random()<.6)follow(npc);return;}
   if(i>=0&&g.d.o[i]&&g.d.o[i].sick){const o=g.d.o[i];S.mh=clamp(S.mh+o.sm,0,100);if(o.ss)S.st=clamp(S.st+o.ss,0,S.maxSt);const good=o.sm>0||o.ss>0;setTimeout(()=>{if(S&&S.mode==='play')log((o.sm>0?pick(['“Strano. Mi sento meglio.”','“Che risata. Mi gira la testa, ma va bene.”','“Era assurdo. Eppure mi ha fatto bene.”']):o.ss>0?pick(['“Una forza strana nelle gambe. Non so da dove arriva.”','“La follia scalda. Le gambe vanno da sole.”']):pick(['“Perché l\'ho detto?”','“Quella non era la mia voce.”','“Sto perdendo la testa.”','“Chi ha parlato? Io?”']))+(o.ss?` (stamina ${o.ss>0?'+':''}${o.ss})`:''),good?'var(--amber)':'var(--red)','th');},900);}
   if(g.kind==='bigot'){const o=i<0?g.d.o.find(x=>x.def):g.d.o[i];npc.rel=clamp((npc.rel||0)+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);
     log(o.f,o.m>0?'var(--green)':o.m>=-1?'var(--dim)':'var(--red)');
@@ -798,7 +805,7 @@ function answer(i){
     if(o.out){const ok=npc.rel>=0&&Math.random()<.75;npc.rel=clamp(npc.rel+(ok?8:-18),-100,100);log(npc.name+(ok?' sorride: «Allora spero che ti aspetti.»':' fa una smorfia e si allontana.'),ok?'var(--green)':'var(--red)');}
     else log(npc.name+(o.r<0?' alza le mani: «Scusa.»':' annuisce.'),'var(--dim)');return;}
   if(g.kind==='deep'){if(i<0){log(npc.name+' resta in silenzio accanto a te.','var(--dim)');return;}
-    const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
+    const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);fxLog(o.r,o.m);
     if(o.n)setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.alive&&!npc.leaving)openDlg(npc,DEEP[o.n],'deep');},1800);
     else log(npc.name+' ti stringe la spalla, senza dire niente.','var(--green)');
     return;}
@@ -806,7 +813,8 @@ function answer(i){
   if(i<0){npc.rel-=5;log('Ignori '+npc.name+'. Si allontana in silenzio.','var(--dim)');return;}
   const o=g.d.o[i],before=relLabel(npc.rel);npc.rel=clamp(npc.rel+o.r,-100,100);
   if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);if(o.r>0)S.mh=Math.min(100,S.mh+o.r/4);
-  log(npc.name+(o.r>5?' sorride.':o.r<0?' ti guarda storto.':' annuisce.')+(o.s?` (stamina ${o.s>0?'+':''}${o.s})`:''),o.r>0?'var(--green)':o.r<0?'var(--red)':'var(--dim)');
+  log(npc.name+(o.r>5?' sorride.':o.r<0?' ti guarda storto.':' annuisce.'),o.r>0?'var(--green)':o.r<0?'var(--red)':'var(--dim)');fxLog(o.r,o.r>0?o.r/4:0,o.s);
+  if(npc.rel>=40&&!S.alone&&Math.random()<.7)follow(npc);
   const after=relLabel(npc.rel);
   if(after!==before&&(after==='Amico'||after==='Rivale'))log(npc.name+(after==='Amico'?' ora è tuo amico.':' ora è tuo rivale.'),after==='Amico'?'var(--green)':'var(--red)');
   if(after!==before&&after==='Fraterno'){S.bro=true;npc.buddy=pick([-5,-4,4,5]);npc.lane=pick([2,3]);log(npc.name+' ora è come un fratello per te.','var(--green)');}
@@ -1535,14 +1543,13 @@ let PLAYER=null;
 function makePlayer(){
   const black=DEBUG_ID?(DEBUG_ID==='black'||DEBUG_ID==='both'):Math.random()<.2,gay=DEBUG_ID?(DEBUG_ID==='gay'||DEBUG_ID==='both'):Math.random()<.2;
   /* descrizione: metà dal test (i due tratti più marcati), metà casuale */
-  const t=PROFILE||{f:50,n:50,s:50,c:50},ks=['f','n','s','c'].sort((a,b)=>Math.abs(t[b]-50)-Math.abs(t[a]-50)).slice(0,2);
-  const tr=ks.map(k=>P_TRAIT[k][t[k]>=50?0:1]),rn=shuffle(P_RAND).slice(0,2);
+  const bg=pick(BACKGROUNDS),rn=shuffle(P_RAND.filter(x=>!(bg.x&&bg.x.test(x)))).slice(0,1);
   const N=pick(STATES.filter(x=>x.s!=='Ungheria')),li=Math.floor(Math.random()*N.l.length); // l'Ungheria resta all'ansiosa ungherese
   return {first:pick(N.m),last:N.l[li],state:N.s,bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,
     shirt:pick(['#d8d0b8','#c8553d','#4a78a8','#6a9a5a','#d89a30','#a05a90','#3a3a4a','#e8e8e8','#8a2a2a','#3ac8c8',...ERA.shirts]),
     hair:black?pick(['#1a1210','#2a1a10']):pick(['#3a2418','#1a1410','#c8a060','#8a5a30','#d8c890','#5a3a20']),
     skin:black?pick(['#6a4028','#5a3420','#7a4a2a']):pick(['#e8b896','#f0c8a8','#d8a880','#c89870']),band:Math.random()<.25,
-    desc:shuffle([...tr,...rn]).join(' ')};
+    bg,desc:bg.d+' '+rn.join(' ')};
 }
 /* schermata di caricamento di 2 secondi tra una schermata e l'altra */
 function loadThen(fn){
@@ -1554,7 +1561,7 @@ function loadThen(fn){
 function presentPlayer(shoe){
   PLAYER=makePlayer();const P=PLAYER;
   show(`<h2>IL MARCIATORE · ${YEAR}</h2><div class="pcard"><canvas id="pspr" width="12" height="18"></canvas><div class="pinfo">
-    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><p>${P.desc}</p></div></div>
+    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><div class="pbg">${P.bg.t}</div><p>${P.desc}</p></div></div>
     <button class="main" id="go">AVANTI</button>`);
   const c=$('pspr'),main=cx;cx=c.getContext('2d');cx.imageSmoothingEnabled=false;try{drawWalker(2,1,P,0,true,false);}finally{cx=main;}
   $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);}));
@@ -1763,6 +1770,55 @@ Object.assign(DEEP,{
 const BRO_CHAT=['c_cibo','c_musica','c_scarpe','c_stelle','c_scuola','c_animali','c_gioco','c_barzelletta','c_piedi'];
 DEEP_START.push('d_padre','d_colpa','d_ricordo','d_corpo');
 
+
+/* ================= BACKGROUND DEL GIOCATORE (casuale; aggiunge risposte personali nei dialoghi) ================= */
+const BACKGROUNDS=[
+ {t:'ORFANO DI GUERRA',d:'I suoi genitori sono morti sotto le bombe dell\'ultimo inverno di guerra. È cresciuto in un orfanotrofio di suore, tra brande di ferro e minestre di cavolo.',x:/madre|famiglia|sorella/,
+  a:[['«Io i miei non li ho mai conosciuti. La guerra se li è presi.»',10,2],['«All\'orfanotrofio ci insegnavano a non piangere. Funziona fino a un certo punto.»',8,1],['«Nessuno mi aspetta a casa. Forse per questo cammino più leggero.»',6,-3],['«Le suore dicevano che i morti ci guardano. Spero non oggi.»',7,0]]},
+ {t:'CRESCIUTO IN UN CAMPO PROFUGHI',d:'La sua famiglia ha attraversato tre confini a piedi. Ha passato l\'infanzia in una baracca di lamiera, in fila per il pane.',
+  a:[['«Ho già camminato così, da bambino. Tre confini. Mia madre mi teneva per mano.»',10,3],['«In fila per il pane si impara la pazienza. E a non fidarsi.»',6,1],['«Al campo dicevano: chi si siede, resta. Avevano ragione.»',8,2]]},
+ {t:'FIGLIO DI UN DISERTORE',d:'Nell\'ultimo anno di guerra suo padre gettò il fucile e sparì. Da allora la sua famiglia ha un marchio rosso sui documenti.',
+  a:[['«Mio padre si rifiutò di sparare. Lo hanno chiamato codardo. Io lo chiamo papà.»',12,2],['«Il mio cognome fa paura ai funzionari. A me fa ridere.»',6,2],['«Forse mi hanno estratto per lui. Non era un caso.»',8,-3]]},
+ {t:'FIGLIO DI UN UFFICIALE DEL CONSIGLIO',d:'Suo padre porta una divisa piena di medaglie. Non sono bastate a togliere il suo nome dall\'urna.',
+  a:[['«Mio padre è un ufficiale del Consiglio. Non ha mosso un dito per me.»',6,-2],['«Lo so cosa pensi. Non sono come lui.»',4,0],['«Se vinco, gli sputo addosso. Davanti a tutti.»',10,3]]},
+ {t:'CONTRABBANDIERE DEL MERCATO NERO',d:'Ha venduto sigarette, calze di nylon e penicillina sotto i portici. Sa sempre dove trovare quello che manca.',
+  a:[['«Al mercato nero si impara una cosa: tutto ha un prezzo. Anche questa strada.»',6,1],['«Se usciamo vivi, ti procuro quello che vuoi. Parola di contrabbandiere.»',10,2],['«Ho venduto medicine a chi non poteva pagarle. A credito. Nessuno mi ha mai ripagato.»',8,1]]},
+ {t:'MINATORE DELLA RICOSTRUZIONE',d:'Da quando aveva quattordici anni scende in miniera per il carbone della Federazione. I suoi polmoni lo sanno già.',
+  a:[['«Ho passato più ore al buio che al sole. Questa strada almeno ha il cielo.»',8,3],['«In miniera si canta per non pensare. Vuoi che canti?»',10,2],['«Ho visto crollare una galleria con dentro sei amici. Questa è solo una strada.»',8,-2]]},
+ {t:'FIGLIO DI CONTADINI ESPROPRIATI',d:'Le requisizioni si sono prese la terra, le vacche e il grano. Suo padre ora fa il bracciante sui campi che erano suoi.',
+  a:[['«La Grazia ridarebbe la terra a mio padre. Per questo cammino.»',10,3],['«Mi hanno portato via le vacche davanti agli occhi. Avevo sei anni. Le chiamavo per nome.»',8,-1],['«La terra non si dimentica di chi la lavora.»',6,2]]},
+ {t:'FRATELLO DI UN MARCIATORE',d:'Suo fratello maggiore ha marciato due anni fa e non è tornato. Ora tocca a lui.',
+  a:[['«Mio fratello è morto su una strada come questa. Due anni fa.»',10,-3],['«Cammino anche per lui. Lui si è fermato al centoventesimo chilometro.»',10,1],['«Mi ha lasciato le sue scarpe. Non mi stanno nemmeno.»',8,0]]},
+ {t:'STUDENTE ESPULSO',d:'Lo hanno cacciato dall\'università per un volantino contro il Consiglio. Due settimane dopo il suo nome è uscito dall\'urna.',
+  a:[['«Ho scritto un volantino. Uno. E ora sono qui.»',8,1],['«Studiavo storia. Qui la stiamo facendo a piedi.»',8,3],['«Non ho paura di loro. Ho paura di dimenticare perché li odio.»',10,-1]]},
+ {t:'EX SEMINARISTA',d:'Voleva diventare prete. Ha lasciato il seminario quando ha capito che il Consiglio decideva anche le prediche.',
+  a:[['«Ho smesso di credere in seminario. Sto ricominciando adesso, passo dopo passo.»',10,2],['«Se vuoi, prego per te. Non costa niente.»',10,3],['«Dio non c\'entra con questa strada. Gli uomini sì.»',6,0]]},
+];
+/* effetti immediati delle risposte, mostrati subito */
+const fxTxt=(r,m,st)=>[r?`amicizia ${r>0?'+':''}${Math.round(r)}`:'',m?`mente ${m>0?'+':''}${Math.round(m)}`:'',st?`stamina ${st>0?'+':''}${st}`:''].filter(Boolean).join(' · ');
+const fxLog=(r,m,st)=>{const t=fxTxt(r,m,st);if(t)log('('+t+')',(m||0)+(r||0)/4>=0?'var(--green)':'var(--red)');};
+/* seguiti con gli amici: la conversazione continua su più battute */
+Object.assign(DEEP,{
+ f1:{t:"Posso chiederti una cosa, {N}? Cosa farai la prima sera a casa, se ce la fai?",o:[Q("«Dormirò per tre giorni.»",D(6,4,'f1b')),Q("«Andrò sulla tomba di qualcuno.»",D(8,-2,'f1b')),Q("«Non ci penso. Porta sfortuna.»",D(2,-1))]},
+ f1b:{t:"Io invece mangerò finché scoppio. Poi piangerò. Poi mangerò ancora.",o:[Q("Ridi con lui.",D(6,5)),Q("«Invitami.»",D(10,4))]},
+ f2:{t:"Hai mai pensato di sederti e basta? Io sì, ogni dieci minuti.",o:[Q("«Anch'io. Poi guardo te.»",D(10,4,'f2b')),Q("«Mai. Non posso permettermelo.»",D(4,2,'f2b')),Q("«Smettila di pensarci.»",D(-4,-2))]},
+ f2b:{t:"Allora facciamo un patto: se uno dei due pensa di sedersi, lo dice all'altro.",o:[Q("«Patto.»",D(10,5)),Q("«E l'altro cosa fa?»",D(6,2,'f2c'))]},
+ f2c:{t:"Lo insulta finché non si arrabbia abbastanza da camminare.",o:[Q("Ridi. «Mi sembra giusto.»",D(8,6))]},
+ f3:{t:"Ti va di contare insieme i pali della luce? Mi distrae.",o:[Q("«Uno... due... tre...»",D(6,5,'f3b')),Q("«Non ho fiato per contare.»",D(-2,-1))]},
+ f3b:{t:"Centoquarantadue. Sai che il mio paese aveva centoquarantadue abitanti? Aveva, sì.",o:[Q("«Aveva?»",D(6,-3,'f3c')),Q("«Ne avrà uno in più quando torni.»",D(10,4))]},
+ f3c:{t:"L'hanno svuotato per una diga. Adesso è sott'acqua. Mi piace pensare che le campane suonino ancora, laggiù.",o:[Q("«Allora suoneranno per te.»",D(10,3)),Q("«Le senti anche adesso?»",D(8,-2))]},
+ f4:{t:"Ho fame, {N}. Ma una fame strana, di cose che non esistono più.",o:[Q("«Tipo?»",D(6,2,'f4b')),Q("«Mangia un tubetto.»",D(0,0))]},
+ f4b:{t:"Il pane di mia nonna. Lo faceva il venerdì. L'odore arrivava fino alla strada.",o:[Q("«Raccontami di lei.»",D(10,4)),Q("Chiudi gli occhi e immagini l'odore.",D(8,6))]},
+ f5:{t:"Dimmi una cosa vera su di te. Una che non hai mai detto a nessuno.",o:[Q("«Ho ancora paura del buio.»",D(10,2,'f5b')),Q("«Una volta ho rubato.»",D(8,1,'f5b')),Q("«Non ho segreti.»",D(-4,-1))]},
+ f5b:{t:"Grazie. Adesso te ne devo una io. ...Non so nuotare. E vengo da un posto di mare.",o:[Q("Ridi piano.",D(8,5)),Q("«Ti insegno io, dopo.»",D(12,4))]},
+ f6:{t:"Ti dà fastidio se cammino in silenzio accanto a te? Non ho niente da dire. Voglio solo non essere solo.",o:[Q("«Resta.»",D(10,4,'f6b')),Q("«Preferisco stare da solo.»",D(-8,-2))]},
+ f6b:{t:"...Grazie. È la cosa più gentile che mi abbiano detto in tutta la marcia.",o:[Q("Gli dai una piccola spinta con la spalla.",D(8,4))]},
+ f7:{t:"Se arrivassimo in due alla fine, uno contro uno... tu cosa faresti?",o:[Q("«Ci penseremo lì.»",D(4,0,'f7b')),Q("«Camminerei per te.»",D(12,-3,'f7b')),Q("«Cercherei di vincere.»",D(-2,2,'f7b'))]},
+ f7b:{t:"Io credo che mi siederei. Non per pietà. Per stanchezza. Sei avvisato.",o:[Q("«Non osare.»",D(10,3)),Q("«Grazie... credo.»",D(6,-2))]},
+ f8:{t:"Raccontami una barzelletta. Brutta. Più è brutta, meglio è.",o:[Q("Ne racconti una orribile.",D(8,6,'f8b')),Q("«Non me ne ricordo nessuna.»",D(0,-1))]},
+ f8b:{t:"È terribile. È la cosa più bella che abbia sentito oggi. Un'altra.",o:[Q("Ne racconti un'altra, peggiore.",D(8,6)),Q("«Basta, ho finito il repertorio.»",D(4,2))]},
+});
+const FOLLOW=['f1','f2','f3','f4','f5','f6','f7','f8'];
 /* ---- patto finale col fraterno (restate in 3) ---- */
 Object.assign(DEEP,{
  f_patto:{t:"Siamo rimasti in tre. Ascoltami bene, perché lo dico una volta sola.",o:[Q("«Ti ascolto.»",D(4,2,'f_patto2')),Q("«Non dirlo. Non adesso.»",D(4,-2,'f_patto2'))]},
