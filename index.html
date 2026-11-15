@@ -367,9 +367,9 @@ function villainAct(){
   const tag=vic.rel>=80?' (fraterno)':vic.rel>=40?' (amico)':vic.rel<=-80?' (ti odia)':vic.rel<=-40?' (rivale)':vic.rel<=-15?' (ostile)':vic.rel>=15?' (simpatia)':'',col=vic.rel>=15?'var(--green)':vic.rel<=-15?'var(--red)':'',
     fr=!!col,vn=col?`<span style="color:${col}">${vic.name}${tag}</span>`:vic.name,vl=`<span style="color:var(--red)">${v.name}</span>`;
   const opts=[
-   {l:'Difendi '+vn,f:()=>{S.karma++;S.st=Math.max(0,S.st-6);S.mh=Math.min(100,S.mh+3);vic.elimAt+=rand(60,120);v.rel=-80;if(vic.named)relUp(vic,15);
+   {l:'Difendi '+vn,f:()=>{S.karma++;store.set('up_defends',store.get('up_defends',0)+1);S.st=Math.max(0,S.st-6);S.mh=Math.min(100,S.mh+3);vic.elimAt+=rand(60,120);v.rel=-80;if(vic.named)relUp(vic,15);
       S.npcs.filter(n=>n.named&&n.alive&&n!==vic).forEach(n=>relUp(n,4));log('Ti metti in mezzo. '+vic.name+' resta in piedi; '+v.name+' ti guarda con odio.','var(--green)');karmaCheck();}},
-   {l:'Aiuti '+v.name,f:()=>{S.karma--;S.st=Math.min(S.maxSt,S.st+8);vic.elimAt=Math.min(vic.elimAt,S.t+rand(2,6));if(vic.named)relUp(vic,-60);
+   {l:'Aiuti '+v.name,f:()=>{S.karma--;store.set('up_betrays',store.get('up_betrays',0)+1);S.st=Math.min(S.maxSt,S.st+8);vic.elimAt=Math.min(vic.elimAt,S.t+rand(2,6));if(vic.named)relUp(vic,-60);
       S.npcs.filter(n=>n.named&&n.alive&&n!==vic).forEach(n=>relUp(n,-15));log('Dai una spinta a '+vic.name+'. Cade. '+v.name+' ti strizza l\'occhio: «Bravo, socio.»','var(--red)');karmaCheck();}},
    {l:'Non ti immischi',f:()=>{vic.elimAt=Math.min(vic.elimAt,S.t+rand(20,60));S.mh=Math.max(0,S.mh-3);log('Guardi altrove. '+vic.name+' barcolla.','var(--dim)');}}];
   choice(vl+' VUOLE FAR FUORI '+(col?`<span style="color:${col}">${vic.name.toUpperCase()}</span>`:vic.name.toUpperCase()),vl+' si avvicina a '+vn+' per fargli lo sgambetto, ghignando. Nessun soldato guarda.',opts,8,2);return true;
@@ -490,14 +490,14 @@ function makeProfile(ans){
 
 /* ================= EQUIPAGGIAMENTO ================= */
 const SHOES={
- ginnastica:{n:'Scarpe da ginnastica',pro:'Leggere: fanno risparmiare un po\' di stamina.',con:'Le vesciche arrivano presto.',st:.95,ph:1,mh:1,blister:150},
+ ginnastica:{n:'Sneakers',pro:'Leggere: fanno risparmiare un po\' di stamina.',con:'Le vesciche arrivano presto.',st:.95,ph:1,mh:1,blister:150},
  tennis:{n:'Scarpe da tennis',pro:'Affidabili, nessuna brutta sorpresa.',con:'Non eccellono in niente; le vesciche arrivano, tardi.',st:1,ph:1,mh:1,blister:480},
- mocassini:{n:'Mocassini',pro:'Comodi: corpo e mente si logorano meno.',con:'Prima o poi la suola si stacca.',st:1,ph:.7,mh:.75,breaks:true},
- trekking:{n:'Scarponi da trekking',pro:'Indistruttibili, niente vesciche.',con:'Pesanti: consumano più stamina.',st:1.1,ph:.9,mh:1},
- running:{n:'Scarpe da corsa',pro:'???',con:'???',unlock:'Si sbloccano giocando.'},
+ mocassini:{n:'Mocassini',unlock:'Ferma 5 sgambetti degli infami (anche in marce diverse).',pro:'Comodi: corpo e mente si logorano meno.',con:'Prima o poi la suola si stacca.',st:1,ph:.7,mh:.75,breaks:true},
+ trekking:{n:'Scarponi da trekking',unlock:'Aiuta gli infami a fare 5 sgambetti (anche in marce diverse).',pro:'Indistruttibili, niente vesciche.',con:'Pesanti: consumano più stamina.',st:1.1,ph:.9,mh:1},
+ running:{n:'Scarpe da corsa',pro:'Leggerissime: fanno risparmiare molta stamina.',con:'Leggere anche di suola: le vesciche arrivano a metà marcia.',st:.88,ph:1,mh:1,blister:300,unlock:'Vinci una marcia con le scarpe rotte.'},
 };
 const BISC=2;
-const TIPS=["Consiglio n.1: \"Ogni marcia inizia con il primo passo.\"","Consiglio n.2: \"Rispondere al test attitudinale aiuta ogni marciatore a conoscere se stesso. Rispondere sinceramente aiuta di più.\"","Consiglio n.3: \"Non indossare scarpe da ginnastica.\"","Consiglio n.4: \"Ogni 30 chilometri un richiamo sarà cancellato.\"","Consiglio n.5: \"In salita le gambe chiedono il doppio.\"","Consiglio n.6: \"I morti della Marcia vengono sempre onorati.\"","Consiglio n.7: \"Va' piano e ce la farai.\"","Consiglio n.8: \"Risparmiare il fiato.\"","Consiglio n.9: \"Raccomandiamo di indossare calze da ginnastica.\"","Consiglio n.10: \"Risparmia energia, quando è possibile.\"","Consiglio n.11: \"È severamente vietato molestare gli altri marciatori.\"","Consiglio n.12: \"Se scendi sotto i 5,5 km/h verrai richiamato.\"","Consiglio n.13: \"Nuove scorte di cibo saranno distribuite ogni giorno alle ore 9.\"","Consiglio n.14: \"Alla terza ammonizione la marcia viene <i>sospesa</i> per il marciatore.\"","Consiglio n.15: \"Prepararsi alle intemperie migliora le possibilità di farcela.\"","Consiglio n.16: \"Ricordati di idratarti adeguatamente.\"","Consiglio n.17: \"Chi corre arriva stanco. Chi cammina al limite arriva.\"","Consiglio n.18: \"Un sasso nella scarpa costa meno di un richiamo. Quasi sempre.\"","Consiglio n.19: \"La Federazione autorizza lo scambio di beni tra marciatori.\"","Consiglio n.20: \"Vietato interagire con gli spettatori.\"","Consiglio n.21: \"Le notti sono la parte più difficile per la mente dei marciatori.\"","Consiglio n.22: \"Le scarpe migliori non sono le più comode. Né le più leggere.\""];
+const TIPS=["Consiglio n.1: \"Ogni marcia inizia con il primo passo.\"","Consiglio n.2: \"Rispondere al test attitudinale aiuta ogni marciatore a conoscere se stesso. Rispondere sinceramente aiuta di più.\"","Consiglio n.3: \"Non indossare le sneakers.\"","Consiglio n.4: \"Ogni 30 chilometri un richiamo sarà cancellato.\"","Consiglio n.5: \"In salita le gambe chiedono il doppio.\"","Consiglio n.6: \"I morti della Marcia vengono sempre onorati.\"","Consiglio n.7: \"Va' piano e ce la farai.\"","Consiglio n.8: \"Risparmiare il fiato.\"","Consiglio n.9: \"Raccomandiamo di indossare calze da ginnastica.\"","Consiglio n.10: \"Risparmia energia, quando è possibile.\"","Consiglio n.11: \"È severamente vietato molestare gli altri marciatori.\"","Consiglio n.12: \"Se scendi sotto i 5,5 km/h verrai richiamato.\"","Consiglio n.13: \"Nuove scorte di cibo saranno distribuite ogni giorno alle ore 9.\"","Consiglio n.14: \"Alla terza ammonizione la marcia viene <i>sospesa</i> per il marciatore.\"","Consiglio n.15: \"Prepararsi alle intemperie migliora le possibilità di farcela.\"","Consiglio n.16: \"Ricordati di idratarti adeguatamente.\"","Consiglio n.17: \"Chi corre arriva stanco. Chi cammina al limite arriva.\"","Consiglio n.18: \"Un sasso nella scarpa costa meno di un richiamo. Quasi sempre.\"","Consiglio n.19: \"La Federazione autorizza lo scambio di beni tra marciatori.\"","Consiglio n.20: \"Vietato interagire con gli spettatori.\"","Consiglio n.21: \"Le notti sono la parte più difficile per la mente dei marciatori.\"","Consiglio n.22: \"Le scarpe migliori non sono le più comode. Né le più leggere.\""];
 
 /* ================= PENSIERI (PH e MH sono nascosti) ================= */
 const TH={
@@ -1540,7 +1540,7 @@ const T_ITEM={
  sigarette:{pro:'Ogni sigaretta: +20 mente e +25 stamina.',con:'−10 fisico ogni volta e rischio di polmonite.',how:'Hai finito una marcia odiato da tutti.'},
  zainetto:{n:'Zainetto',pro:'Porti 2 oggetti invece di 1.',con:'Nessuno.',how:'Hai vinto 3 marce di fila.'},
 };
-const T_SHOE={ginnastica:'Disponibili dall\'inizio.',tennis:'Disponibili dall\'inizio.',mocassini:'Disponibili dall\'inizio.',trekking:'Disponibili dall\'inizio.'};
+const T_SHOE={ginnastica:'Disponibili dall\'inizio.',tennis:'Disponibili dall\'inizio.',mocassini:'Ferma 5 sgambetti degli infami (anche in marce diverse).',trekking:'Aiuta gli infami a fare 5 sgambetti (anche in marce diverse).',running:'Vinci una marcia con le scarpe rotte.'};
 /* ================= MANUALE DEL MARCIATORE: consigli in ordine e tutorial ================= */
 function manual(){
   const num=t=>+((t.match(/n\.(\d+)/)||[0,999])[1]);
@@ -1630,12 +1630,12 @@ function end(win){
    const unZ=store.get('up_unlock',{});if(streakN>=ZAINO_WINS&&!unZ.zainetto){unZ.zainetto=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccato: Zainetto — ora porti 2 oggetti</p>';}
    const deadN=S.npcs.filter(n=>!n.alive||n.leaving).length;
    const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
-   U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('kway',store.get('up_rains',0)>=10,'Sbloccato: K-way');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
+   U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('kway',store.get('up_rains',0)>=10,'Sbloccato: K-way');U('mocassini',store.get('up_defends',0)>=5,'Sbloccati: Mocassini');U('trekking',store.get('up_betrays',0)>=5,'Sbloccati: Scarponi da trekking');U('running',win&&S.broken,'Sbloccate: Scarpe da corsa');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
    if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
   const K2=store.get('up_know',{}),un2=store.get('up_unlock',{});let tipMsg='';
   K2[S.shoe]=K2[S.shoe]||{};
   if(!K2[S.shoe].con){K2[S.shoe].con=true;tipMsg+=`<p>👟 Ora conosci il difetto di <b>${SHOES[S.shoe].n}</b>: ${SHOES[S.shoe].con}</p>`;}
-  const cand=Object.keys(SHOES).filter(k=>k!=='running'&&!(K2[k]&&K2[k].pro)&&(!SHOES[k].unlock||un2[k]));
+  const cand=Object.keys(SHOES).filter(k=>!(K2[k]&&K2[k].pro)&&(!SHOES[k].unlock||un2[k]));
   if(cand.length){const k=pick(cand);K2[k]=K2[k]||{};K2[k].pro=true;tipMsg+=`<p>💡 Suggerimento: <b>${SHOES[k].n}</b> — ${SHOES[k].pro}</p>`;}
   store.set('up_know',K2);
   const pos=S.npcs.filter(n=>n.alive&&!n.leaving).length+1,hrs=Math.floor(S.t/HOUR),mins=Math.floor(S.t%HOUR*60/HOUR);
