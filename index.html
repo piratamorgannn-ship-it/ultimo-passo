@@ -926,7 +926,7 @@ function update(dt){
   if(S.callCur){S.callCur.t-=dt;if(S.callCur.t<=0)S.callCur=null;}else if(S.calls.length){S.callCur={s:S.calls.shift(),t:1.8};sfx.warnSoft();}
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
-    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);const ahead=PX+n.off*SPR>S.truckX+70;if(!ahead&&n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>S.truckX+70)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+28)shoot(n,x);return;}
+    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);const ahead=PX+n.off*SPR>TX()+42;if(!ahead&&n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>TX()+42)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=TX())shoot(n,x);return;}
     {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;n.tempKm=S.km;}
      if(n.tempW&&S.km-(n.tempKm||0)>=WARN_KM&&w>40){n.warns=0;n.tempW=0;}}
     n.v+=(rand(6.5,7.3)*SR-n.v)*dt*.3;
@@ -939,6 +939,8 @@ function update(dt){
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=60&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
       else{n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}}
   });
+  {let rear=1e9;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)rear=Math.min(rear,PX+n.off*SPR);});
+   const tgt=rear<1e9?clamp(S.truckX+38-rear,0,260):0;S.lag=(S.lag||0)+(tgt-(S.lag||0))*Math.min(1,dt*1.5);}
   S.corpses=S.corpses.filter(c=>c.wx-S.scroll>-20);
   if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
   if(S.thunder>0)S.thunder-=dt;
@@ -1000,13 +1002,15 @@ function update(dt){
 }
 /* ELIMINAZIONE: dietro la fila avanza una linea di cingolati che chiude la strada, con un blindato di soldati (nel futuro un drone).
    Chi è avanti al 3° richiamo viene colpito alle gambe; poi, a terra, la linea lo travolge. Chi resta indietro viene travolto e basta. */
+/* se il giocatore stacca il gruppo, i cingolati restano dietro ai marciatori: lo segue solo il blindato a bordo strada */
+const TX=()=>S.truckX+28-(S.lag||0);
 const BLX=()=>S.truckX+16, SNIP=[[86,4],[110,7]];  // cecchini: [y del cingolato, x sullo scafo]
-const gunPos=()=>{if(ERA.veh==='drone')return [BLX()+20,50];const fx=S.truckX+28,[y,dx]=SNIP[(S.snipTurn=(S.snipTurn||0)+1)%2];return [Math.round(fx-30+dx+14),y-5];};
+const gunPos=()=>{if(ERA.veh==='drone')return [BLX()+20,50];const fx=TX(),[y,dx]=SNIP[(S.snipTurn=(S.snipTurn||0)+1)%2];return [Math.round(fx-30+dx+14),y-5];};
 /* i cecchini si alzano a mirare quando manca meno di 2 s a un'eliminazione (PNG o giocatore) */
 function aimingNow(){
   if(S.mode==='dying')return !S.dead;
   if(S.warn>=2&&S.underT>1)return true;
-  const fx=S.truckX+28;
+  const fx=TX();
   return S.npcs.some(n=>n.alive&&(n.leaving?(PX+n.off*SPR-fx)<(S.speed/SR*1.1+3)*SPR*2+2:(n.elimAt>S.t&&n.elimAt-S.t<2&&S.saving!==n&&!n.savePending)));
 }
 const LEG_SCREAM=["AAAAAAH!","AAAAAAAAAAAH! LE GAMBE!","NO VI PREGO! HO UNA FIGLIA A CASA!","NO! NO! NOOO!","MI ALZO! MI ALZO! DATEMI UN SECONDO!","MAMMA! MAMMAAA!","PIETÀ! VI PREGO, PIETÀ!","NON SENTO PIÙ LE GAMBE! AIUTO!","HO UN BAMBINO! HO UN BAMBINO!","PERCHÉ IO? PERCHÉ IO?!","AIUTATEMI! QUALCUNO MI AIUTI!","FERMATELI! FERMATE QUELLE MACCHINE!","BRUCIA! BRUCIA TUTTO!","DIO MIO, NO! NON COSÌ!"];
@@ -1223,11 +1227,11 @@ function drawScene(){
     if(o.p){if(S.dead)drawCrushed(o.x,o.y+10,me);else if(S.collapsed||S.fainted||S.down)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
     else{if(o.x<-10||o.x>W+10)return;if(o.n.leaving)drawSlump(o.x,o.y,o.n,false);else drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,false);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
   });
-  S.aiming=aimingNow();drawTankLine(S.truckX+28);
+  S.aiming=aimingNow();drawTankLine(TX());
   if(S.flash){const f=S.flash;cx.strokeStyle=fut?'#f83838':'#f8e8a0';cx.lineWidth=1;cx.beginPath();cx.moveTo(f.x0,f.y0);cx.lineTo(f.x1,f.y1);cx.stroke();R(f.x0-1,f.y0-2,4,4,fut?'#ff8080':'#f8f0c0');}
   if(S.rain>0){cx.fillStyle='rgba(170,190,220,.6)';S.drops.forEach(p=>cx.fillRect(Math.round(p.x),Math.round(p.y),1,3));}
   const dk=darkness(hour);
-  if(dk>0){cx.fillStyle=`rgba(8,6,20,${dk})`;cx.fillRect(0,0,W,H);cx.fillStyle=fut?`rgba(248,60,60,${dk*.25})`:`rgba(240,220,150,${dk*.35})`;cx.beginPath();cx.moveTo(S.truckX+28,100);cx.lineTo(S.truckX+140,88);cx.lineTo(S.truckX+140,122);cx.closePath();cx.fill();}
+  if(dk>0){cx.fillStyle=`rgba(8,6,20,${dk})`;cx.fillRect(0,0,W,H);cx.fillStyle=fut?`rgba(248,60,60,${dk*.25})`:`rgba(240,220,150,${dk*.35})`;cx.beginPath();cx.moveTo(TX(),100);cx.lineTo(TX()+112,88);cx.lineTo(TX()+112,122);cx.closePath();cx.fill();}
   if(S.thunder>.9){cx.fillStyle='rgba(255,255,240,.6)';cx.fillRect(0,0,W,H);}
   {const el=$('chatd'),n=S.dyingNpc;if(n&&n.alive&&!n.leaving&&S.mode==='play'&&(S.t%1)<.75){const k=cv.clientWidth/W;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
   {const el=$('chatb');el.classList.toggle('shout',!!(S.chat&&S.chat.shout));el.classList.toggle('help',!!(S.chat&&S.chat.help));if(S.chat&&S.mode==='play'){const n=S.chat.n,k=cv.clientWidth/W;el.textContent=S.chat.s;el.style.left=((PX+n.off*SPR+3)*k)+'px';el.style.top=((86+n.lane*5-3-Math.round((S.slope||0)*(n.off*SPR+3)))*cv.clientHeight/H)+'px';el.style.display='block';}else el.style.display='none';}
@@ -1725,7 +1729,7 @@ function frame(){
       else if(S.mode==='over'&&S.finale)finStep(dt);
       else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
         S.anim+=dt*4;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)n.off+=n.v/SR*dt*1.6;});if(S.chat){S.chat.t-=dt;if(S.chat.t<=0)S.chat=null;}  // gli altri proseguono senza di te
-        if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);
+        if(S.lag>0&&!S.dead)S.lag=Math.max(0,S.lag-50*dt);else if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);
           setTimeout(()=>{const bo=$('blackout');if(bo&&S&&S.mode==='dying')bo.classList.add('on');},1600);
           setTimeout(()=>{if(S&&!S.ended){S.ended=1;end(false);}},2600);}}
         else if(S.dead)S.truckX+=40*dt;}  // la linea di cingolati riprende la marcia dietro chi resta
