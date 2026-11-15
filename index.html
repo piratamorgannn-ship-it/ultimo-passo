@@ -1525,6 +1525,7 @@ function tutorial(){
     <h3>CORPO E MENTE</h3><p>Fisico e mente non si vedono: li capisci dai <b>pensieri</b> che compaiono nei messaggi. Se uno dei due arriva a zero crolli a terra: tocca i piedi più veloce che puoi per <b>rialzarti</b>.</p>
     <h3>EVENTI</h3><p>Crampi, cadute, pioggia, sassi, sgambetti: quando compare un riquadro in alto, segui le istruzioni e tocca in fretta.</p>
     <h3>GLI ALTRI MARCIATORI</h3><p>Chi ti cammina vicino ti parla: scegli le risposte. Le scelte decidono chi diventa tuo <b>amico</b> (che ti aiuterà) e chi ti <b>odierà</b>. Attento a chi gode quando gli altri cadono.</p>
+    <h3>FORTUNA E CARATTERE</h3><p>La marcia non è fatta solo di bravura: c'è anche la <b>fortuna</b>. Il percorso, il meteo, le salite, chi ti cammina accanto e cosa ti capita lungo la strada cambiano ogni volta. Anche il tuo <b>carattere</b> conta: le risposte al test, il tuo passato e le scelte che fai con gli altri marciatori possono cambiare l'esito della marcia.</p>
     <h3>VINCERE</h3><p>Resta l'ultimo in piedi. Siete in quarantasei: uno solo arriva in fondo.</p></div>
     <div class="row2"><button class="ghost" id="tback2">‹ MANUALE</button><button class="main" id="tmenu">MENU</button></div>`,'manual endsc');
   $('tback2').addEventListener('click',manual);$('tmenu').addEventListener('click',titleScreen);
@@ -1586,7 +1587,7 @@ function loading(shoe){
   $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);}));
 }
 function end(win){
-  MENU_MUSIC=false;
+  MENU_MUSIC=false;{const bo=$('blackout');if(bo)bo.classList.remove('on');}
   if(!S||S.mode==='over')return;S.mode='over';hideBox();
   const best=store.get('up_best3',0);if(S.t>best)store.set('up_best3',S.t);
   const runsN=store.get('up_runs',0)+1;store.set('up_runs',runsN);
@@ -1650,7 +1651,10 @@ function frame(){
       else if(S.mode==='count'){countdown(dt);hud();}
       else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
         S.anim+=dt*4;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)n.off+=n.v/SR*dt*1.6;});if(S.chat){S.chat.t-=dt;if(S.chat.t<=0)S.chat=null;}  // gli altri proseguono senza di te
-        if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);setTimeout(()=>{if(S&&!S.ended){S.ended=1;end(false);}},1800);}}}
+        if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);
+          setTimeout(()=>{const bo=$('blackout');if(bo&&S&&S.mode==='dying')bo.classList.add('on');},1600);
+          setTimeout(()=>{if(S&&!S.ended){S.ended=1;end(false);}},2600);}}
+        else if(S.dead)S.truckX+=40*dt;}  // la linea di cingolati riprende la marcia dietro chi resta
       drawWorld();
     }
   }catch(e){showErr(e);}
