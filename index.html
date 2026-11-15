@@ -16,6 +16,9 @@
 html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;overflow:hidden;touch-action:none;overscroll-behavior:none}
 #app{position:relative;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #stage{position:relative;flex:1;min-height:0}
+.fin #hud,.fin #bottom,.fin #chatb,.fin #chatd,.fin #alert,.fin #box,.fin #vig{display:none!important}
+#screen.winsc{background:transparent}#screen.winsc>*{text-shadow:0 0 4px #000,0 0 8px #000,1px 1px 0 #000}
+#winfade{position:absolute;inset:0;background:#000;opacity:0;transition:opacity 7s linear;z-index:4;pointer-events:none}
 #cdn{display:none;top:42%!important;transition:none!important;transform:translate(-50%,-50%);z-index:3;pointer-events:none}
 #cdn.pop{animation:cdpop .9s steps(6,end)}
 @keyframes cdpop{0%{transform:translate(-50%,-50%) scale(1.3);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.15}}
@@ -546,7 +549,7 @@ let JUKE=null,MENU_MUSIC=true;
 const MARCH={bpm:104,wave:'square',bass:'triangle',root:110,scale:[0],prog:[0,0,0,0],pat:Array(16).fill(null),drums:'march'};
 let _TR=null;const TRACKS=()=>_TR||(_TR=[{n:'Marcia militare (titolo e menu)',m:MARCH}].concat(ERAS.flatMap(e=>[{n:e.from+' · sottofondo ('+e.name+')',m:e.m},...(e.r?[{n:e.from+' · radio: '+e.r.label,m:e.r},{n:e.from+' · radio guasta a metà',m:{...e.r,dist:.5}},{n:e.from+' · radio guasta (finale)',m:{...e.r,dist:1}}]:[])])));
 function radioDist(m){if(m&&m.dist!=null)return m.dist;if(!S||!S.radio||!ERA.r||m!==ERA.r||(S.mode!=='play'&&S.mode!=='dying'))return 0;return clamp((progress()-.15)/.85,0,1);}
-function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;const menu=MENU_MUSIC&&(!S||(S.mode!=='play'&&S.mode!=='dying'));const m=JUKE||(menu?MARCH:(S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4*(1+.55*radioDist(m));
+function startMusic(){if(!AC||MUS.timer)return;MUS.next=AC.currentTime+.1;MUS.timer=setInterval(()=>{try{if(!AC)return;if(S&&S.finale){MUS.next=AC.currentTime+.1;return;}const menu=MENU_MUSIC&&(!S||(S.mode!=='play'&&S.mode!=='dying'));const m=JUKE||(menu?MARCH:(S&&S.radio&&ERA.r)?ERA.r:ERA.m),spb=60/m.bpm/4*(1+.55*radioDist(m));
   if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+.05;
   let guard=0;while(MUS.next<AC.currentTime+.25&&guard++<16){playStep(MUS.step,MUS.next,m,spb);MUS.next+=spb;MUS.step++;}}catch(e){}},60);}
 function playStep(i,t,m,spb){
@@ -585,7 +588,14 @@ function balloon(s,cxp,y,col='#1a1410',bg='#f4ecd0'){const w=s.length*4+5,x=Math
 
 /* ================= STATO ================= */
 let S=null,PROFILE=null;
-function newRun(shoe,tr){{const bo=document.getElementById('blackout');if(bo)bo.classList.remove('on');}
+/* ===== FINALE DELLA VITTORIA: silenzio, solo i passi; la camera si avvicina al giocatore ===== */
+function startFinale(){if(S.mode!=='play')return;S.mode='finale';S.finale=true;S.finT=0;S.stepT=0;S.chat=null;S.balloon=null;hideBox();
+  app.classList.add('fin');fit();
+  [cv,$('fx')].forEach(c=>{c.style.transformOrigin=(PX/W*100).toFixed(1)+'% 82%';c.style.transition='transform 5s ease-in-out';});
+  requestAnimationFrame(()=>[cv,$('fx')].forEach(c=>c.style.transform='translate('+(50-PX/W*100).toFixed(1)+'%,-30%) scale(2.4)'));}
+function finStep(dt){S.anim+=dt*4;S.scroll+=dt*27;S.stepT-=dt;if(S.stepT<=0){S.stepT=.5;sfx.step();}}
+function finCleanup(){app.classList.remove('fin');[cv,$('fx')].forEach(c=>{c.style.transition='';c.style.transform='';});const f=$('winfade');if(f)f.remove();if(S)S.finale=false;}
+function newRun(shoe,tr){finCleanup();{const bo=document.getElementById('blackout');if(bo)bo.classList.remove('on');}
   fit();
   $('jukeHud').style.display=DEBUG?'inline':'none';
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
@@ -985,7 +995,7 @@ function update(dt){
   if(!S.collapsed&&S.ph<=0)return collapse('ph');
   if(S.mh<15&&!S.mhWarned){S.mhWarned=true;log('“Non ce la faccio più. Sto per crollare.” (la mente è al limite)','var(--red)','th');buzz([80,80,80]);}else if(S.mh>30)S.mhWarned=false;
   if(!S.collapsed&&S.mh<=0)return collapse('mh');
-  if(S.npcs.every(n=>!n.alive))end(true);
+  if(S.npcs.every(n=>!n.alive))startFinale();
 }
 /* ELIMINAZIONE: dietro la fila avanza una linea di cingolati che chiude la strada, con un blindato di soldati (nel futuro un drone).
    Chi è avanti al 3° richiamo viene colpito alle gambe; poi, a terra, la linea lo travolge. Chi resta indietro viene travolto e basta. */
@@ -1224,7 +1234,7 @@ function drawScene(){
    /* MH < 5%: ogni 2-3 s una piccola scossa con leggera sfocatura */
    if(on&&S.mh<5){S.shkN=(S.shkN==null?1:S.shkN)-1/60;if(S.shkN<=0){S.shkN=rand(2,3);S.shkT=.35;}}else S.shkT=0;
    if(S.shkT>0){S.shkT-=1/60;const a=S.shkT/.35;bl=` blur(${(.9*a).toFixed(2)}px)`;tr=`translate(${(Math.random()*4-2)*a|0}px,${(Math.random()*3-1.5)*a|0}px)`;}
-   if(cv.style.transform!==tr){cv.style.transform=tr;$('fx').style.transform=tr;}
+   if(!S.finale&&cv.style.transform!==tr){cv.style.transform=tr;$('fx').style.transform=tr;}
    /* stamina o PH < 5%: lo schermo pulsa come un battito */
    {const v=$('vig');let o=0;if(on&&(S.st<5||S.ph<5)){const ph=(performance.now()/1000)%1.1;o=ph<.12?ph/.12:ph<.45?1-(ph-.12)/.33:0;o*=.85;}const os=o.toFixed(2);if(v.style.opacity!==os)v.style.opacity=os;}
    const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})${bl}`;if(cv.style.filter!==f)cv.style.filter=f;}
@@ -1392,7 +1402,7 @@ function drawMap(c,prog){
 
 /* ================= SCHERMATE ================= */
 const sc=$('screen');
-function show(html,cls=''){sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.innerHTML=html;}
+function show(html,cls=''){if(!/winsc/.test(cls))finCleanup();sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.innerHTML=html;}
 const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
@@ -1669,7 +1679,8 @@ function end(win){
   <p>Marcia del ${YEAR} (${ROUTE.c[0]} → ${ROUTE.c[ROUTE.c.length-1]}) · N.${S.bib} · <b>${hrs} ore ${mins} min</b> · <b>${fmt(S.km)} km</b> · posizione <b>${pos}ª</b>/${TOTAL}${S.t>best?' · <span style="color:var(--amber)">record</span>':''}</p>
   ${unlockMsg}${tipMsg}<div class="ptab">${rows}</div>
   <p class="lbl" style="font-size:11px">Profilo nascosto — fisico ${trait(t.f)}, nervi ${trait(t.n)}, stomaco ${trait(t.s)}, carisma ${trait(t.c)}</p>
-  <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`,'endsc');
+  <div class="row2"><button class="ghost" id="home">SCHERMATA PRINCIPALE</button><button class="main" id="go">PROSSIMA MARCIA</button></div>`,win?'endsc winsc':'endsc');
+  if(win){const f=document.createElement('div');f.id='winfade';app.appendChild(f);setTimeout(()=>{f.style.opacity='1';},1500);setTimeout(()=>{if(S)S.finale=false;},8500);}
   $('go').addEventListener('click',()=>loadThen(quiz));
   $('home').addEventListener('click',()=>{const c=$('chatb'),d=$('chatd');if(c)c.style.display='none';if(d)d.style.display='none';loadThen(titleScreen);});
 }
@@ -1707,6 +1718,8 @@ function frame(){
       if(!isFinite(S.speed))S.speed=0;
       if(S.mode==='play'){update(dt);hud();}
       else if(S.mode==='count'){countdown(dt);hud();}
+      else if(S.mode==='finale'){S.finT+=dt;finStep(dt);if(S.finT>5.5&&!S.ended){S.ended=1;end(true);}}
+      else if(S.mode==='over'&&S.finale)finStep(dt);
       else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
         S.anim+=dt*4;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)n.off+=n.v/SR*dt*1.6;});if(S.chat){S.chat.t-=dt;if(S.chat.t<=0)S.chat=null;}  // gli altri proseguono senza di te
         if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);
