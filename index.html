@@ -691,7 +691,7 @@ const HELP={rialzati:'{n} ti afferra sotto le braccia e ti rimette in piedi: «N
 function startQTE(type,who){
   /* 1 volta su 4 un amico ti aiuta da solo (e l'amicizia cresce) */
   if(HELP[type]){const br=friends().filter(n=>n.rel>=80),fr=br.length?br:(type==='rialzati'?[]:friends());if(fr.length&&Math.random()<(br.length?.5:.25)){const f=pick(fr);S.qte={type,who,t:0,n:0};if(f.rel>=80)f.savedMe=true;log(HELP[type].replace('{n}',f.name),'var(--green)');helpSay(f,HELP_B[type]||'CI SONO IO!');endQTE(true);relUp(f,6);return;}}
-  const q={type,t:0,who,n:0};
+  const q={type,t:0,who,n:0,spd:S.speed};
   Object.assign(q,{
    crampo:{dur:3.6,need:8,title:'CRAMPO!',sub:'Massaggia il polpaccio camminando',btn:'MASSAGGIA'},
    caduta:{dur:1.6,title:'INCIAMPI!',sub:'Ritrova l\'equilibrio quando il segno è nel verde',btn:'EQUILIBRIO',timing:true},
@@ -704,6 +704,7 @@ function startQTE(type,who){
    rialzati:{dur:3,need:Math.min(32,18+4*((S&&S.collapses||1)-1)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca i tasti dei piedi più veloce che puoi!',btn:'',padsOnly:1},
    salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
+  q.dur*=1.4;  // tempi più lunghi per leggere con calma
   if(q.timing){q.z0=rand(.45,.65);q.z1=q.z0+.17;}
   S.qte=q;
   showBox('box qte',`<div class="big">${q.title}</div><div class="tx">${q.sub}</div>${q.timing?`<div class="track"><div class="zone" style="left:${q.z0*100}%;width:${(q.z1-q.z0)*100}%"></div><div class="mk" id="mk"></div></div>`:''}${q.need?`<div class="tx" id="qn">0 / ${q.need}</div>`:''}${q.padsOnly?'':`<button class="main" id="qb">${q.btn}</button>`}<div class="tm" style="width:80%"><b id="qt"></b></div>`);
@@ -753,7 +754,7 @@ function finishSave(n){S.saving=null;if(!n.alive||n.leaving)return;
   if(n.saveFail){n.leaving=1;S.mh-=10;log(n.name+' ti scivola via dalle braccia.','var(--red)');}
   else{n.elimAt=S.t+rand(150,300);n.warns=0;n.w3=0;n.tempW=0;S.mh=Math.min(100,S.mh+10);relUp(n,10);log(n.name+' riprende fiato: «Ti devo la vita.»','var(--green)');}}
 function choice(title,text,opts,dur,def){
-  S.dlg={choice:true,t:0,dur,def,opts};
+  S.dlg={choice:true,t:0,dur:dur*1.4,def,opts};
   showBox('box',`<div class="nm" style="color:var(--amber);flex:none">${title}</div><div class="tx">${text}</div><div class="tm"><b id="dt"></b></div><div class="opts">${opts.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   box.querySelectorAll('.opts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();const g=S.dlg;S.dlg=null;hideBox();S.dlgFree=S.t+3.5;g.opts[+b.dataset.i].f();}));
   sfx.tick();
@@ -814,7 +815,7 @@ function openDlg(npc,d,kind){
     let third=null;if(PLAYER&&PLAYER.bg){S.bgUsed=S.bgUsed||[];const av=PLAYER.bg.a.filter(a=>!S.bgUsed.includes(a[0]));if(av.length){const a=pick(av),nx=(good&&good.n)||(os.find(o=>o.n)||{}).n;third={l:a[0],r:a[1],m:a[2],bg:1,n:nx};}}
     if(!third&&os.length>2)third=os.find(o=>o.g)||pick(os.slice(1,-1));
     const arr=shuffle([good,bad,third].filter(Boolean));d={...d,o:arr};}
-  S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
+  S.dlg={npc,d,t:0,dur:kind==='deep'?22:17,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm"><span class="big">${npc.named?npc.name:npc.name.replace(/ \(N\.\d+\)/,'')}</span> <span class="rl">N.${npc.bibN}</span> <span class="rl">· ${npc.from||'?'}${npc.state?' ('+npc.state+')':''}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
   box.querySelectorAll('.opts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);}));
@@ -884,7 +885,10 @@ function update(dt){
   S.capNow=cap;
   if(!S.collapsed&&!S.fainted&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.combo==='montanaro'?1:S.kway?.97:.94):1)*(S.injury?.95:1);
-  S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
+  /* durante gli eventi (crampi, cadute, spinte…) il marciatore cammina da solo: il giocatore pensa solo al problema */
+  const autoW=S.qte&&S.qte.type!=='blocco'&&S.qte.type!=='rialzati'&&!S.collapsed&&!S.fainted;
+  if(autoW){S.speed+=(Math.max(LIMIT*1.04,Math.min(S.qte.spd||0,cap))-S.speed)*Math.min(1,dt*2.5);S.steps=[S.t-.4,S.t];}
+  else S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.speed=Math.max(0,S.speed||0);S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
   S.maxSt=Math.max(40,100-S.t*.06);
   let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195)*sh.st;  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=S.combo==='montanaro'?1.2:1.4;if(S.combo==='walkman'&&S.radio)d*=.95;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
@@ -926,7 +930,7 @@ function update(dt){
   if(S.callCur){S.callCur.t-=dt;if(S.callCur.t<=0)S.callCur=null;}else if(S.calls.length){S.callCur={s:S.calls.shift(),t:1.8};sfx.warnSoft();}
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
-    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);const ahead=PX+n.off*SPR>TX()+42;if(!ahead&&n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>TX()+42)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=TX())shoot(n,x);return;}
+    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);const ahead=PX+n.off*SPR>TX()+42;if(!ahead&&n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>TX()+42)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=Math.max(TX(),-12))shoot(n,x);return;}  // se i cingolati sono rimasti fuori schermo, l'eliminazione avviene appena esce a sinistra
     {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;n.tempKm=S.km;}
      if(n.tempW&&S.km-(n.tempKm||0)>=WARN_KM&&w>40){n.warns=0;n.tempW=0;}}
     n.v+=(rand(6.5,7.3)*SR-n.v)*dt*.3;
@@ -1586,7 +1590,7 @@ function tutorial(){
     <h3>IL LIMITE E I RICHIAMI</h3><p>Non puoi scendere sotto i <b>5,5 km/h</b>. Se resti sotto per 3 secondi ricevi un <b>richiamo</b> (i quadratini rossi in alto). Ogni 30 km percorsi senza richiami, uno viene cancellato. Al <b>terzo richiamo</b> la tua marcia è finita.</p>
     <h3>STAMINA, ACQUA, VESCICA</h3><p>Le barre in alto. La <b>stamina</b> cala sempre mentre cammini, di più se vai veloce o in salita: senza stamina le gambe non tengono il passo. <b>La stamina si recupera soprattutto mangiando</b>: i <b>tubetti</b> del cinturone (nuovi ogni mattina alle 9), i cibi che porti con te (<b>biscotti</b>, <b>panini</b>, <b>hamburger</b>…) e quelli che ti regalano gli amici (<b>barrette</b>, razioni). Anche le sigarette la ridanno (ma rovinano il corpo), e rallentare sotto il limite ne fa tornare un po', a rischio di richiamo. <b>BEVI</b> quando vuoi: l'acqua aiuta il corpo, ma dopo un minuto dovrai <b>liberarti</b> (camminando un po' più piano).</p>
     <h3>CORPO E MENTE</h3><p>Fisico e mente non si vedono: li capisci dai <b>pensieri</b> che compaiono nei messaggi. Se uno dei due arriva a zero crolli a terra: tocca i piedi più veloce che puoi per <b>rialzarti</b>.</p>
-    <h3>EVENTI</h3><p>Crampi, cadute, pioggia, sassi, sgambetti: quando compare un riquadro in alto, segui le istruzioni e tocca in fretta.</p>
+    <h3>EVENTI</h3><p>Crampi, cadute, spinte, sassi, sgambetti: quando compare un riquadro in alto, segui le istruzioni prima che la barra del tempo finisca. Di solito devi premere il pulsante dell'evento <b>più volte</b> (per esempio nel <b>crampo</b> va massaggiato il polpaccio a ripetizione), a volte al <b>momento giusto</b>. Durante l'evento il tuo marciatore <b>continua a camminare da solo</b>, al passo che aveva: non devi toccare i piedi, concentrati solo sul problema. Fanno eccezione le <b>gambe bloccate</b> (sei fermo finché non ti sblocchi) e il <b>crollo a terra</b> (ti rialzi toccando i piedi).</p>
     <h3>GLI ALTRI MARCIATORI</h3><p>Chi ti cammina vicino ti parla: scegli le risposte. Le scelte decidono chi diventa tuo <b>amico</b> (che ti aiuterà) e chi ti <b>odierà</b>. Attento a chi gode quando gli altri cadono.</p>
     <h3>FORTUNA E CARATTERE</h3><p>La marcia non è fatta solo di bravura: c'è anche la <b>fortuna</b>. Il percorso, il meteo, le salite, chi ti cammina accanto e cosa ti capita lungo la strada cambiano ogni volta. Anche il tuo <b>carattere</b> conta: le risposte al test, il tuo passato e le scelte che fai con gli altri marciatori possono cambiare l'esito della marcia.</p>
     <h3>VINCERE</h3><p>Resta l'ultimo in piedi. Siete in quarantasei: uno solo arriva in fondo.</p></div>
