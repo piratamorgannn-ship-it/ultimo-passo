@@ -792,7 +792,7 @@ function follow(npc){setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.
 function answer(i){
   const g=S.dlg;if(!g)return;S.dlg=null;hideBox();S.dlgFree=S.t+3.5;const npc=g.npc;
   if(i>=0&&g.d.o[i]&&g.d.o[i].bg){const o=g.d.o[i];(S.bgUsed=S.bgUsed||[]).push(o.l);if(g.kind==='base')npc.stage++;npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
-    log(npc.name+' ti ascolta in silenzio. Poi annuisce piano.','var(--green)');fxLog(o.r,o.m);if(npc.rel>=40&&Math.random()<.6)follow(npc);return;}
+    log(npc.name+' ti ascolta in silenzio. Poi annuisce piano.','var(--green)');fxLog(o.r,o.m,0,npc);if(npc.rel>=40&&Math.random()<.6)follow(npc);return;}
   if(i>=0&&g.d.o[i]&&g.d.o[i].sick){const o=g.d.o[i];S.mh=clamp(S.mh+o.sm,0,100);if(o.ss)S.st=clamp(S.st+o.ss,0,S.maxSt);const good=o.sm>0||o.ss>0;setTimeout(()=>{if(S&&S.mode==='play')log((o.sm>0?pick(['“Strano. Mi sento meglio.”','“Che risata. Mi gira la testa, ma va bene.”','“Era assurdo. Eppure mi ha fatto bene.”']):o.ss>0?pick(['“Una forza strana nelle gambe. Non so da dove arriva.”','“La follia scalda. Le gambe vanno da sole.”']):pick(['“Perché l\'ho detto?”','“Quella non era la mia voce.”','“Sto perdendo la testa.”','“Chi ha parlato? Io?”']))+(o.ss?` (stamina ${o.ss>0?'+':''}${o.ss})`:''),good?'var(--amber)':'var(--red)','th');},900);}
   if(g.kind==='bigot'){const o=i<0?g.d.o.find(x=>x.def):g.d.o[i];npc.rel=clamp((npc.rel||0)+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);
     log(o.f,o.m>0?'var(--green)':o.m>=-1?'var(--dim)':'var(--red)');
@@ -805,7 +805,7 @@ function answer(i){
     if(o.out){const ok=npc.rel>=0&&Math.random()<.75;npc.rel=clamp(npc.rel+(ok?8:-18),-100,100);log(npc.name+(ok?' sorride: «Allora spero che ti aspetti.»':' fa una smorfia e si allontana.'),ok?'var(--green)':'var(--red)');}
     else log(npc.name+(o.r<0?' alza le mani: «Scusa.»':' annuisce.'),'var(--dim)');return;}
   if(g.kind==='deep'){if(i<0){log(npc.name+' resta in silenzio accanto a te.','var(--dim)');return;}
-    const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);fxLog(o.r,o.m);
+    const o=g.d.o[i];npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);fxLog(o.r,o.m,0,npc);
     if(o.n)setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.alive&&!npc.leaving)openDlg(npc,DEEP[o.n],'deep');},1800);
     else log(npc.name+' ti stringe la spalla, senza dire niente.','var(--green)');
     return;}
@@ -813,7 +813,7 @@ function answer(i){
   if(i<0){npc.rel-=5;log('Ignori '+npc.name+'. Si allontana in silenzio.','var(--dim)');return;}
   const o=g.d.o[i],before=relLabel(npc.rel);npc.rel=clamp(npc.rel+o.r,-100,100);
   if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);if(o.r>0)S.mh=Math.min(100,S.mh+o.r/4);
-  log(npc.name+(o.r>5?' sorride.':o.r<0?' ti guarda storto.':' annuisce.'),o.r>0?'var(--green)':o.r<0?'var(--red)':'var(--dim)');fxLog(o.r,o.r>0?o.r/4:0,o.s);
+  log(npc.name+(o.r>5?' sorride.':o.r<0?' ti guarda storto.':' annuisce.'),o.r>0?'var(--green)':o.r<0?'var(--red)':'var(--dim)');fxLog(o.r,o.r>0?o.r/4:0,o.s,npc);
   if(npc.rel>=40&&!S.alone&&Math.random()<.7)follow(npc);
   const after=relLabel(npc.rel);
   if(after!==before&&(after==='Amico'||after==='Rivale'))log(npc.name+(after==='Amico'?' ora è tuo amico.':' ora è tuo rivale.'),after==='Amico'?'var(--green)':'var(--red)');
@@ -1795,8 +1795,14 @@ const BACKGROUNDS=[
   a:[['«Ho smesso di credere in seminario. Sto ricominciando adesso, passo dopo passo.»',10,2],['«Se vuoi, prego per te. Non costa niente.»',10,3],['«Dio non c\'entra con questa strada. Gli uomini sì.»',6,0]]},
 ];
 /* effetti immediati delle risposte, mostrati subito */
-const fxTxt=(r,m,st)=>[r?`amicizia ${r>0?'+':''}${Math.round(r)}`:'',m?`mente ${m>0?'+':''}${Math.round(m)}`:'',st?`stamina ${st>0?'+':''}${st}`:''].filter(Boolean).join(' · ');
-const fxLog=(r,m,st)=>{const t=fxTxt(r,m,st);if(t)log('('+t+')',(m||0)+(r||0)/4>=0?'var(--green)':'var(--red)');};
+/* effetti delle risposte comunicati in modo indiretto */
+function fxLog(r,m,st,npc){
+  const n=npc?npc.name.replace(/ \(N\.\d+\)/,''):'',p=[];
+  if(npc&&r)p.push(r>=8?'ti senti più legato a '+n:r>0?'senti che '+n+' si fida un po\' di più':r<=-8?'senti che '+n+' si allontana da te':n+' si irrigidisce');
+  if(m)p.push(m>=4?(p.length?'e sollevato':'ti senti sollevato'):m>0?(p.length?'e un po\' più sereno':'ti senti un po\' più sereno'):m<=-4?(p.length?'e qualcosa dentro di te si incrina':'qualcosa dentro di te si incrina'):(p.length?'ma ti resta un peso addosso':'ti resta un peso addosso'));
+  if(st)p.push(st>0?'le gambe sembrano più leggere':'senti la fatica nelle gambe');
+  if(!p.length)return;let t=p.join(', ').replace(', e ',' e ').replace(', ma ',', ma ');t=t[0].toUpperCase()+t.slice(1)+'.';
+  log(t,(m||0)+(r||0)/4+(st||0)/4>=0?'var(--green)':'var(--red)','th');}
 /* seguiti con gli amici: la conversazione continua su più battute */
 Object.assign(DEEP,{
  f1:{t:"Posso chiederti una cosa, {N}? Cosa farai la prima sera a casa, se ce la fai?",o:[Q("«Dormirò per tre giorni.»",D(6,4,'f1b')),Q("«Andrò sulla tomba di qualcuno.»",D(8,-2,'f1b')),Q("«Non ci penso. Porta sfortuna.»",D(2,-1))]},
