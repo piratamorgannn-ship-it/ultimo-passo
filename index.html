@@ -690,6 +690,9 @@ const HELP_B={rialzati:'SU! TI TENGO IO!',sgambetto:'TI HO PRESO!',crampo:'TI MA
 const HELP={rialzati:'{n} ti afferra sotto le braccia e ti rimette in piedi: «Non qui. Non adesso.»',sgambetto:'{n} ti tira su al volo prima che tu cada.',crampo:'{n} ti massaggia la gamba mentre camminate.',caduta:'{n} ti afferra prima che tu cada.',isteria:'{n} ti stringe la mano: «Respira con me.»',blocco:'{n} ti spinge avanti: «Muoviti, dai!»',spinta:'{n} si mette in mezzo e ti tiene in piedi.'};
 function startQTE(type,who){
   /* 1 volta su 4 un amico ti aiuta da solo (e l'amicizia cresce) */
+  /* chi hai salvato ti restituisce il favore: ti aiuta almeno (volte che l'hai salvato + 1) */
+  if(HELP[type]){const db=S.npcs.find(n=>n.alive&&!n.leaving&&n!==S.dyingNpc&&n.savedN>0&&(n.helpedN||0)<n.savedN+1);
+    if(db){db.helpedN=(db.helpedN||0)+1;S.qte={type,who,t:0,n:0};log(HELP[type].replace('{n}',db.name)+(db.helpedN===1?' «Te lo dovevo.»':''),'var(--green)');helpSay(db,db.helpedN===1?'TE LO DEVO!':(HELP_B[type]||'CI SONO IO!'));endQTE(true);relUp(db,4);return;}}
   if(HELP[type]){const br=friends().filter(n=>n.rel>=80),fr=br.length?br:(type==='rialzati'?[]:friends());if(fr.length&&Math.random()<(br.length?.5:.25)){const f=pick(fr);S.qte={type,who,t:0,n:0};if(f.rel>=80)f.savedMe=true;log(HELP[type].replace('{n}',f.name),'var(--green)');helpSay(f,HELP_B[type]||'CI SONO IO!');endQTE(true);relUp(f,6);return;}}
   const q={type,t:0,who,n:0,spd:S.speed};
   Object.assign(q,{
@@ -752,7 +755,7 @@ function askSave(n){n.saveAsked=true;n.savePending=true;n.saveAskT=S.t;
     {l:'Lo lasci andare',f:()=>{n.savePending=false;n.leaving=1;S.mh-=12;log('Lasci la sua mano. Non ti volti.','var(--red)');if(n.savedMe)betray(n);}}],8,1);}
 function finishSave(n){S.saving=null;if(!n.alive||n.leaving)return;
   if(n.saveFail){n.leaving=1;S.mh-=10;log(n.name+' ti scivola via dalle braccia.','var(--red)');}
-  else{n.elimAt=S.t+rand(150,300);n.warns=0;n.w3=0;n.tempW=0;S.mh=Math.min(100,S.mh+10);relUp(n,10);log(n.name+' riprende fiato: «Ti devo la vita.»','var(--green)');}}
+  else{n.savedN=(n.savedN||0)+1;n.elimAt=S.t+rand(150,300);n.warns=0;n.w3=0;n.tempW=0;S.mh=Math.min(100,S.mh+10);relUp(n,10);log(n.name+' riprende fiato: «Ti devo la vita.»','var(--green)');}}
 function choice(title,text,opts,dur,def){
   S.dlg={choice:true,t:0,dur:dur*1.4,def,opts};
   showBox('box',`<div class="nm" style="color:var(--amber);flex:none">${title}</div><div class="tx">${text}</div><div class="tm"><b id="dt"></b></div><div class="opts">${opts.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
