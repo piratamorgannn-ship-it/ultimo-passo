@@ -196,7 +196,7 @@ button:disabled{opacity:.35}
 <script>
 (()=>{
 'use strict';
-const H=128,LIMIT=6.4,K=4.6,TOTAL=50,QPER=10,SPR=2;
+const H=128,LIMIT=5.5,SR=LIMIT/6.4,K=4.6*SR,TOTAL=46,QPER=10,SPR=2; // SR: rapporto col vecchio limite (6,4 km/h) per ricalibrare passo e fatica
 let W=320,PX=96;
 const $=id=>document.getElementById(id);
 const cv=$('scene');let cx=cv.getContext('2d');let OFF=null,OCX=null;
@@ -298,18 +298,25 @@ const CAST=[
 const O=(l,r,s=0)=>({l,r,s});
 /* nomi e città casuali: ogni personaggio con nome mantiene il carattere, ma nome e provenienza cambiano a ogni marcia */
 const CAST_POOL={
- marek:{n:['Marek','Tomasz','Janek','Piotr','Kuba','Andrzej','Mikołaj','Jonas','Darius','Wojtek'],c:['Danzica','Stettino','Riga','Klaipėda','Tallinn','Kiel','Rostock','Gdynia']},
- ilse:{n:['Ilse','Greta','Frieda','Liesel','Ingrid','Astrid','Helga','Karin','Sabine','Ute'],c:['Lipsia','Dresda','Brema','Hannover','Malmö','Göteborg','Bergen','Magdeburgo']},
- ennio:{n:['Ennio','Gino','Tonino','Bruno','Renzo','Nando','Aldo','Carlo','Franco','Sandro'],c:['Torino','Genova','Bologna','Milano','Bergamo','Verona','Parma','Livorno']},
- dragan:{n:['Dragan','Goran','Zoran','Milan','Vuk','Ante','Dejan','Branko','Stipe','Nikola'],c:['Spalato','Zara','Mostar','Sarajevo','Niš','Skopje','Tirana','Podgorica']},
- pieter:{n:['Pieter','Joost','Bram','Wim','Koen','Jan','Sander','Hendrik','Ruud','Maarten'],c:['Rotterdam','Utrecht','Gand','Anversa','Groninga','Leida','Lovanio','Delft']},
- aleksej:{n:['Aleksej','Dmitrij','Ivan','Fëdor','Kirill','Lev','Jurij','Saša','Grigorij','Pavel'],c:['Kazan\'','Samara','Volgograd','Saratov','Nižnij Novgorod','Perm\'','Tver\'','Jaroslavl\'']},
- colette:{n:['Colette','Élise','Margaux','Juliette','Camille','Agnès','Odile','Solène','Manon','Hélène'],c:['Lione','Marsiglia','Lilla','Nantes','Bordeaux','Rennes','Tolosa','Digione']},
- seamus:{n:['Seamus','Liam','Declan','Ciarán','Rory','Niall','Eoin','Padraig','Fergal','Conor'],c:['Dublino','Cork','Galway','Belfast','Limerick','Glasgow','Cardiff','Derry']},
- zsofia:{n:['Zsófia','Réka','Anikó','Katalin','Ildikó','Eszter','Noémi','Judit','Erzsébet','Csilla'],c:['Budapest','Debrecen','Seghedino','Pécs','Győr','Cluj','Bratislava','Košice']},
- sofia:{n:['Sofia','Inês','Carmen','Lucía','Marta','Beatriz','Rosa','Teresa','Ana','Pilar'],c:['Lisbona','Porto','Coimbra','Siviglia','Valencia','Bilbao','Granada','Saragozza']},
+ marek:{n:['Marek','Tomasz','Janek','Piotr','Kuba','Andrzej','Mikołaj','Jonas','Darius','Wojtek']},
+ ilse:{n:['Ilse','Greta','Frieda','Liesel','Ingrid','Astrid','Helga','Karin','Sabine','Ute']},
+ ennio:{n:['Ennio','Gino','Tonino','Bruno','Renzo','Nando','Aldo','Carlo','Franco','Sandro']},
+ dragan:{n:['Dragan','Goran','Zoran','Milan','Vuk','Ante','Dejan','Branko','Stipe','Nikola']},
+ pieter:{n:['Pieter','Joost','Bram','Wim','Koen','Jan','Sander','Hendrik','Ruud','Maarten']},
+ aleksej:{n:['Aleksej','Dmitrij','Ivan','Fëdor','Kirill','Lev','Jurij','Saša','Grigorij','Pavel']},
+ colette:{n:['Colette','Élise','Margaux','Juliette','Camille','Agnès','Odile','Solène','Manon','Hélène']},
+ seamus:{n:['Seamus','Liam','Declan','Ciarán','Rory','Niall','Eoin','Padraig','Fergal','Conor']},
+ zsofia:{n:['Zsófia','Réka','Anikó','Katalin','Ildikó','Eszter','Noémi','Judit','Erzsébet','Csilla']},
+ sofia:{n:['Sofia','Inês','Carmen','Lucía','Marta','Beatriz','Rosa','Teresa','Ana','Pilar']},
 };
-const NAMES=['Lukas','Jonas','Felix','Emil','Anton','Oskar','Viktor','Pavel','Ivan','Sergej','Dmitri','Oleg','Yuri','Mikhail','Boris','Stefan','Tibor','László','Bence','Ferenc','Radu','Mihai','Vlad','Andrei','Bogdan','Nikos','Yannis','Kostas','Dimitris','Alexis','Matteo','Luca','Marco','Paolo','Giorgio','Davide','Pietro','Michele','Simone','Fabio','Hugo','Louis','Jules','Marcel','Pierre','Antoine','Lucien','Rémi','Diego','Pablo','Javier','Mateo','Álvaro','Iker','Rui','Tiago','Duarte','João','Nuno','Sean','Liam','Connor','Owen','Rhys','Finn','Lars','Nils','Erik','Olav','Sven','Aksel','Mats','Jakub','Ondřej','Tomáš','Marek','Kamil','Szymon','Arto','Juho','Eero','Ville','Anja','Lena','Mila','Nina','Eva','Klara','Olga','Irina','Vera','Daria','Ivana','Jana','Petra','Zofia','Hanna','Ewa','Elena','Giulia','Chiara','Sara','Marie','Camille','Léa','Chloé','Lucia','Elena','Nuria','Joana','Rita','Sigrid','Maja','Saga','Aino','Kaisa','Ilona','Réka','Ioana','Maria','Katya','Nadia','Tanja','Dunja','Mira'];
+const STATES=[{"s": "Albania", "c": ["Tirana", "Durazzo", "Scutari"], "m": ["Arben", "Besnik", "Ilir", "Gentian"], "f": ["Elira", "Mirela", "Arta"], "l": ["Hoxha", "Shehu", "Leka", "Dervishi"], "lf": ["Hoxha", "Shehu", "Leka", "Dervishi"]}, {"s": "Andorra", "c": ["Andorra la Vella", "Escaldes-Engordany", "Encamp"], "m": ["Jordi", "Marc", "Pere", "Xavier"], "f": ["Montserrat", "Núria", "Laia"], "l": ["Puig", "Font", "Riba", "Pujol"], "lf": ["Puig", "Font", "Riba", "Pujol"]}, {"s": "Austria", "c": ["Vienna", "Graz", "Salisburgo"], "m": ["Lukas", "Florian", "Stefan", "Markus"], "f": ["Katharina", "Julia", "Theresa"], "l": ["Gruber", "Huber", "Bauer", "Wagner"], "lf": ["Gruber", "Huber", "Bauer", "Wagner"]}, {"s": "Belgio", "c": ["Bruxelles", "Anversa", "Gand", "Liegi"], "m": ["Jef", "Wouter", "Bart", "Luc"], "f": ["Lien", "Sofie", "An"], "l": ["Peeters", "Janssens", "Maes", "Claes"], "lf": ["Peeters", "Janssens", "Maes", "Claes"]}, {"s": "Bielorussia", "c": ["Minsk", "Gomel", "Brest"], "m": ["Aliaksandr", "Siarhei", "Ihar", "Andrei"], "f": ["Volha", "Nasta", "Iryna"], "l": ["Kavaliou", "Novik", "Marozau", "Bandarenka"], "lf": ["Kavaliova", "Novik", "Marozava", "Bandarenka"]}, {"s": "Bosnia ed Erzegovina", "c": ["Sarajevo", "Mostar", "Tuzla"], "m": ["Emir", "Adnan", "Haris", "Damir"], "f": ["Amra", "Lejla", "Selma"], "l": ["Hodžić", "Hadžić", "Begić", "Delić"], "lf": ["Hodžić", "Hadžić", "Begić", "Delić"]}, {"s": "Bulgaria", "c": ["Sofia", "Plovdiv", "Varna"], "m": ["Georgi", "Ivan", "Dimitar", "Nikolaj"], "f": ["Maria", "Elena", "Desislava"], "l": ["Ivanov", "Georgiev", "Dimitrov", "Petrov"], "lf": ["Ivanova", "Georgieva", "Dimitrova", "Petrova"]}, {"s": "Cipro", "c": ["Nicosia", "Limassol", "Larnaca"], "m": ["Andreas", "Christos", "Michalis", "Giorgos"], "f": ["Eleni", "Androulla", "Maria"], "l": ["Georgiou", "Christodoulou", "Ioannou", "Charalambous"], "lf": ["Georgiou", "Christodoulou", "Ioannou", "Charalambous"]}, {"s": "Città del Vaticano", "c": ["Città del Vaticano"], "m": ["Francesco", "Pietro", "Giovanni", "Matteo"], "f": ["Maria", "Chiara", "Caterina"], "l": ["Bernasconi", "Galli", "Ricci", "Gamma"], "lf": ["Bernasconi", "Galli", "Ricci", "Gamma"]}, {"s": "Croazia", "c": ["Zagabria", "Spalato", "Fiume"], "m": ["Ivan", "Luka", "Marko", "Tomislav"], "f": ["Ana", "Ivana", "Petra"], "l": ["Horvat", "Kovačević", "Babić", "Marić"], "lf": ["Horvat", "Kovačević", "Babić", "Marić"]}, {"s": "Danimarca", "c": ["Copenaghen", "Aarhus", "Odense"], "m": ["Rasmus", "Mads", "Søren", "Anders"], "f": ["Mette", "Sofie", "Freja"], "l": ["Jensen", "Nielsen", "Hansen", "Pedersen"], "lf": ["Jensen", "Nielsen", "Hansen", "Pedersen"]}, {"s": "Estonia", "c": ["Tallinn", "Tartu", "Pärnu"], "m": ["Andres", "Tõnu", "Kristjan", "Mart"], "f": ["Kadri", "Liis", "Triin"], "l": ["Tamm", "Saar", "Sepp", "Mägi"], "lf": ["Tamm", "Saar", "Sepp", "Mägi"]}, {"s": "Finlandia", "c": ["Helsinki", "Tampere", "Turku"], "m": ["Mikko", "Juha", "Antti", "Lauri"], "f": ["Aino", "Satu", "Elina"], "l": ["Virtanen", "Korhonen", "Nieminen", "Mäkinen"], "lf": ["Virtanen", "Korhonen", "Nieminen", "Mäkinen"]}, {"s": "Francia", "c": ["Parigi", "Lione", "Marsiglia", "Lilla"], "m": ["Julien", "Antoine", "Mathieu", "Thomas"], "f": ["Camille", "Claire", "Juliette"], "l": ["Martin", "Bernard", "Dubois", "Moreau"], "lf": ["Martin", "Bernard", "Dubois", "Moreau"]}, {"s": "Germania", "c": ["Berlino", "Amburgo", "Monaco di Baviera", "Colonia"], "m": ["Jonas", "Felix", "Tobias", "Jan"], "f": ["Anna", "Lena", "Sabine"], "l": ["Müller", "Schmidt", "Schneider", "Fischer"], "lf": ["Müller", "Schmidt", "Schneider", "Fischer"]}, {"s": "Grecia", "c": ["Atene", "Salonicco", "Patrasso"], "m": ["Giorgos", "Kostas", "Nikos", "Dimitris"], "f": ["Eleni", "Katerina", "Sofia"], "l": ["Papadopoulos", "Papadakis", "Oikonomou", "Karagiannis"], "lf": ["Papadopoulou", "Papadaki", "Oikonomou", "Karagianni"]}, {"s": "Irlanda", "c": ["Dublino", "Cork", "Galway", "Limerick"], "m": ["Seamus", "Liam", "Declan", "Padraig"], "f": ["Siobhán", "Aoife", "Niamh"], "l": ["Murphy", "Kelly", "O'Brien", "Byrne"], "lf": ["Murphy", "Kelly", "O'Brien", "Byrne"]}, {"s": "Islanda", "c": ["Reykjavík", "Akureyri", "Hafnarfjörður"], "m": ["Gunnar", "Einar", "Sigurður", "Ólafur"], "f": ["Guðrún", "Sigrún", "Katrín"], "l": ["Jónsson", "Gunnarsson", "Einarsson", "Ólafsson"], "lf": ["Jónsdóttir", "Gunnarsdóttir", "Einarsdóttir", "Ólafsdóttir"]}, {"s": "Italia", "c": ["Roma", "Napoli", "Bologna", "Torino", "Palermo"], "m": ["Ennio", "Marco", "Davide", "Salvatore"], "f": ["Giulia", "Francesca", "Chiara"], "l": ["Rossi", "Esposito", "Bianchi", "Romano"], "lf": ["Rossi", "Esposito", "Bianchi", "Romano"]}, {"s": "Kosovo", "c": ["Pristina", "Prizren", "Peć"], "m": ["Blerim", "Valon", "Driton", "Fatos"], "f": ["Blerta", "Vlora", "Teuta"], "l": ["Krasniqi", "Berisha", "Gashi", "Morina"], "lf": ["Krasniqi", "Berisha", "Gashi", "Morina"]}, {"s": "Lettonia", "c": ["Riga", "Daugavpils", "Liepāja"], "m": ["Jānis", "Andris", "Edgars", "Kārlis"], "f": ["Līga", "Inese", "Zane"], "l": ["Bērziņš", "Kalniņš", "Ozoliņš", "Liepiņš"], "lf": ["Bērziņa", "Kalniņa", "Ozoliņa", "Liepiņa"]}, {"s": "Liechtenstein", "c": ["Vaduz", "Schaan", "Triesen"], "m": ["Matthias", "Marco", "Thomas", "Patrick"], "f": ["Sandra", "Nadine", "Corinne"], "l": ["Frick", "Büchel", "Marxer", "Ospelt"], "lf": ["Frick", "Büchel", "Marxer", "Ospelt"]}, {"s": "Lituania", "c": ["Vilnius", "Kaunas", "Klaipėda"], "m": ["Tomas", "Mantas", "Darius", "Vytautas"], "f": ["Rūta", "Eglė", "Ieva"], "l": ["Kazlauskas", "Petrauskas", "Jankauskas", "Stankevičius"], "lf": ["Kazlauskaitė", "Petrauskaitė", "Jankauskaitė", "Stankevičiūtė"]}, {"s": "Lussemburgo", "c": ["Lussemburgo", "Esch-sur-Alzette", "Differdange"], "m": ["Marc", "Luc", "Gilles", "Yves"], "f": ["Anne", "Carole", "Mireille"], "l": ["Schmit", "Muller", "Weber", "Hoffmann"], "lf": ["Schmit", "Muller", "Weber", "Hoffmann"]}, {"s": "Macedonia del Nord", "c": ["Skopje", "Bitola", "Ocrida"], "m": ["Aleksandar", "Goran", "Zoran", "Nikola"], "f": ["Elena", "Marija", "Biljana"], "l": ["Stojanovski", "Nikolovski", "Trajkovski", "Petrovski"], "lf": ["Stojanovska", "Nikolovska", "Trajkovska", "Petrovska"]}, {"s": "Malta", "c": ["La Valletta", "Birkirkara", "Mosta"], "m": ["Karl", "Joseph", "Matthew", "Kurt"], "f": ["Maria", "Rebecca", "Roberta"], "l": ["Borg", "Camilleri", "Vella", "Farrugia"], "lf": ["Borg", "Camilleri", "Vella", "Farrugia"]}, {"s": "Moldavia", "c": ["Chișinău", "Bălți", "Tiraspol"], "m": ["Ion", "Vasile", "Andrei", "Mihai"], "f": ["Ana", "Elena", "Natalia"], "l": ["Rusu", "Ciobanu", "Ceban", "Popa"], "lf": ["Rusu", "Ciobanu", "Ceban", "Popa"]}, {"s": "Monaco", "c": ["Monte Carlo", "La Condamine", "Fontvieille"], "m": ["Louis", "Pierre", "Christophe", "Antoine"], "f": ["Hélène", "Sophie", "Caroline"], "l": ["Notari", "Médecin", "Pastor", "Gastaud"], "lf": ["Notari", "Médecin", "Pastor", "Gastaud"]}, {"s": "Montenegro", "c": ["Podgorica", "Nikšić", "Cettigne"], "m": ["Nikola", "Vuk", "Milan", "Danilo"], "f": ["Jelena", "Milica", "Ivana"], "l": ["Vujović", "Popović", "Radović", "Bošković"], "lf": ["Vujović", "Popović", "Radović", "Bošković"]}, {"s": "Norvegia", "c": ["Oslo", "Bergen", "Trondheim"], "m": ["Ola", "Lars", "Erik", "Magnus"], "f": ["Ingrid", "Kari", "Silje"], "l": ["Hansen", "Johansen", "Olsen", "Larsen"], "lf": ["Hansen", "Johansen", "Olsen", "Larsen"]}, {"s": "Paesi Bassi", "c": ["Amsterdam", "Rotterdam", "Utrecht"], "m": ["Pieter", "Daan", "Joost", "Sander"], "f": ["Femke", "Anouk", "Lotte"], "l": ["de Jong", "Jansen", "de Vries", "Bakker"], "lf": ["de Jong", "Jansen", "de Vries", "Bakker"]}, {"s": "Polonia", "c": ["Danzica", "Varsavia", "Cracovia", "Stettino"], "m": ["Marek", "Piotr", "Tomasz", "Krzysztof"], "f": ["Agnieszka", "Kasia", "Magda"], "l": ["Nowak", "Kowalski", "Wiśniewski", "Wójcik"], "lf": ["Nowak", "Kowalska", "Wiśniewska", "Wójcik"]}, {"s": "Portogallo", "c": ["Lisbona", "Porto", "Coimbra"], "m": ["João", "Rui", "Tiago", "Miguel"], "f": ["Inês", "Mariana", "Beatriz"], "l": ["Silva", "Santos", "Ferreira", "Costa"], "lf": ["Silva", "Santos", "Ferreira", "Costa"]}, {"s": "Regno Unito", "c": ["Londra", "Manchester", "Glasgow", "Belfast"], "m": ["Tom", "Jack", "Callum", "Owen"], "f": ["Emily", "Hannah", "Kirsty"], "l": ["Smith", "Jones", "Taylor", "MacLeod"], "lf": ["Smith", "Jones", "Taylor", "MacLeod"]}, {"s": "Repubblica Ceca", "c": ["Praga", "Brno", "Ostrava"], "m": ["Jan", "Petr", "Jakub", "Tomáš"], "f": ["Tereza", "Lucie", "Jana"], "l": ["Novák", "Svoboda", "Dvořák", "Černý"], "lf": ["Nováková", "Svobodová", "Dvořáková", "Černá"]}, {"s": "Romania", "c": ["Bucarest", "Cluj-Napoca", "Iași", "Timișoara"], "m": ["Andrei", "Mihai", "Radu", "Cristian"], "f": ["Ioana", "Alina", "Andreea"], "l": ["Popescu", "Ionescu", "Stan", "Dumitrescu"], "lf": ["Popescu", "Ionescu", "Stan", "Dumitrescu"]}, {"s": "Russia", "c": ["Mosca", "San Pietroburgo", "Kazan'", "Nižnij Novgorod"], "m": ["Aleksej", "Dmitrij", "Fëdor", "Ivan", "Sergej"], "f": ["Natal'ja", "Ol'ga", "Anastasija"], "l": ["Ivanov", "Smirnov", "Kuznecov", "Popov"], "lf": ["Ivanova", "Smirnova", "Kuznecova", "Popova"]}, {"s": "San Marino", "c": ["Città di San Marino", "Borgo Maggiore", "Serravalle"], "m": ["Matteo", "Luca", "Marino", "Alessandro"], "f": ["Elisa", "Federica", "Martina"], "l": ["Gasperoni", "Guidi", "Giardi", "Casadei"], "lf": ["Gasperoni", "Guidi", "Giardi", "Casadei"]}, {"s": "Serbia", "c": ["Belgrado", "Novi Sad", "Niš"], "m": ["Dragan", "Stefan", "Miloš", "Nemanja"], "f": ["Jelena", "Milica", "Ana"], "l": ["Jovanović", "Petrović", "Nikolić", "Marković"], "lf": ["Jovanović", "Petrović", "Nikolić", "Marković"]}, {"s": "Slovacchia", "c": ["Bratislava", "Košice", "Žilina"], "m": ["Peter", "Martin", "Juraj", "Michal"], "f": ["Zuzana", "Katarína", "Lucia"], "l": ["Horváth", "Kováč", "Varga", "Tóth"], "lf": ["Horváthová", "Kováčová", "Vargová", "Tóthová"]}, {"s": "Slovenia", "c": ["Lubiana", "Maribor", "Capodistria"], "m": ["Luka", "Matej", "Žiga", "Jure"], "f": ["Nina", "Maja", "Špela"], "l": ["Novak", "Horvat", "Kranjc", "Zupan"], "lf": ["Novak", "Horvat", "Kranjc", "Zupan"]}, {"s": "Spagna", "c": ["Madrid", "Barcellona", "Siviglia", "Valencia"], "m": ["Javier", "Carlos", "Pablo", "Diego"], "f": ["Sofía", "Lucía", "Carmen"], "l": ["García", "Fernández", "López", "Martínez"], "lf": ["García", "Fernández", "López", "Martínez"]}, {"s": "Svezia", "c": ["Stoccolma", "Göteborg", "Malmö"], "m": ["Johan", "Erik", "Oskar", "Nils"], "f": ["Astrid", "Linnea", "Elin"], "l": ["Andersson", "Johansson", "Karlsson", "Nilsson"], "lf": ["Andersson", "Johansson", "Karlsson", "Nilsson"]}, {"s": "Svizzera", "c": ["Zurigo", "Ginevra", "Berna", "Lugano"], "m": ["Reto", "Urs", "Luca", "Mathieu"], "f": ["Nadia", "Corinne", "Seraina"], "l": ["Müller", "Meier", "Keller", "Rochat"], "lf": ["Müller", "Meier", "Keller", "Rochat"]}, {"s": "Ucraina", "c": ["Kiev", "Leopoli", "Odessa", "Charkiv"], "m": ["Taras", "Oleh", "Bohdan", "Andrij"], "f": ["Oksana", "Olena", "Halyna"], "l": ["Ševčenko", "Kovalenko", "Bondarenko", "Tkačenko"], "lf": ["Ševčenko", "Kovalenko", "Bondarenko", "Tkačenko"]}, {"s": "Ungheria", "c": ["Budapest", "Debrecen", "Seghedino", "Pécs"], "m": ["László", "Gábor", "Bence", "Ádám"], "f": ["Zsófia", "Réka", "Eszter"], "l": ["Nagy", "Kovács", "Tóth", "Szabó"], "lf": ["Nagy", "Kovács", "Tóth", "Szabó"]}];
+/* stati possibili per i 10 personaggi (con le città adatte quando indicate) */
+const CAST_STATES={marek:[['Polonia',['Danzica','Stettino']],['Lituania',['Klaipėda']],['Lettonia',['Riga','Liepāja']],['Estonia',['Tallinn']]],
+ ilse:[['Norvegia'],['Svezia'],['Danimarca'],['Finlandia'],['Islanda']],ennio:[['Italia'],['San Marino']],
+ dragan:[['Serbia'],['Croazia'],['Bosnia ed Erzegovina'],['Montenegro'],['Macedonia del Nord'],['Bulgaria']],pieter:[['Paesi Bassi'],['Belgio']],
+ sofia:[['Spagna'],['Portogallo'],['Andorra']],aleksej:[['Russia'],['Bielorussia']],colette:[['Francia'],['Svizzera',['Ginevra']],['Lussemburgo'],['Monaco']],
+ seamus:[['Irlanda'],['Regno Unito',['Belfast']]],zsofia:[['Ungheria']]};
+const stateOf=n=>STATES.find(x=>x.s===n);
 /* discorsi profondi con gli amici fraterni: ogni risposta può portare avanti la discussione */
 const D=(r,m,n)=>({r,m,n});const Q=(l,x)=>({l,...x});
 const DEEP={
@@ -373,7 +380,7 @@ function madTalk(){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n
 const LOVEQ={t:"Ce l'hai la ragazza, a casa? Scommetto di sì.",o:[Q("«Sì, certo.»",{r:2,m:-3}),Q("«Non ho una ragazza. Ho un ragazzo.»",{r:0,m:5,out:1}),Q("«Non sono affari tuoi.»",{r:-6,m:0})]};
 /* insulti dei marciatori razzisti/omofobi (parole offensive censurate con asterischi) */
 const SLUR={
- black:["Che ci fai tu qui, ne**o? Questa marcia è per gente della Federazione vera.","Spero che i soldati sparino prima ai ne**i come te.","Tornatene da dove sei venuto, sporco ne**o. Ah, già: non puoi.","Ehi, ne**o, non starmi così vicino."],
+ black:["Che ci fai tu qui, ne**o? Questa marcia è per gente della Federazione vera.","Spero che i cingoli passino prima sui ne**i come te.","Tornatene da dove sei venuto, sporco ne**o. Ah, già: non puoi.","Ehi, ne**o, non starmi così vicino."],
  gay:["Ho visto come guardi gli altri ragazzi, fr***o. Stammi lontano.","I fr***i come te portano sfortuna. Cammina più in là.","Mi fai schifo, {N}. Lo sanno tutti che sei un fr***o.","Cammina dritto, fr***o, se ci riesci."],
 };
 const SLUR_ALL=[
@@ -390,12 +397,12 @@ const slurOpts=()=>{const base=SLUR_ALL.filter(o=>o.good||o.def),rest=shuffle(SL
 const CHAT=[
  ["Qualcuno ha una gomma da masticare?","Scommetto che arrivo a Natale.","Mia madre mi ha messo il maglione sbagliato.","Chi vince offre da bere a tutti!","Ho già fame.","Bel tempo per una passeggiata, eh?","Ehi, ti si è slacciata una scarpa. Scherzo.","Al mio paese questa la chiamano gita."],
  ["Non sento più le gambe.","Quanto manca? Qualcuno lo sa?","Ho sete. Ho sempre sete.","Smettetela di parlare, mi gira la testa.","Voglio solo sedermi un minuto.","Mamma...","Avete visto quello con la maglia rossa? Non c'è più.","Non ridete. Non c'è niente da ridere."],
- ["Non voglio morire qui.","Sparatemi e basta.","Non ricordo più la faccia di mia madre.","Siamo rimasti in pochi. Troppo pochi.","Perdonatemi.","La strada si muove. La vedete anche voi?","Non ce la faccio. Non ce la faccio.","Chiunque vinca... si ricordi di noi."],
+ ["Non voglio morire qui.","Che mi passino sopra e basta.","Non ricordo più la faccia di mia madre.","Siamo rimasti in pochi. Troppo pochi.","Perdonatemi.","La strada si muove. La vedete anche voi?","Non ce la faccio. Non ce la faccio.","Chiunque vinca... si ricordi di noi."],
 ];
 const CHAT_MAD=["Sono tornati a marciare con noi dalla morte. Li vedi anche tu?","Il cingolato mi parla. Dice che sono stato bravo.","Mamma è lì, a bordo strada. Ciao mamma! CIAO!","Contate con me: uno, uno, uno, uno, uno...","Hihihi. Hihihihihi.","Le ombre camminano più veloci di noi.","Io sono già morto. Aspetto solo che se ne accorgano.","Mi hanno chiamato per nome! Ho un nome!","La strada respira. Senti come respira?","Non siamo noi a camminare. È la strada che ci tira."];
 const CHAT_HILL=["Un'altra salita? Ma chi l'ha disegnata questa strada?","Maledetta collina.","Le gambe mi bruciano.","Chi ha messo una montagna proprio qui?","Non finisce più, questa salita!","Se arrivo in cima giuro che non cammino più in vita mia."];
 const CHAT_RAIN=["Perfetto. Ci mancava solo la pioggia.","Ho l'acqua anche nelle mutande.","Le scarpe fanno ciac ciac a ogni passo.","Almeno adesso non ho sete.","Questa pioggia mi entra nelle ossa."];
-const CHAT_COLD=["Non sento più le dita.","Fa un freddo cane.","Datemi una coperta, vi prego.","Mi battono i denti più forte dei passi.","Se mi fermo congelo. Se mi fermo mi sparano."];
+const CHAT_COLD=["Non sento più le dita.","Fa un freddo cane.","Datemi una coperta, vi prego.","Mi battono i denti più forte dei passi.","Se mi fermo congelo. Se mi fermo mi travolgono."];
 const progress=()=>{const al=S.npcs.filter(n=>n.alive&&!n.leaving).length;return clamp(Math.max(S.t/700,(S.npcs.length-al)/(S.npcs.length-1)),0,1);};
 const DEFEND=["«Lascialo stare.»","«Un'altra parola e inciampi tu.»","«Siamo tutti sulla stessa strada, idiota.»","«Se hai fiato per questo, cammina più forte.»"];
 /* dialoghi extra dopo i 3 di base: con gli amici si diventa fratelli, con i rivali ci si odia a morte */
@@ -408,7 +415,7 @@ const BOND=[
 const FEUD=[
  {t:"Ehi, {N}. Spero che tu sia il prossimo.",o:[O("\"Dopo di te.\"",-18),O("Fai finta di non sentire.",-4),O("Gli offri un sorso d'acqua.",12)]},
  {t:"Ti ho visto barcollare. Manca poco, vero?",o:[O("Sorridi e acceleri apposta.",-14,-5),O("Lo mandi al diavolo.",-20),O("\"Possiamo smetterla?\"",10)]},
- {t:"Quando ti spareranno, applaudirò.",o:[O("Gli sputi vicino alle scarpe.",-22),O("Non rispondi.",-4),O("\"Io non ti odio.\"",12)]},
+ {t:"Quando i cingoli ti passeranno sopra, applaudirò.",o:[O("Gli sputi vicino alle scarpe.",-22),O("Non rispondi.",-4),O("\"Io non ti odio.\"",12)]},
  {t:"Dicono che tu sia il cocco dei soldati. Che schifo.",o:[O("Gli salti quasi addosso.",-24,-8),O("Abbassi lo sguardo.",-6),O("\"Siamo tutti qui per colpa loro.\"",10)]},
 ];
 const DLG={
@@ -478,7 +485,7 @@ const SHOES={
 };
 const BISC=2;
 const TIPS=['Consiglio n.3: "Non indossare scarpe da ginnastica."','Consiglio n.8: "Non molestare i compagni di marcia."','Consiglio n.9: "Va\' piano e ce la farai."','Consiglio n.10: "Risparmiare il fiato."','Consiglio n.12: "Raccomandiamo di indossare calze da ginnastica."','Consiglio n.13: "Risparmia energia, quando è possibile."',
- 'Consiglio n.1: "Ogni marcia inizia con il primo passo."','Consiglio n.21: "Bere fa bene al corpo. Il corpo, prima o poi, restituisce."','Consiglio n.7: "I morti della Marcia vengono sempre onorati."',
+ 'Consiglio n.1: "Ogni marcia inizia con il primo passo."','Consiglio n.15: "Se scendi sotto i 5,5 km/h verrai richiamato."','Consiglio n.4: "Ogni 30 chilometri un richiamo sarà cancellato."','Consiglio n.18: "Alla terza ammonizione la marcia viene <i>sospesa</i> per il marciatore."','Consiglio n.21: "Bere fa bene al corpo. Il corpo, prima o poi, restituisce."','Consiglio n.7: "I morti della Marcia vengono sempre onorati."',
  'Consiglio n.2: "Rispondere al test attitudinale aiuta ogni marciatore a conoscere se stesso. Rispondere sinceramente aiuta di più."','Consiglio n.17: "Nuove scorte di cibo saranno distribuite ogni giorno alle ore 9."',
  'Consiglio n.24: "Chi corre arriva stanco. Chi cammina al limite arriva."','Consiglio n.31: "Un amico vero vale più di un panino. Ma il panino non ti tradisce."','Consiglio n.5: "In salita le gambe chiedono il doppio. Accontentale."',
  'Consiglio n.19: "Prepararsi alle intemperie migliora le possibilità di farcela."','Consiglio n.40: "Non ascoltare i morti che parlano. E nemmeno i vivi che parlano coi morti."',
@@ -514,6 +521,7 @@ const sfx={
  warnSoft:()=>{for(let i=0;i<2;i++){tone(660,.09,'square',.05,null,i*.2);tone(440,.09,'square',.05,null,i*.2+.1);}},
  warn:()=>{for(let i=0;i<3;i++){tone(1320,.11,'square',.17,null,i*.26);tone(880,.11,'square',.17,null,i*.26+.12);}},
  shot:()=>{noise(.7,.45);tone(90,.3,'square',.12,40);},laser:()=>{tone(1800,.25,'sawtooth',.1,120);noise(.3,.2);},
+ crush:()=>{noise(.6,.5,undefined,300);tone(55,.5,'sawtooth',.14,30);tone(40,.7,'square',.08,25,.15);},
  thunder:()=>{noise(.35,.6);tone(50,.8,'sine',.15,30);},eat:()=>{tone(300,.05,'square',.03);tone(260,.05,'square',.03,null,.08);},
  type:()=>tone(rand(600,700),.015,'square',.012),
  fanfare:()=>{const N=[[392,0],[523,.18],[659,.36],[784,.54],[659,.9],[784,1.08],[1046,1.3]];N.forEach(([f,d])=>{tone(f,.28,'sawtooth',.06,null,d);tone(f/2,.28,'square',.03,null,d);});[523,659,784].forEach(f=>tone(f,1.4,'sawtooth',.035,null,1.55));noise(.2,.5,undefined,3000);},
@@ -573,12 +581,15 @@ function newRun(shoe,tr){{const bo=document.getElementById('blackout');if(bo)bo.
   $('jukeHud').style.display=DEBUG?'inline':'none';
   $('iBisc').style.display=RUN_ITEMS.includes('biscotti')?'':'none';$('iPan').style.display=RUN_ITEMS.includes('panini')?'':'none';$('iHam').style.display=RUN_ITEMS.includes('hamburger')?'':'none';$('iCig').style.display=RUN_ITEMS.includes('sigarette')?'':'none';
   const npcs=[],lo=offMin(),hi=offMax();
+  /* stati: uno per marciatore, senza doppioni (prima i 10 personaggi, poi gli anonimi) */
+  const usedS=new Set([PLAYER?PLAYER.state:'']);
   const usedN=new Set(),bib=PLAYER?PLAYER.bib:Math.floor(rand(1,TOTAL+1)),used=new Set([bib]);const newBib=()=>{let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);return n;};
-  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);npcs.push({...c,name:nm,bibN:newBib(),from:pick(P.c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2),lane:Math.floor(rand(0,6)),elimAt:rand(250,760),ph:rand(0,4),leaving:0});});
+  CAST.forEach(c=>{const P=CAST_POOL[c.id];let nm;do{nm=pick(P.n);}while(usedN.has(nm));usedN.add(nm);const opt=shuffle(CAST_STATES[c.id].filter(o=>!usedS.has(o[0])))[0];usedS.add(opt[0]);npcs.push({...c,name:nm,bibN:newBib(),state:opt[0],from:pick(opt[1]||stateOf(opt[0]).c),named:true,rel:Math.round((tr.c-50)/5),stage:0,alive:true,off:rand(-10,14),v:rand(6.6,7.2)*SR,lane:Math.floor(rand(0,6)),elimAt:rand(250,760),ph:rand(0,4),leaving:0});});
   {const nm=npcs.filter(n=>n.named).sort(()=>Math.random()-.5);nm.slice(0,4).forEach(n=>n.elimAt=rand(780,880));}
   const hairs=['#2a1a10','#5a3a20','#c8a060','#1a1a1a','#8a5a30','#d8c890'];
   for(let i=0;i<TOTAL-1-CAST.length;i++){let n;do{n=Math.floor(rand(1,TOTAL+1));}while(used.has(n));used.add(n);
-    let gn;do{gn=pick(NAMES);}while(usedN.has(gn));usedN.add(gn);npcs.push({id:'g'+i,name:gn+' (N.'+n+')',bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3),lane:Math.floor(rand(0,6)),elimAt:rand(30,760),ph:rand(0,4),leaving:0});}
+    const SS=shuffle(STATES.filter(x=>!usedS.has(x.s)))[0];usedS.add(SS.s);const fem=Math.random()<.4;let gn,tries=0;do{gn=pick(fem?SS.f:SS.m);}while(usedN.has(gn)&&++tries<12);usedN.add(gn);const li=Math.floor(Math.random()*SS.l.length);
+    npcs.push({id:'g'+i,name:gn+' (N.'+n+')',first:gn,last:(fem?SS.lf:SS.l)[li],fem,state:SS.s,from:pick(SS.c),bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3)*SR,lane:Math.floor(rand(0,6)),elimAt:rand(30,760),ph:rand(0,4),leaving:0});}
   const sh=SHOES[shoe];
   S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
@@ -611,7 +622,7 @@ function step(foot){
   if(S.fainted)return;
   if(S.collapsed){if(S.qte&&S.qte.type==='rialzati'){qteHit();flash(foot==='L'?$('padL'):$('padR'),'hit');sfx.step();}else if(!S.downMsgT||S.t-S.downMsgT>4){S.downMsgT=S.t;log('Sei a terra: non puoi camminare finché non ti rialzi.','var(--red)');}return;}
   const pad=foot==='L'?$('padL'):$('padR');
-  if(foot!==S.nextFoot){S.speed=Math.max(0,S.speed-1.6);S.st=Math.max(0,S.st-2);S.steps=[];S.tripT=S.t;log('Inciampi! Alterna sinistro e destro.','var(--red)');sfx.bad();buzz(60);flash(pad,'bad');return;}
+  if(foot!==S.nextFoot){S.speed=Math.max(0,S.speed-1.6*SR);S.st=Math.max(0,S.st-2);S.steps=[];S.tripT=S.t;log('Inciampi! Alterna sinistro e destro.','var(--red)');sfx.bad();buzz(60);flash(pad,'bad');return;}
   S.steps.push(S.t);if(S.steps.length>6)S.steps.shift();
   S.nextFoot=foot==='L'?'R':'L';sfx.step();flash(pad,'hit');
 }
@@ -627,7 +638,7 @@ onTap('iCig',()=>{if(S.cig<=0)return;S.cig--;S.smoked++;S.mh=Math.min(100,S.mh+2
   log(pick(['Accendi una sigaretta. Il mondo rallenta.','Il fumo ti riempie il petto. Ti senti invincibile.','Una boccata lunga. Le gambe tornano a girare.']),'var(--green)');
   if(!S.pneumonia&&Math.random()<.08*S.smoked)setTimeout(()=>{if(!S||S.mode!=='play'||S.pneumonia)return;S.pneumonia=true;S.st=Math.max(0,S.st-30);S.ph=Math.max(0,S.ph-20);sfx.bad();buzz([200,80,200]);log('Tossisci sangue. Il petto brucia: è polmonite.','var(--red)');},rand(15,35)*1000);});
 onTap('iHam',()=>{if(S.ham<=0)return;S.ham--;eat(35,0,0,'Carne cruda. Ti fa schifo, ma senti la forza tornare.');
-  if(Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
+  if(Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
 onTap('iBar',()=>{if(!(S.bar>0))return;S.bar--;eat(25,4,3,'La barretta del tuo amico. Sa di cioccolato e di casa.');});
 onTap('iTub',()=>{if(S.tub<=0)return;S.tub--;eat(22,2,3,'Un tubetto di concentrato. Disgustoso, ma nutre.');});
 onTap('iPee',()=>{if(S.bl<35||S.peeing>0)return;S.peeing=5;log('Ti liberi senza fermarti... il passo ne risente. Tieni il ritmo!','var(--amber)');});
@@ -638,7 +649,7 @@ $('jukeHud').addEventListener('click',()=>{const T=TRACKS();let i=T.findIndex(t=
 function eat(st,mh,ph,msg){
   S.st=Math.min(S.maxSt,S.st+st);S.mh=Math.min(100,S.mh+mh);S.ph=Math.min(100,S.ph+ph);sfx.eat();
   const full=S.sto>45;S.sto+=30;log(msg,'var(--green)');
-  if(full&&Math.random()<(1-S.tr.s/100)*1.1)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-12);S.mh-=8;S.speed=Math.max(0,S.speed-2);S.steps=[];sfx.bad();buzz(200);log('Hai mangiato troppo e troppo in fretta. Vomiti camminando.','var(--red)');},2500);
+  if(full&&Math.random()<(1-S.tr.s/100)*1.1)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-12);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('Hai mangiato troppo e troppo in fretta. Vomiti camminando.','var(--red)');},2500);
 }
 function cadence(){const st=S.steps;if(st.length<2)return 0;const n=Math.min(st.length-1,4);let sum=0;for(let i=st.length-n;i<st.length;i++)sum+=st[i]-st[i-1];const since=S.t-st[st.length-1];if(since>2)return 0;return 1/Math.max(sum/n,since,.15);}
 
@@ -699,11 +710,11 @@ function endQTE(ok){
   if(q.type==='blocco'){log('Sei rimasto fermo troppo a lungo.',Rd);addWarn('sei rimasto bloccato, fermo in mezzo alla strada');return;}
   const fr=friends();
   if(fr.length&&Math.random()<.5){log(pick(fr).name+' ti sorregge per un braccio.',G);S.speed-=.8;S.st-=5;return;}
-  if(q.type==='crampo'){S.st-=18;S.ph-=4;S.speed-=2;log('Il crampo ti morde la gamba.',Rd);}
-  if(q.type==='caduta'){S.ph-=10;S.speed-=3;S.steps=[];if(Math.random()<.3){S.injury=true;log('Cadi sull\'asfalto. Il ginocchio sanguina.',Rd);}else log('Cadi e ti rialzi di scatto.',Rd);}
-  if(q.type==='spinta'){S.st-=10;S.speed-=3;S.steps=[];log('Barcolli. '+q.who+' ride.',Rd);}
-  if(q.type==='sgambetto'){S.ph-=8;S.st-=10;S.speed-=3.5;S.steps=[];log('Cadi lungo disteso. '+q.who+' ride.',Rd);}
-  if(q.type==='isteria'){S.mh-=10;S.speed-=2.5;S.steps=[];log('Urli qualcosa che non ricorderai. I soldati ti guardano.',Rd);}
+  if(q.type==='crampo'){S.st-=18;S.ph-=4;S.speed-=2*SR;log('Il crampo ti morde la gamba.',Rd);}
+  if(q.type==='caduta'){S.ph-=10;S.speed-=3*SR;S.steps=[];if(Math.random()<.3){S.injury=true;log('Cadi sull\'asfalto. Il ginocchio sanguina.',Rd);}else log('Cadi e ti rialzi di scatto.',Rd);}
+  if(q.type==='spinta'){S.st-=10;S.speed-=3*SR;S.steps=[];log('Barcolli. '+q.who+' ride.',Rd);}
+  if(q.type==='sgambetto'){S.ph-=8;S.st-=10;S.speed-=3.5*SR;S.steps=[];log('Cadi lungo disteso. '+q.who+' ride.',Rd);}
+  if(q.type==='isteria'){S.mh-=10;S.speed-=2.5*SR;S.steps=[];log('Urli qualcosa che non ricorderai. I soldati ti guardano.',Rd);}
   S.st=Math.max(0,S.st);S.speed=Math.max(0,S.speed);
 }
 /* un amico fraterno sta per cedere: puoi provare a salvarlo */
@@ -761,7 +772,7 @@ function bigotTalk(){
 }
 /* verso il finale (restano 5 o meno) 1 volta su 3 anche le tue risposte diventano malate: ne resta sempre una sana */
 /* [frase, MH, stamina]: quasi tutte costano mente, ma alcune danno stamina e qualcuna, per assurdo, anche mente */
-const SICK_ANS=[["«Ah ah. Sì. Sì. Ah ah ah.»",3,0],["«Ti sento dentro la testa, sai?»",-4,0],["«Contami i denti. Mi sembra che ne manchi uno.»",-4,0],["«Shh. La strada ci ascolta.»",-3,6],["«Io sono già morto ieri, non preoccuparti.»",-5,10],["«Mangerei l'asfalto. È caldo, sembra pane.»",-3,8],["«Il blindato mi ha chiamato per nome. Con la voce di mia madre.»",-6,0],["«Ripeti. Ripeti. Ripeti quello che hai detto.»",-4,0],["Ridi, e non riesci a smettere.",5,-3],["Ti metti a piangere senza motivo.",4,0],["«Chi sei tu? Ci conosciamo?»",-4,0],["«Lo sapevo. Lo sapevo da sempre.»",-2,6],["Canticchi una ninna nanna a voce altissima.",3,4],["«Le mie scarpe sono piene di sangue. Che bello, sono calde.»",-4,12],["«Dio ha il fucile. L'ho visto.»",-6,0],["«Non parlare. Ti sentono i morti.»",-4,0],["Annusi l'aria come un cane.",-2,8],["«Se mi tocchi, mi sciolgo.»",-4,0],["«Ho contato le stelle. Sono quarantanove.»",-3,0],["«Le mie gambe sono di un altro. Gliele devo restituire.»",-4,14]];
+const SICK_ANS=[["«Ah ah. Sì. Sì. Ah ah ah.»",3,0],["«Ti sento dentro la testa, sai?»",-4,0],["«Contami i denti. Mi sembra che ne manchi uno.»",-4,0],["«Shh. La strada ci ascolta.»",-3,6],["«Io sono già morto ieri, non preoccuparti.»",-5,10],["«Mangerei l'asfalto. È caldo, sembra pane.»",-3,8],["«Il blindato mi ha chiamato per nome. Con la voce di mia madre.»",-6,0],["«Ripeti. Ripeti. Ripeti quello che hai detto.»",-4,0],["Ridi, e non riesci a smettere.",5,-3],["Ti metti a piangere senza motivo.",4,0],["«Chi sei tu? Ci conosciamo?»",-4,0],["«Lo sapevo. Lo sapevo da sempre.»",-2,6],["Canticchi una ninna nanna a voce altissima.",3,4],["«Le mie scarpe sono piene di sangue. Che bello, sono calde.»",-4,12],["«Dio guida il cingolato. L'ho visto.»",-6,0],["«Non parlare. Ti sentono i morti.»",-4,0],["Annusi l'aria come un cane.",-2,8],["«Se mi tocchi, mi sciolgo.»",-4,0],["«Ho contato le stelle. Sono quarantanove.»",-3,0],["«Le mie gambe sono di un altro. Gliele devo restituire.»",-4,14]];
 function sickify(d){
   const alive=S.npcs.filter(n=>n.alive&&!n.leaving).length+1;if(alive>5||Math.random()>=1/3||d.o.length<2)return d;
   const sc=o=>o.m!=null?o.m*2+(o.r||0)*.1:(o.r||0);let best=0;d.o.forEach((o,i)=>{if(sc(o)>sc(d.o[best]))best=i;});
@@ -772,7 +783,7 @@ function openDlg(npc,d,kind){
   d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
   if(kind!=='bigot'&&kind!=='loveq')d=sickify(d);
   S.dlg={npc,d,t:0,dur:kind==='deep'?16:12,kind};S.lastTalk=npc;
-  showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.named?npc.name+' <span class="rl">N.'+npc.bibN+'</span>':npc.name} <span class="rl">· ${npc.from||'?'}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
+  showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm">${npc.named?npc.name+' <span class="rl">N.'+npc.bibN+'</span>':npc.name} <span class="rl">· ${npc.from||'?'}${npc.state?' ('+npc.state+')':''}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
   box.querySelectorAll('.opts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);}));
   sfx.tick();
@@ -821,13 +832,13 @@ function randomEvent(){
 
 /* ================= LOGICA ================= */
 const HOUR=12; // secondi reali per 1 ora di gioco: max ~15 min reali = fino a ~3 giorni di marcia con le notti
-const WARN_CLEAR=60; // secondi reali dopo cui si cancella un richiamo
+const WARN_KM=30; // km percorsi senza nuovi richiami per cancellarne uno (vale anche per i PNG)
 const hourNow=()=>9+S.t/HOUR; // la marcia parte alle 9 del primo giorno
 const isNight=()=>{const h=hourNow()%24;return h>=20||h<6;};
 function update(dt){
   S.t+=dt;const sh=S.sh,hour=hourNow(),heat=isHeat(),wx=S.wx;
-  let cap=5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100);
-  if(S.peeing>0){cap=Math.min(cap,6.9);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
+  let cap=(5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100))*SR;
+  if(S.peeing>0){cap=Math.min(cap,6.9*SR);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
   if(S.collapsed||S.fainted)cap=0;
   if(!S.fainted&&!S.collapsed&&S.hy<=0.5&&S.t>5){S.faintT=(S.faintT||0)+dt;if(S.faintT>=4){S.faintT=0;if(Math.random()<.5)faint();}}else if(!S.fainted)S.faintT=0;
@@ -835,9 +846,9 @@ function update(dt){
   if(!S.collapsed&&!S.fainted&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.kway?.97:.94):1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
-  S.anim+=S.speed*dt*.6;S.scroll+=S.speed*dt*4;S.km+=S.speed*dt/60;
+  S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
   S.maxSt=Math.max(40,100-S.t*.06);
-  let d=(.45+Math.max(0,S.speed-LIMIT)*.22)*sh.st;if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=1.4;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)*.6);
+  let d=(.45+Math.max(0,S.speed-LIMIT)/SR*.22)*sh.st;if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=1.4;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
@@ -846,7 +857,7 @@ function update(dt){
   {const night=isNight(),day=1+Math.floor((hour-6)/24);
    if(night&&!S.nightOn){S.nightOn=true;log(wx.cold?'Scende la notte. Fa freddo, molto freddo.':'Scende la notte. Si cammina al buio.','var(--blue)');}
    if(!night&&S.nightOn){S.nightOn=false;S.heatMsg=false;log(day===2?'Spunta l\'alba del secondo giorno.':day===3?'L\'alba del terzo giorno. Siete ancora in piedi.':'Un\'altra alba. Giorno '+day+'.','var(--amber)');}}
-  if(heat&&S.hy<15&&Math.random()<dt*.08){S.ph-=15;S.mh-=10;S.speed-=2;log('Colpo di calore. Il mondo gira.','var(--red)');sfx.bad();}
+  if(heat&&S.hy<15&&Math.random()<dt*.08){S.ph-=15;S.mh-=10;S.speed-=2*SR;log('Colpo di calore. Il mondo gira.','var(--red)');sfx.bad();}
   if(!S.blister&&sh.blister&&S.t>sh.blister){S.blister=true;log('Senti le vesciche aprirsi nelle scarpe.','var(--red)');}
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log('La suola dei mocassini si stacca.','var(--red)');}
   let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&isNight())pd+=.03;if(S.rain>0&&!S.kway)pd+=.04;
@@ -860,7 +871,7 @@ function update(dt){
   if(S.t>5&&S.speed<LIMIT&&!(S.qte&&S.qte.type==='blocco')){S.underT+=dt;if(S.underT>=3){S.underT=0;addWarn();}}else S.underT=Math.max(0,S.underT-dt*2);
   S.truckX+=((S.collapsed||S.fainted?PX-38:4+S.underT*9)-S.truckX)*Math.min(1,dt*(S.collapsed||S.fainted?1.5:3));
   if(S.underT>.5){S.heartT-=dt;if(S.heartT<=0){sfx.heart();S.heartT=.9-S.underT*.2;}}
-  if(S.warn>0&&S.t-S.lastWarnT>WARN_CLEAR){S.warn--;S.lastWarnT=S.t;log('Hai tenuto il passo a lungo: un richiamo cancellato.','var(--green)');}
+  if(S.warn>0&&S.km-(S.warnKm||0)>=WARN_KM){S.warn--;S.warnKm=S.km;log('Hai tenuto il passo per 30 km: un richiamo cancellato.','var(--green)');}
   if(S.balloon){S.balloon.t-=dt;if(S.balloon.t<=0)S.balloon=null;}
   if(S.chat){S.chat.t-=dt;if(S.chat.t<=0||!S.chat.n.alive)S.chat=null;}
   S.chatT=(S.chatT==null?4:S.chatT)-dt;
@@ -876,15 +887,15 @@ function update(dt){
   if(S.callCur){S.callCur.t-=dt;if(S.callCur.t<=0)S.callCur=null;}else if(S.calls.length){S.callCur={s:S.calls.shift(),t:1.8};sfx.warnSoft();}
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
-    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);if(n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}n.off-=(S.speed*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+30)shoot(n,x);return;}
-    {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;}
-     if(n.tempW&&S.t-n.tempW>60&&w>40){n.warns=0;n.tempW=0;}}
-    n.v+=(rand(6.5,7.3)-n.v)*dt*.3;
+    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);if(n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>S.truckX+70)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+28)shoot(n,x);return;}
+    {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;n.tempKm=S.km;}
+     if(n.tempW&&S.km-(n.tempKm||0)>=WARN_KM&&w>40){n.warns=0;n.tempW=0;}}
+    n.v+=(rand(6.5,7.3)*SR-n.v)*dt*.3;
     let tgt=n.named?(n.home=(n.home==null?rand(-14,14):clamp(n.home+rand(-3,3)*dt,-16,16))):(S.groups[n.g]?S.groups[n.g].a:0)+n.jit;if(n.warns>=1&&!n.tempW)tgt=Math.min(tgt,lo*.8+n.jit);if(n.appT>S.t)tgt=n.off>=0?4:-4;
     // velocità assoluta del PNG (km/h): segue il suo posto nella fila ma non scende sotto ~6,5 né sale oltre ~8,2
     let va=n.v+(tgt-n.off)*.25;if(S.dlg&&S.dlg.npc===n)va=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)va=S.speed+(n.buddy-n.off)*.5;
-    va=clamp(va,6.5,8.2);
-    n.off=clamp(n.off+(va-S.speed)*dt*1.6,lo-90,hi+90);  // se rallenti o ti fermi gli altri proseguono (anche fuori schermo)
+    va=clamp(va,6.5*SR,8.2*SR);
+    n.off=clamp(n.off+(va-S.speed)/SR*dt*1.6,lo-90,hi+90);  // se rallenti o ti fermi gli altri proseguono (anche fuori schermo)
     if(n.savePending&&S.t-(n.saveAskT||0)>12&&!(S.dlg&&S.dlg.choice)){n.savePending=false;n.leaving=1;}  // la scelta è stata chiusa da un crollo
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=80&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
       else{n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}}
@@ -919,6 +930,7 @@ function update(dt){
     if(kx<-60)S.kiosk=null;}
   if(S.saving&&!S.qte){S.savWait=(S.savWait||0)+dt;if(S.savWait>4){S.savWait=0;finishSave(S.saving);}}else S.savWait=0;  // sicurezza: salvataggio rimasto a metà
   if(!S.barGiven&&!S.alone&&S.st<30&&S.tub<=0&&S.bisc<=0&&S.pan<=0&&S.ham<=0&&!(S.bar>0)){const b=S.npcs.find(n=>n.named&&n.alive&&!n.leaving&&n.rel>=80&&n!==S.dyingNpc);if(b){S.barGiven=1;S.bar=1;sfx.good();log(b.name+' ti mette in mano una barretta: «L\'ho tenuta per te. Mangiala, e non dire niente.»','var(--green)');}}
+  S.umb=clamp((S.umb||0)+(S.rain>0?dt:-dt)/2,0,1);  // ombrellone giallo dei cecchini: si apre in 2 s quando piove, si chiude quando smette
   if(S.infame){S.swT-=dt;if(S.swT<=0){S.swT=rand(4,9);const d=rand(-9,6);S.mh=clamp(S.mh+d,0,100);if(d<-5)log(pick(['“Cosa ho fatto?”','“Non guardatemi così.”','“Ho fatto quello che dovevo. Vero?”','“Li sento ridere di me.”']),'var(--red)','th');}}
   if(!S.dyingNpc&&S.npcs.filter(n=>n.alive&&!n.leaving).length+1<=6){const c=S.npcs.filter(n=>n.alive&&!n.leaving);if(c.length){S.dyingNpc=pick(c);if(S.dlg&&S.dlg.npc===S.dyingNpc){S.dlg=null;hideBox();}if(S.chat&&S.chat.n===S.dyingNpc)S.chat=null;}}
   if(!S.finale&&S.npcs.filter(n=>n.alive&&!n.leaving).length<=2){S.finale=true;const fin=ROUTE.c[ROUTE.c.length-1];S.zplan.push({z:'finale',dur:1e9,name:fin});S.zi=S.zplan.length-1;S.zNext=1e9;S.zones.push({z:'finale',s:S.scroll-.5*W/.15});
@@ -936,13 +948,25 @@ function update(dt){
   if(!S.collapsed&&S.mh<=0)return collapse('mh');
   if(S.npcs.every(n=>!n.alive))end(true);
 }
-const gunPos=()=>ERA.veh==='drone'?[S.truckX+20,76]:[S.truckX+27,93];
+/* ELIMINAZIONE: dietro la fila avanza una linea di cingolati che chiude la strada, con un blindato di soldati (nel futuro un drone).
+   Chi è avanti al 3° richiamo viene colpito alle gambe; poi, a terra, la linea lo travolge. Chi resta indietro viene travolto e basta. */
+const BLX=()=>S.truckX+16, SNIP=[[86,4],[110,7]];  // cecchini: [y del cingolato, x sullo scafo]
+const gunPos=()=>{if(ERA.veh==='drone')return [BLX()+20,50];const fx=S.truckX+28,[y,dx]=SNIP[(S.snipTurn=(S.snipTurn||0)+1)%2];return [Math.round(fx-30+dx+14),y-5];};
+/* i cecchini si alzano a mirare quando manca meno di 2 s a un'eliminazione (PNG o giocatore) */
+function aimingNow(){
+  if(S.mode==='dying')return !S.dead;
+  if(S.warn>=2&&S.underT>1)return true;
+  const fx=S.truckX+28;
+  return S.npcs.some(n=>n.alive&&(n.leaving?(PX+n.off*SPR-fx)<(S.speed/SR*1.1+3)*SPR*2+2:(n.elimAt>S.t&&n.elimAt-S.t<2&&S.saving!==n&&!n.savePending)));
+}
+function legShot(n,x){const y=86+n.lane*5;const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:x+3,y1:y+13,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(120);
+  if(n.named||Math.random()<.3)log(ERA.veh==='drone'?'Il drone colpisce '+n.name+' alle gambe col laser. Cade.':'Un soldato spara alle gambe di '+n.name+'. Cade.','var(--dim)');}
 function shoot(n,x){
   n.alive=false;const y=86+n.lane*5;
-  S.corpses.push({wx:S.scroll+x,y,c:n});
-  const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:x+3,y1:y+7,t:.15};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(150);
+  S.corpses.push({wx:S.scroll+x,y,c:n,crushed:1});
+  sfx.crush();buzz(200);
   const friend=n.named&&n.rel>=40;S.mh-=friend?14:3;
-  if(n.named||Math.random()<.35)log(friend?'Hanno sparato a '+n.name+'. Era tuo amico.':(n.named?'Hanno sparato a '+n.name+'.':'Uno sparo. '+n.name+' resta sull\'asfalto.'),friend?'var(--red)':'var(--dim)');
+  if(n.named||Math.random()<.35)log(friend?'La linea di cingolati passa sopra '+n.name+'. Era tuo amico.':(n.named?'La linea di cingolati passa sopra '+n.name+'.':'Il rumore dei cingoli. '+n.name+' resta sull\'asfalto.'),friend?'var(--red)':'var(--dim)');
   if(S.dlg&&S.dlg.npc===n){S.dlg=null;hideBox();}
   S.kills=(S.kills||0)+1;const k=S.kills;
   setTimeout(()=>deathReaction(k),1200);if(k===1)setTimeout(()=>deathReaction(k,true),3600);
@@ -969,7 +993,7 @@ function slowWhy(){
 function addWarn(why){
   if(S.mode!=='play')return;
   why=why||slowWhy();S.warnLog=S.warnLog||[];S.warnLog.push(why);
-  S.warn++;S.lastWarnT=S.t;S.mh-=6;sfx.warn();buzz([120,60,120,60,120]);
+  S.warn++;S.lastWarnT=S.t;S.warnKm=S.km;S.mh-=6;sfx.warn();buzz([120,60,120,60,120]);
   S.balloon={s:'N.'+S.bib+' RICHIAMO!',t:2.6};
   log(`RICHIAMO ${S.warn}/3 — "Numero ${S.bib}!" (${why})`,'var(--red)');
   if(S.warn>=3){if(S.fainted)die('Colpo di calore: sei svenuto per la sete e nessuno ti ha rialzato. Terzo richiamo (3/3).',true);
@@ -996,10 +1020,14 @@ function collapse(kind){
 }
 function die(cause,shot){
   {const bo=$('blackout');if(bo)bo.classList.remove('on');}
+  const down=S.collapsed||S.fainted;
+  if(shot)cause+=down?' La linea di cingolati ti è passata sopra.':(ERA.veh==='drone'?' Il drone ti ha colpito alle gambe col laser e la linea di cingolati ti è passata sopra.':' Un soldato ti ha sparato alle gambe e la linea di cingolati ti è passata sopra.');
   S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;hideBox();
-  if(shot)setTimeout(()=>{const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:PX+3,y1:103,t:.15};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(400);S.dead=true;},700);
-  else{S.dead=true;sfx.bad();}
-  setTimeout(()=>end(false),2400);
+  if(shot){S.tankRoll=0;S.down=true;
+    if(!down)setTimeout(()=>{const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:PX+3,y1:111,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(400);S.tankRoll=1;},600);
+    else S.tankRoll=1;
+    setTimeout(()=>{if(S&&S.mode==='dying'&&!S.ended){S.ended=1;end(false);}},7000);}
+  else{S.dead=true;sfx.bad();setTimeout(()=>end(false),2400);}
 }
 
 /* ================= HUD ================= */
@@ -1121,7 +1149,7 @@ function drawScene(){
   for(let x=-(Math.floor(S.scroll)%20);x<W;x+=20)R(x,104,10,1,fut?'#38e8f8':'#c8c098');
   for(let i=0;i<Math.ceil(W/30);i++){const x=((i*53-S.scroll)%W+W)%W;R(x,93+(i*7)%22,3,1,'#38383c');}
   R(0,120,W,8,ZV[zoneAt(.5,off2+PX)]);for(let x=-(Math.floor(S.scroll)%9);x<W;x+=9)R(x,121,3,1,'#4a4434');
-  S.corpses.forEach(c=>drawCorpse(c.wx-S.scroll,c.y+10,c.c));
+  S.corpses.forEach(c=>(c.crushed?drawCrushed:drawCorpse)(c.wx-S.scroll,c.y+10,c.c));
   if(S.kiosk){const k=S.kiosk,x=Math.round(k.wx-S.scroll),y=70;
     const raid=k.st==='raid',dt2=raid?S.t-k.raidT:0;
     if(!raid||dt2<.6){for(let i=0;i<18;i++)R(x+i,y,1,3,i%4<2?'#c83a2a':'#f0e8d8');}  // tendina a righe
@@ -1132,14 +1160,15 @@ function drawScene(){
       const bx=x+20;R(bx,y+1,4,4,'#e0b090');R(bx,y,4,1,'#2a1a10');R(bx,y+3,4,1,'#2a1a10');R(bx,y+5,4,6,'#e8e4d8');R(bx,y+11,1,4,'#3a3a5a');R(bx+3,y+11,1,4,'#3a3a5a');}
     else{R(x+2,y+13,14,2,'#6a4022');R(x+4,y+12,3,1,'#c83a3a');R(x+10,y+13,2,1,'#c83a3a');
       if(dt2<4){const bx=x+20-Math.round(dt2*10);R(bx,y+3,4,4,'#e0b090');R(bx,y+5,4,1,'#2a1a10');R(bx,y+7,4,6,'#e8e4d8');R(bx+5,y+2,3,11,'#3a4a2a');R(bx+5,y,3,2,'#2a3a1a');}}}
-  drawVehicle(S.truckX,92,hh);
+  drawVehicle(BLX(),66,hh);
   const list=S.npcs.filter(n=>n.alive).map(n=>({n,x:PX+n.off*SPR,y:86+n.lane*5}));
   list.push({p:true,x:PX,y:98});list.sort((a,b)=>a.y-b.y);
   const me=S.me||{shirt:'#d8d0b8',hair:S.black?'#1a1210':'#3a2418',skin:S.skin||'#e8b896'};
   list.forEach(o=>{
-    if(o.p){if(S.dead)drawCorpse(o.x,o.y+10,me);else if(S.collapsed||S.fainted)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
+    if(o.p){if(S.dead)drawCrushed(o.x,o.y+10,me);else if(S.collapsed||S.fainted||S.down)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
     else{if(o.x<-10||o.x>W+10)return;if(o.n.leaving)drawSlump(o.x,o.y,o.n,false);else drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,false);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
   });
+  S.aiming=aimingNow();drawTankLine(S.truckX+28);
   if(S.flash){const f=S.flash;cx.strokeStyle=fut?'#f83838':'#f8e8a0';cx.lineWidth=1;cx.beginPath();cx.moveTo(f.x0,f.y0);cx.lineTo(f.x1,f.y1);cx.stroke();R(f.x0-1,f.y0-2,4,4,fut?'#ff8080':'#f8f0c0');}
   if(S.rain>0){cx.fillStyle='rgba(170,190,220,.6)';S.drops.forEach(p=>cx.fillRect(Math.round(p.x),Math.round(p.y),1,3));}
   const dk=darkness(hour);
@@ -1158,6 +1187,7 @@ function drawScene(){
 }
 function drawVehicle(x,y,hh){
   const bob=Math.floor(S.t*6)%2,c=ERA.vc,hc=ERA.helm,night=hh>18||hh<6;
+  if(ERA.veh!=='drone'){const sx=x+20,sy=y-6+bob;R(sx,sy+2,3,4,'#3a4430');R(sx,sy,3,2,hc);R(sx+1,sy+1,2,1,'#c89878');R(sx+3,sy+3,6,1,'#1a1a14');}  // soldato col fucile
   if(ERA.veh==='apc'){
     R(x,y+4+bob,24,12,c);R(x+16,y+bob,10,8,c);R(x+18,y+1+bob,6,4,'#1a2018');
     R(x+2,y+1+bob,4,3,hc);R(x+1,y+bob,6,1,hc);R(x+6,y+1+bob,20,1,'#1a1a14');
@@ -1195,6 +1225,27 @@ function drawSlump(x,y,c,isP){x=Math.round(x);y=Math.round(y);const p=ERA.pants;
   R(x+1,y+8,5,5,c.shirt);R(x+5,y+10,3,1,c.skin);
   R(x+1,y+4,4,4,c.skin);R(x+1,y+4,4,2,c.hair);R(x+4,y+6,1,1,'#1a1410');if(c.band)R(x+1,y+5,4,1,'#e83a3a');
   if(isP){R(x+2,y+9,3,2,'#f0f0e8');R(x+3,y+9,1,1,'#b83a2a');}}
+function drawCrushed(x,y,c){x=Math.round(x);y=Math.round(y);R(x-5,y+2,18,3,'#5a1410');R(x-3,y+1,12,2,'#7a1a14');R(x-2,y+2,9,1,c.shirt);R(x+7,y+2,3,1,c.skin);R(x-4,y+3,4,1,ERA.pants);R(x+11,y+3,2,1,'#5a1410');R(x-7,y+3,2,1,'#5a1410');}
+/* linea di cingolati affiancati che chiude tutta la strada: lo stile cambia con l'epoca */
+function drawTankLine(fx){
+  const v=ERA.veh,c=v==='drone'?'#5a5a70':v==='jeep'?'#262626':v==='car'?'#6a6248':ERA.vc,dk=v==='drone'?'#3a3a4a':'#1e1e1a',hl=v==='drone'?'#38e8f8':'#3a3a34';
+  const sc=Math.floor(S.scroll)%4,bob=Math.floor(S.t*8)%2;
+  [84,96,108].forEach((y,i)=>{const x=Math.round(fx-30-(i%2)*3);
+    R(x,y+5,30,6,c);R(x+2,y+4,24,1,c);                                   // scafo
+    if(v==='drone'){R(x,y+11,30,2,dk);if(bob)R(x+2,y+13,26,1,hl);}       // futuro: scafo che fluttua con luce sotto
+    else{R(x-1,y+10,32,4,dk);for(let k=0;k<8;k++)R(x+k*4-sc,y+11,2,2,hl);R(x+1,y+12,1,1,'#5a5a50');R(x+28,y+12,1,1,'#5a5a50');}
+    R(x+8,y+1,12,4,c);R(x+9,y,10,1,c);R(x+10,y+2,6,1,dk);                 // torretta
+    R(x+20,y+2,v==='drone'?12:14,1,v==='drone'?'#38e8f8':'#2a2a24');      // cannone
+    if(v==='apc'){R(x+3,y+6,4,2,'#e8d8a0');}else if(v==='car'){R(x+3,y+6,2,2,'#c8b878');R(x+22,y+6,4,1,dk);}else if(v==='jeep'){R(x+24,y+5,6,1,'#4a4a4a');}
+  });
+  // due cecchini sugli scafi
+  const aim=S.aiming,uni=v==='drone'?'#7a7a90':'#3a4430',hc=ERA.helm;
+  SNIP.forEach(([y,dx])=>{const x=Math.round(fx-30+dx),u2='#1a1a14',sk='#d8a882',hm=v==='drone'?'#c8c8d8':'#6a7a4a';
+    {const u=S.umb||0;if(u>0){const h=aim?13:10,w=Math.max(2,Math.round(u*14)),cx0=x+1,cy=y-h-Math.round((1-u)*-2);   // ombrellone che si apre
+      R(cx0,cy,1,h,'#7a6a40');R(cx0-Math.floor(w/2),cy-1,w+1,2,'#f0c820');if(w>4)R(cx0-Math.floor(w/2)+1,cy-2,w-1,1,'#f8e070');if(u>=1){R(cx0-7,cy+1,1,1,'#c8a010');R(cx0+7,cy+1,1,1,'#c8a010');}}}
+    if(!aim){R(x-1,y-1,6,6,u2);R(x,y,4,5,uni);R(x,y-2,4,2,hm);R(x+1,y,2,1,sk);R(x+4,y-7,1,9,u2);R(x+4,y-8,1,1,'#5a5a5a');}       // accovacciato, fucile puntato in alto
+    else{R(x-1,y-8,6,11,u2);R(x,y-7,4,10,uni);R(x,y-10,4,3,hm);R(x+1,y-7,3,1,sk);R(x+3,y-5,11,1,u2);R(x+4,y-4,2,1,u2);R(x+13,y-6,1,1,'#f8e8a0');}}); // in piedi, mira
+}
 function drawCorpse(x,y,c){x=Math.round(x);y=Math.round(y);R(x-2,y+3,14,2,'rgba(0,0,0,.35)');R(x+6,y,4,3,c.skin);R(x+9,y,1,3,c.hair);R(x,y,6,3,c.shirt);R(x-4,y+1,4,2,ERA.pants);R(x+4,y+3,3,1,'#6a1a14');}
 function drawFace(g,c){
   g.imageSmoothingEnabled=false;const P=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h);};
@@ -1301,9 +1352,9 @@ function show(html,cls=''){sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.in
 const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
-Cinquanta ragazzi, estratti a sorte in ogni angolo della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
+Quarantasei ragazzi, uno per ogni stato della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
 L'ultimo rimasto in piedi ottiene la Grazia: ha salva la vita e, per un anno intero, la sua terra riceve ciò che la Federazione nega a tutte le altre: pane, medicine, carbone, e nessuna requisizione.
-Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stessa fame, la stessa possibilità. Una su cinquanta.
+Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stessa fame, la stessa possibilità. Una su quarantasei.
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
@@ -1460,28 +1511,14 @@ const P_TRAIT={f:['Fisico asciutto e resistente: ha sempre lavorato all\'aria ap
  s:['Stomaco di ferro: mangerebbe anche i sassi.','Stomaco delicato: basta un niente per farlo stare male.'],
  c:['Simpatico e chiacchierone, si fa voler bene da chiunque.','Chiuso e diffidente, con gli sconosciuti non spreca parole.']};
 const P_RAND=['Faceva l\'apprendista meccanico.','Studiava da geometra, prima dell\'estrazione.','Lavorava nella panetteria di famiglia, all\'alba.','Suona la chitarra. Male, ma con passione.','Ha una sorella più piccola che lo aspetta alla finestra.','Colleziona francobolli di paesi che non esistono più.','Tifa per una squadra che non vince da vent\'anni.','Non ha mai visto il mare.','Ha lasciato la scuola per lavorare in fabbrica.','Sogna di fare il fotografo.','Sa cucinare solo le uova, ma le fa benissimo.','Prima di oggi non aveva mai preso un treno.','Scrive poesie che non fa leggere a nessuno.','Ripara biciclette nel cortile di casa.','Ha promesso a sua madre che sarebbe tornato.','Porta sempre in tasca un sasso portafortuna.'];
-const P_NAT=[
- {c:['Milano','Torino','Bologna','Roma','Napoli','Genova','Firenze','Bari'],f:['Luca','Marco','Andrea','Matteo','Dario','Nico','Teo','Bruno','Pietro','Simone'],l:['Rossi','Bianchi','Ricci','Marino','Greco','Conti','Esposito','Gallo','Romano','Ferri']},
- {c:['Berlino','Amburgo','Monaco','Lipsia','Dresda','Colonia','Brema'],f:['Felix','Jonas','Leon','Elias','Oskar','Lukas','Paul','Emil','Max','Moritz'],l:['Müller','Schmidt','Fischer','Weber','Becker','Wagner','Hoffmann','Koch','Richter','Braun']},
- {c:['Parigi','Lione','Marsiglia','Lilla','Bordeaux','Nantes'],f:['Hugo','Mathis','Louis','Jules','Lucas','Théo','Antoine','Rémi','Victor','Bastien'],l:['Dubois','Moreau','Lambert','Laurent','Girard','Bernard','Roux','Fournier','Mercier','Blanc']},
- {c:['Madrid','Siviglia','Valencia','Barcellona','Bilbao','Granada'],f:['Diego','Rafael','Pablo','Javier','Mateo','Álvaro','Iker','Sergio','Hugo','Rubén'],l:['García','López','Martínez','Sánchez','Pérez','Romero','Navarro','Torres','Ruiz','Gil']},
- {c:['Lisbona','Porto','Coimbra','Braga'],f:['Tiago','João','Rui','Duarte','Nuno','Afonso','Diogo','Miguel'],l:['Silva','Ferreira','Costa','Santos','Pereira','Oliveira','Sousa','Almeida']},
- {c:['Varsavia','Danzica','Cracovia','Breslavia','Poznań'],f:['Jakub','Kuba','Piotr','Tomasz','Kamil','Szymon','Marek','Adam'],l:['Kowalski','Nowak','Wójcik','Lewandowski','Zieliński','Kamiński','Mazur','Krawczyk']},
- {c:['Amsterdam','Rotterdam','Utrecht','Bruxelles','Anversa','Gand'],f:['Daan','Bram','Sem','Lars','Jesse','Thijs','Ruben','Milan'],l:['Jansen','De Vries','Bakker','Visser','Smit','Peeters','Maes','Mulder']},
- {c:['Praga','Brno','Vienna','Budapest','Bratislava'],f:['Tomáš','Jakub','Ondřej','Bence','Tibor','Lukas','Stefan','Ádám'],l:['Novák','Svoboda','Dvořák','Nagy','Kovács','Varga','Gruber','Huber']},
- {c:['Belgrado','Spalato','Zagabria','Sarajevo','Sofia','Bucarest'],f:['Stefan','Nikola','Luka','Ivan','Dragan','Mihai','Andrei','Petar'],l:['Horvat','Kovač','Petrović','Jovanović','Popescu','Ionescu','Dimitrov','Ivanov']},
- {c:['Atene','Salonicco','Patrasso'],f:['Nikos','Yannis','Kostas','Dimitris','Alexis','Giorgos'],l:['Papadopoulos','Pappas','Nikolaidis','Georgiou','Vlachos','Karras']},
- {c:['Oslo','Stoccolma','Copenaghen','Göteborg','Bergen'],f:['Erik','Nils','Lars','Olav','Sven','Mats','Aksel','Kai'],l:['Andersen','Lindqvist','Olsen','Johansson','Nilsson','Larsen','Berg','Holm']},
- {c:['Mosca','Kiev','Minsk','Riga','Tallinn','Vilnius'],f:['Ivan','Pavel','Viktor','Dmitri','Sergej','Oleg','Aleks','Yuri'],l:['Petrov','Ivanov','Smirnov','Volkov','Sokolov','Kuznetsov','Berzins','Tamm']},
-];
 let PLAYER=null;
 function makePlayer(){
   const black=DEBUG_ID?(DEBUG_ID==='black'||DEBUG_ID==='both'):Math.random()<.2,gay=DEBUG_ID?(DEBUG_ID==='gay'||DEBUG_ID==='both'):Math.random()<.2;
   /* descrizione: metà dal test (i due tratti più marcati), metà casuale */
   const t=PROFILE||{f:50,n:50,s:50,c:50},ks=['f','n','s','c'].sort((a,b)=>Math.abs(t[b]-50)-Math.abs(t[a]-50)).slice(0,2);
   const tr=ks.map(k=>P_TRAIT[k][t[k]>=50?0:1]),rn=shuffle(P_RAND).slice(0,2);
-  const N=pick(P_NAT);
-  return {first:pick(N.f),last:pick(N.l),bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,
+  const N=pick(STATES.filter(x=>x.s!=='Ungheria')),li=Math.floor(Math.random()*N.l.length); // l'Ungheria resta all'ansiosa ungherese
+  return {first:pick(N.m),last:N.l[li],state:N.s,bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,
     shirt:pick(['#d8d0b8','#c8553d','#4a78a8','#6a9a5a','#d89a30','#a05a90','#3a3a4a','#e8e8e8','#8a2a2a','#3ac8c8',...ERA.shirts]),
     hair:black?pick(['#1a1210','#2a1a10']):pick(['#3a2418','#1a1410','#c8a060','#8a5a30','#d8c890','#5a3a20']),
     skin:black?pick(['#6a4028','#5a3420','#7a4a2a']):pick(['#e8b896','#f0c8a8','#d8a880','#c89870']),band:Math.random()<.25,
@@ -1497,7 +1534,7 @@ function loadThen(fn){
 function presentPlayer(shoe){
   PLAYER=makePlayer();const P=PLAYER;
   show(`<h2>IL MARCIATORE · ${YEAR}</h2><div class="pcard"><canvas id="pspr" width="12" height="18"></canvas><div class="pinfo">
-    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city}</div><p>${P.desc}</p></div></div>
+    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><p>${P.desc}</p></div></div>
     <button class="main" id="go">AVANTI</button>`);
   const c=$('pspr'),main=cx;cx=c.getContext('2d');cx.imageSmoothingEnabled=false;try{drawWalker(2,1,P,0,true,false);}finally{cx=main;}
   $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);}));
@@ -1569,7 +1606,8 @@ function frame(){
       if(!isFinite(S.speed))S.speed=0;
       if(S.mode==='play'){update(dt);hud();}
       else if(S.mode==='count'){countdown(dt);hud();}
-      else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}}
+      else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
+        if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);setTimeout(()=>{if(S&&!S.ended){S.ended=1;end(false);}},1800);}}}
       drawWorld();
     }
   }catch(e){showErr(e);}
@@ -1584,17 +1622,17 @@ requestAnimationFrame(frame);
 /* ---- nuovi personaggi: il mistico russo, la ribelle francese, l'attaccabrighe irlandese, l'ansiosa ungherese ---- */
 DLG.aleksej=[
  {t:"Pace a te, numero {N}. Io sono {ME}. Ho pregato per tutti stanotte. Anche per te, senza conoscerti.",o:[O("Grazie, {ME}. Serve.",14),O("Prega per te, che ne hai bisogno.",-10),O("Non credo in queste cose.",2)]},
- {t:"A {CITY} mia nonna accende una candela per ogni marciatore. Cinquanta candele. Stasera ne spegnerà tante.",o:[O("Che ne accenda una in più per te.",14),O("Le candele non fermano i proiettili.",-8),O("Rimani in silenzio con lui.",8)]},
+ {t:"A {CITY} mia nonna accende una candela per ogni marciatore. Quarantasei candele. Stasera ne spegnerà tante.",o:[O("Che ne accenda una in più per te.",14),O("Le candele non fermano i cingoli.",-8),O("Rimani in silenzio con lui.",8)]},
  {t:"Ho digiunato tre giorni prima della Marcia. Pensavo di arrivare puro. Adesso ho solo fame.",o:[O("Gli passi qualcosa da mangiare.",20,-6),O("«Che idea stupida.»",-12),O("«La fame passa. Tieni duro.»",8)]},
  {t:"Credi che chi muore qui vada in un posto migliore? Oppure resta su questa strada, a camminare per sempre?",o:[O("«In un posto migliore.»",12),O("«Resta qui. Con noi.»",4),O("«Non c'è niente dopo.»",-6)]},
- {t:"Ho visto un soldato piangere, stamattina. Di nascosto. Anche loro sono anime, {N}.",o:[O("«Allora che smettano di sparare.»",8),O("«Non mi interessa la loro anima.»",-6),O("«Hai un cuore troppo grande.»",14)]},
+ {t:"Ho visto un soldato piangere, stamattina. Di nascosto. Anche loro sono anime, {N}.",o:[O("«Allora che fermino i cingoli.»",8),O("«Non mi interessa la loro anima.»",-6),O("«Hai un cuore troppo grande.»",14)]},
  {t:"Se arrivo in fondo, mi faccio monaco. Se arrivi tu, accendimi una candela. Promesso?",o:[O("«Promesso. Una candela grande.»",18),O("«Arriveremo tutti e due.»",12),O("«Non faccio promesse.»",-8)]}];
 DLG.colette=[
  {t:"Tu. Sì, tu, {N}. Sono {ME}, da {CITY}. Lo sai che questa Marcia è un crimine, vero? Dillo ad alta voce.",o:[O("«È un crimine.»",14),O("«Abbassa la voce, ci senti tutti.»",4),O("«Io cammino e basta.»",-8)]},
  {t:"Scrivevo poesie sui muri della facoltà. Contro il Consiglio. Indovina perché proprio io sono stata estratta.",o:[O("«Non era a sorte, allora.»",14),O("«Te la sei cercata.»",-14),O("«Recitami una poesia.»",12)]},
  {t:"Se vinco, salgo sul palco della Grazia e sputo in faccia al generale. Davanti alle telecamere.",o:[O("«Ti tengo il microfono.»",14),O("«Ti ammazzerebbero un secondo dopo.»",4),O("«Sei pazza.»",-6)]},
  {t:"Ho un fratellino che crede che io sia in vacanza. Ho lasciato una lettera per quando sarà grande.",o:[O("«Gliela leggerai tu.»",16),O("«Cosa c'è scritto?»",10),O("«Non pensarci, cammina.»",-4)]},
- {t:"Odio il silenzio di questa fila. Cinquanta persone e nessuno urla. Perché non urliamo tutti insieme?",o:[O("«Perché ci sparerebbero.»",4),O("«Urlo con te. Al tre.»",16,-4),O("«Urla da sola.»",-10)]},
+ {t:"Odio il silenzio di questa fila. Quarantasei persone e nessuno urla. Perché non urliamo tutti insieme?",o:[O("«Perché ci travolgerebbero.»",4),O("«Urlo con te. Al tre.»",16,-4),O("«Urla da sola.»",-10)]},
  {t:"Promettimi una cosa: se resto indietro, racconta a qualcuno che ho detto di no. Che non ero d'accordo.",o:[O("«Lo racconterò a tutti.»",18),O("«Lo dirai tu stessa.»",12),O("«Nessuno ascolterebbe.»",-10)]}];
 DLG.seamus=[
  {t:"Che hai da guardare, {N}? Ah, niente. Sono {ME}. Facevo a pugni per soldi a {CITY}. Qui almeno non mi pagano per prenderle.",o:[O("«Piacere, {ME}.»",10),O("«Stai lontano da me.»",-12),O("«Ne hai prese tante, si vede.»",4)]},
@@ -1604,10 +1642,10 @@ DLG.seamus=[
  {t:"Tieni, {N}. È un sasso liscio, della spiaggia di casa. Porta fortuna. Me lo ridai al traguardo.",o:[O("Lo prendi e lo stringi.",18,3),O("«Tienilo tu, ne hai più bisogno.»",12),O("«Non credo alla fortuna.»",-6)]},
  {t:"Ascolta: io non so parlare. So solo menare. Ma se qualcuno ti tocca, se la vede con me. Chiaro?",o:[O("«Chiaro. Grazie, Seamus.»".replace('Seamus','{ME}'),18),O("«So difendermi da solo.»",2),O("«Non ho bisogno di un cane da guardia.»",-14)]}];
 DLG.zsofia=[
- {t:"Scusa, {N}... sono {ME}. Hai contato quanti siamo? Io sì. Quarantanove più me. Più te, cioè... scusa. Parlo troppo quando ho paura.",o:[O("«Parla pure. Mi fa compagnia.»",14),O("«Sì, parli troppo.»",-10),O("«Respira, {ME}.»",10)]},
+ {t:"Scusa, {N}... sono {ME}. Hai contato quanti siamo? Io sì. Quarantacinque più me. Più te, cioè... scusa. Parlo troppo quando ho paura.",o:[O("«Parla pure. Mi fa compagnia.»",14),O("«Sì, parli troppo.»",-10),O("«Respira, {ME}.»",10)]},
  {t:"Mio padre è medico a {CITY}. Mi ha insegnato a contare le pulsazioni. La mia è a centoquaranta. È tanto?",o:[O("«È normale, camminiamo da ore.»",12),O("«Smettila di misurarti.»",4),O("«È tantissimo.»",-10)]},
  {t:"Ho una lista di cose che non ho mai fatto. Ballare. Guidare. Baciare qualcuno. Tu ne hai una?",o:[O("Gliela racconti.",14),O("«Le farai tutte.»",12),O("«Che lista inutile.»",-12)]},
- {t:"Se svengo, mettimi le gambe in alto. Me l'ha detto mio padre. Tu lo farai? Anche se ci sparano?",o:[O("«Lo farò.»",16),O("«Non svenirai.»",8),O("«Non posso fermarmi per te.»",-12)]},
+ {t:"Se svengo, mettimi le gambe in alto. Me l'ha detto mio padre. Tu lo farai? Anche con i cingoli alle spalle?",o:[O("«Lo farò.»",16),O("«Non svenirai.»",8),O("«Non posso fermarmi per te.»",-12)]},
  {t:"Ho calcolato che ci sono due possibilità su cento che io arrivi in fondo. Due. Non è zero, vero?",o:[O("«Non è zero. È tantissimo.»",16),O("«I numeri non contano qui.»",8),O("«È quasi zero.»",-12)]},
  {t:"Grazie di avermi ascoltata, {N}. Nessuno mi ascolta mai fino alla fine.",o:[O("«Ti ascolterò fino alla fine.»",18),O("«Sei una persona bella.»",14),O("«Non ti ho ascoltata, in realtà.»",-14)]}];
 /* ---- dialoghi personali della parte finale (restano in pochi): malati, depressi, deliri, mistici ---- */
@@ -1711,7 +1749,7 @@ Object.assign(DEEP,{
  f_patto3:{t:"Se cado, non voltarti. E se cadi tu, io non mi volterò. Ti voglio bene, fratello. Per questo te lo chiedo.",o:[Q("«Anch'io. Ci vediamo in fondo alla strada.»",D(10,6)),Q("«Ti voglio bene. Ora cammina.»",D(10,6)),Q("Gli stringi la mano un'ultima volta.",D(12,4))]},
 });
 /* ---- rimorso: un fraterno ti aveva salvato e tu l'hai lasciato morire ---- */
-const GUILT=["“{X} mi ha rimesso in piedi. E io l'ho lasciat{o} crepare.”","“Sono un assassino. Non serve un fucile per esserlo.”","“Ingrato. Ecco cosa sono. Un ingrato con le gambe.”","“Era {mio} {FR}. {Mio} {FR}! E io ho guardato altrove.”","“Mi sento una merda. Ogni passo è un passo che gli ho rubato.”","“Perché sono ancora vivo? Non me lo merito.”","“Sento ancora la sua mano sotto il braccio. Mi ha tirato su. Io no.”","“Se ci fosse un dio, mi fermerebbe adesso.”","“Smettila di guardarmi, {X}. Sei mort{o}. Smettila.”","“Ho scambiato la sua vita con la mia. Pessimo affare, {X}.”"];
+const GUILT=["“{X} mi ha rimesso in piedi. E io l'ho lasciat{o} crepare.”","“Sono un assassino. Non servono i cingoli per esserlo.”","“Ingrato. Ecco cosa sono. Un ingrato con le gambe.”","“Era {mio} {FR}. {Mio} {FR}! E io ho guardato altrove.”","“Mi sento una merda. Ogni passo è un passo che gli ho rubato.”","“Perché sono ancora vivo? Non me lo merito.”","“Sento ancora la sua mano sotto il braccio. Mi ha tirato su. Io no.”","“Se ci fosse un dio, mi fermerebbe adesso.”","“Smettila di guardarmi, {X}. Sei mort{o}. Smettila.”","“Ho scambiato la sua vita con la mia. Pessimo affare, {X}.”"];
 const isFem=n=>['ilse','sofia','colette','zsofia'].includes(n.id);
 function guiltFill(t,n){const f=isFem(n);return t.replace(/\{X\}/g,n.name).replace(/\{o\}/g,f?'a':'o').replace(/\{FR\}/g,f?'sorella':'fratello').replace(/\{mio\}/g,f?'mia':'mio').replace(/\{Mio\}/g,f?'Mia':'Mio');}
 function betray(n){
@@ -1760,13 +1798,13 @@ const ARCS={
  sofia:[{
   x1:{t:"Ho curato soldati, durante la guerra. Avevo sedici anni. Quello che guida il blindato... credo di averlo ricucito io. Una ferita qui, sul collo.",o:[Q("«Ne sei sicura?»",D(4,0,'x2')),Q("«Che scherzo crudele.»",D(8,2,'x2'))]},
   x2:{t:"Sicura. Ha la cicatrice a forma di esse. L'ho fatta storta, avevo le mani che tremavano. Gli ho salvato la vita. Adesso lui deciderà la mia.",o:[Q("«Diglielo. Forse si ricorda.»",D(4,-2,'x3')),Q("«Non dargli questa soddisfazione.»",D(10,3,'x3')),Q("Non sai cosa dire. Le stringi la mano.",D(12,3,'x3'))]},
-  x3:{t:"Non me ne pento, sai. Anche se mi sparasse. Si cura chi sanguina. Punto. Promettimi che rimarrai una persona che cura, {N}.",o:[Q("«Te lo prometto.»",D(14,6)),Q("«Qui dentro è difficile, Sofia.»".replace('Sofia','{ME}'),D(8,2))]}},
+  x3:{t:"Non me ne pento, sai. Anche se toccasse a lui spararmi alle gambe. Si cura chi sanguina. Punto. Promettimi che rimarrai una persona che cura, {N}.",o:[Q("«Te lo prometto.»",D(14,6)),Q("«Qui dentro è difficile, Sofia.»".replace('Sofia','{ME}'),D(8,2))]}},
  {x1:{t:"Posso dirti una cosa da infermiera? Hai le labbra bianche e cammini storto. Fra poco i tuoi piedi ti tradiranno.",o:[Q("«Lo so. Cosa faccio?»",D(8,3,'x2')),Q("«Pensa ai tuoi piedi.»",D(-6,0,'x2'))]},
   x2:{t:"Ascolta il corpo. Bevi prima di avere sete. Mangia prima della fame. E quando la testa ti dice di sederti... guardami. Io ti dirò di no.",o:[Q("«E chi dirà di no a te?»",D(12,4,'x3')),Q("«Grazie. Davvero.»",D(10,5,'x3'))]},
   x3:{t:"Nessuno. Per questo te lo chiedo. Se mi vedi rallentare, chiamami per nome. Il mio vero nome. Non lo dico a nessuno da anni.",o:[Q("«Dimmelo. Lo terrò stretto.»",D(16,6)),Q("«Ti chiamerò con quello che preferisci.»",D(12,4))]}}],
  aleksej:[{
   x1:{t:"Stanotte non sono riuscito a pregare, {N}. Le parole non uscivano. È la prima volta in vita mia.",o:[Q("«Forse Dio sta zitto anche lui.»",D(4,-2,'x2')),Q("«Prega con me, allora. A modo mio.»",D(10,3,'x2'))]},
-  x2:{t:"Mio fratello era seminarista. L'hanno fucilato perché suonava le campane il giorno della Vittoria. Io ho continuato a pregare per tutti e due.",o:[Q("«Allora prega per tre, adesso. Anche per me.»",D(12,4,'x3')),Q("«E Dio dov'era?»",D(2,-3,'x3'))]},
+  x2:{t:"Mio fratello era seminarista. L'hanno portato via perché suonava le campane il giorno della Vittoria. Non è più tornato. Io ho continuato a pregare per tutti e due.",o:[Q("«Allora prega per tre, adesso. Anche per me.»",D(12,4,'x3')),Q("«E Dio dov'era?»",D(2,-3,'x3'))]},
   x3:{t:"Forse Dio cammina qui, in mezzo a noi. Con le vesciche anche Lui. Ti va bene un Dio con le vesciche?",o:[Q("«Mi va benissimo.»",D(14,7)),Q("«Mi basta un amico con le vesciche.»",D(16,6))]}},
  {x1:{t:"Ho un segreto, {N}. Non voglio diventare monaco. Lo dico per non dover spiegare.",o:[Q("«E cosa vorresti, davvero?»",D(8,2,'x2')),Q("«Non devi spiegare niente a me.»",D(8,3,'x2'))]},
   x2:{t:"Vorrei sposarmi. Avere una casa sul Volga e un figlio che non dovrà mai marciare. È un desiderio piccolo, vero? Troppo piccolo per Dio.",o:[Q("«È il desiderio più grande che esista.»",D(14,6,'x3')),Q("«Dio fa il tifo per i desideri piccoli.»",D(12,7,'x3'))]},
@@ -1798,7 +1836,7 @@ for(const id in ARCS)ARCS[id].forEach((arc,a)=>{for(const k in arc){const nd=arc
 const arcReady=n=>ARCS[n.id]&&(n.arc||0)<ARCS[n.id].length&&n.rel>=ARC_REL[n.arc||0]&&!S.alone;
 const BRO_SICK=['m_ombre','m_morto','m_strada','m_soldato','m_nome','m_neve'];
 /* urla di chi sta per crollare */
-const DYING_SCREAM=["AAAAAAH! AIUTATEMI! NON CE LA FACCIO!","NO! NO! VOGLIO TORNARE A CASA!","MAMMA! MAMMAAA!","LE GAMBE! NON SENTO PIÙ LE GAMBE!","ASPETTATEMI! VI PREGO, ASPETTATEMI!","NON SPARATE! MI ALZO! MI ALZO!","DIO, PRENDIMI TU, NON LORO!","VEDO LA LUCE... È CALDA... È COSÌ CALDA...","CI VEDIAMO DALL'ALTRA PARTE, RAGAZZI!","AH AH AH! HO VINTO IO! HO VINTO IO!","È TUTTO UN SOGNO! SVEGLIATEMI!","LA STRADA MI TIRA GIÙ! MI TIRA GIÙ!","NON VOGLIO MORIRE COSÌ! NON COSÌ!","QUALCUNO MI DIA LA MANO! UNA MANO SOLA!","LI SENTO! I MORTI MI CHIAMANO PER NOME!","VI MALEDICO TUTTI! VOI E LA VOSTRA GRAZIA!","PADRE NOSTRO... PADRE NOSTRO... NON MI RICORDO...","DITE A MIA MADRE CHE HO CAMMINATO FINO ALLA FINE!","NON ERA LA MIA ESTRAZIONE! NON ERO IO!","SONO STANCO... LASCIATEMI DORMIRE UN MINUTO...","GLI ANGELI HANNO GLI STIVALI! LI VEDO!","ANCORA UN PASSO! UNO SOLO! ASPETTATE!","FERMATE IL MONDO! VOGLIO SCENDERE!","PERDONATEMI! PERDONATEMI TUTTI!"];
+const DYING_SCREAM=["AAAAAAH! AIUTATEMI! NON CE LA FACCIO!","NO! NO! VOGLIO TORNARE A CASA!","MAMMA! MAMMAAA!","LE GAMBE! NON SENTO PIÙ LE GAMBE!","ASPETTATEMI! VI PREGO, ASPETTATEMI!","NO! FERMI! MI ALZO! MI ALZO!","DIO, PRENDIMI TU, NON LORO!","VEDO LA LUCE... È CALDA... È COSÌ CALDA...","CI VEDIAMO DALL'ALTRA PARTE, RAGAZZI!","AH AH AH! HO VINTO IO! HO VINTO IO!","È TUTTO UN SOGNO! SVEGLIATEMI!","LA STRADA MI TIRA GIÙ! MI TIRA GIÙ!","NON VOGLIO MORIRE COSÌ! NON COSÌ!","QUALCUNO MI DIA LA MANO! UNA MANO SOLA!","LI SENTO! I MORTI MI CHIAMANO PER NOME!","VI MALEDICO TUTTI! VOI E LA VOSTRA GRAZIA!","PADRE NOSTRO... PADRE NOSTRO... NON MI RICORDO...","DITE A MIA MADRE CHE HO CAMMINATO FINO ALLA FINE!","NON ERA LA MIA ESTRAZIONE! NON ERO IO!","SONO STANCO... LASCIATEMI DORMIRE UN MINUTO...","GLI ANGELI HANNO GLI STIVALI! LI VEDO!","ANCORA UN PASSO! UNO SOLO! ASPETTATE!","FERMATE IL MONDO! VOGLIO SCENDERE!","PERDONATEMI! PERDONATEMI TUTTI!"];
 
 MAD.push(
  {t:"Il sole è caduto, l'ho visto. Adesso quello lassù è un lampione.",o:[Q("«È il sole. È sempre lui.»",{r:-2,m:2}),Q("«Hai ragione, è un lampione.»",{r:5,m:-6}),Q("Guardi su anche tu, e ti gira la testa.",{r:3,m:-4})]},
@@ -1811,10 +1849,10 @@ CHAT[0].push("Ho portato tre paia di calze. Genio.","Qualcuno sa una barzelletta
 CHAT[1].push("Le vesciche hanno le vesciche.","Smettila di respirare così forte.","Mi sono bagnato addosso. Non ditelo a nessuno.","Vedo doppio. Due strade. Quale prendo?","Come si chiamava mia sorella? Non me lo ricordo.","Se rallento un attimo... solo un attimo...","Basta. Basta. Basta.","Ogni passo è un coltello.");
 CHAT[2].push("Pregate per me, se sapete come si fa.","Ho freddo dentro le ossa.","Ditemi che c'è una fine.","Ti prego, non guardarmi morire.","Ho visto la mia tomba al bordo della strada.","Mamma, scusa. Scusa. Scusa.","Non ho più lacrime.","Il prossimo sono io. Lo sento.");
 CHAT_MAD.push("Le mie scarpe ridono di me.","Ho contato i morti. Sono più dei vivi. Siamo noi i morti?","Il vento ha la voce di mio padre.","Ballate! Ballate con me!","Ho fame di stelle.","Qualcuno ha spento il mondo e nessuno se n'è accorto.","Sono un uccello. Domani volo via.","Non è sangue. È vernice. È tutto vernice.","Mi sono visto passare. Ero io, più avanti.","Shhh. Il blindato dorme.");
-CHAT_HILL.push("Chi l'ha messa qui questa salita, un sadico?","Su, su, su, sempre su.","Se cado, rotolo fino a casa.","Ho le cosce di legno.","Mi sanguinano i talloni.","In cima mi sdraio. Poi mi sparano. Ma mi sdraio.");
+CHAT_HILL.push("Chi l'ha messa qui questa salita, un sadico?","Su, su, su, sempre su.","Se cado, rotolo fino a casa.","Ho le cosce di legno.","Mi sanguinano i talloni.","In cima mi sdraio. Poi mi passano sopra. Ma mi sdraio.");
 CHAT_RAIN.push("Il cielo ci sta sputando addosso.","Ho le dita come uva passa.","Almeno il fango è morbido.","Pioggia e salite. Bel posto per morire.","Non vedo niente con quest'acqua negli occhi.");
-CHAT_COLD.push("Ho il fiato che fuma come un treno.","Dove sono le mie orecchie? Le avevo.","Il gelo mi morde le caviglie.","Un fuoco. Darei un rene per un fuoco.","Stanotte moriremo di freddo, non di pallottole.");
-VILLAIN_SAY.push("Avanti, cadi. Ti aspetto.","Ti ho visto zoppicare, eh?","Ancora pochi e poi tocca a voi.","Mi piace il rumore che fanno quando cadono.","Il prossimo sparo è per te, me lo sento.");
+CHAT_COLD.push("Ho il fiato che fuma come un treno.","Dove sono le mie orecchie? Le avevo.","Il gelo mi morde le caviglie.","Un fuoco. Darei un rene per un fuoco.","Stanotte moriremo di freddo, non sotto i cingoli.");
+VILLAIN_SAY.push("Avanti, cadi. Ti aspetto.","Ti ho visto zoppicare, eh?","Ancora pochi e poi tocca a voi.","Mi piace il rumore che fanno quando cadono.","Il prossimo sotto i cingoli sei tu, me lo sento.");
 SLUR.black.push("Torna da dove sei venuto, ne**o.","Un ne**o che marcia per la Federazione. Che barzelletta.","Non toccarmi, ne**o. Mi sporchi.");
 SLUR.gay.push("Cammina come un uomo, fr***o.","Se mi guardi ancora, fr***o, ti faccio cadere io.","Un fr***o in meno sarebbe una bella notizia.");
 DEFEND.push("«Prenditela con me, se hai fegato.»","«Lui cammina meglio di te.»","«Un'altra parola e ti lascio indietro io.»","«Chiudi la bocca e risparmia il fiato.»");
@@ -1832,9 +1870,9 @@ const CHAT_HOME=["A quest'ora mia madre mette su il caffè.","Mi manca il mio le
 function freshPick(pool){S.chatUsed=S.chatUsed||new Set();let c=pool.filter(x=>!S.chatUsed.has(x));if(!c.length){pool.forEach(x=>S.chatUsed.delete(x));c=pool;}const x=pick(c);S.chatUsed.add(x);return x;}
 
 /* ---- reazioni alle uccisioni ---- */
-const DEATH_SHOCK=["Oh Dio... oh Dio...","Allora ci ammazzano davvero...","Parlava con me e un attimo dopo gli hanno fatto esplodere la testa.","Ho il suo sangue sulle scarpe. Ho il suo sangue sulle scarpe!","Non è possibile. Non è possibile.","Era vero. Era tutto vero.","Mi viene da vomitare.","Non guardate. Non guardate indietro.","Ha urlato il nome di sua madre.","Gli hanno sparato come a un cane.","Credevo fosse solo propaganda. Credevo...","Quel rumore. Non lo dimenticherò mai.","Aveva la mia età. Aveva la mia età!","Lo hanno lasciato lì, in mezzo alla strada.","Tremo. Non riesco a smettere di tremare.","Ho sentito l'osso rompersi.","Sto per svenire. Tenetemi.","Qualcuno ha visto la sua faccia? Io sì. Io sì.","Mamma, voglio tornare a casa.","Gli ho sorriso stamattina. Gli ho sorriso.","Si è girato verso di noi prima dello sparo.","È caduto senza un lamento. Senza niente.","Poteva essere chiunque. Poteva essere me.","Ho sentito qualcosa di caldo sulla faccia.","Non è un gioco. Non è mai stato un gioco."];
+const DEATH_SHOCK=["Oh Dio... oh Dio...","Allora ci ammazzano davvero...","Parlava con me e un attimo dopo era sotto i cingoli.","Ho il suo sangue sulle scarpe. Ho il suo sangue sulle scarpe!","Non è possibile. Non è possibile.","Era vero. Era tutto vero.","Mi viene da vomitare.","Non guardate. Non guardate indietro.","Ha urlato il nome di sua madre.","L'hanno schiacciato come un cane.","Credevo fosse solo propaganda. Credevo...","Quel rumore. Non lo dimenticherò mai.","Aveva la mia età. Aveva la mia età!","Lo hanno lasciato lì, in mezzo alla strada.","Tremo. Non riesco a smettere di tremare.","Ho sentito l'osso rompersi.","Sto per svenire. Tenetemi.","Qualcuno ha visto la sua faccia? Io sì. Io sì.","Mamma, voglio tornare a casa.","Gli ho sorriso stamattina. Gli ho sorriso.","Si è girato verso di noi prima che i cingoli lo prendessero.","È caduto senza un lamento. Senza niente.","Poteva essere chiunque. Poteva essere me.","Ho sentito qualcosa di caldo sulla faccia.","Non è un gioco. Non è mai stato un gioco."];
 const DEATH_RESIGN=["Un altro angelo.","La marcia è questa. Purtroppo...","Uno in meno. Per tutti.","Non mi giro più. Non serve.","Ci si abitua. È questa la cosa peggiore.","Riposa, amico. Tu almeno hai finito.","Prima o poi tocca a tutti.","Ho smesso di contarli.","Un'altra madre che aspetterà invano.","Un altro nome che nessuno dirà più.","Che la terra gli sia leggera.","Silenzio. Anche lui merita un minuto di silenzio.","Non piango più. Non ho più niente dentro.","Il prossimo potrei essere io. Va bene così.","Cammina. Cammina e non pensare.","È la strada che decide. Non noi."];
-const DEATH_ANGER=["Bastardi. Bastardi in divisa.","Un giorno pagherete. Tutti.","Sparate a dei ragazzi. Siete fieri, eh?","Guardateli: ridono. Ridono!","Vorrei strappargli quel fucile di mano.","Maledetto Consiglio. Maledetti tutti.","Assassini. Assassini!","Lo chiamano ordine. È un macello.","Spero che quel blindato si ribalti.","Anche voi avete delle madri. Pensateci.","Chi vi ha insegnato a uccidere così?","Un giorno abbatteremo le vostre statue.","Ditemi il vostro nome, soldato. Voglio ricordarlo.","Sputo sulla vostra Grazia.","Non siamo bestie. Non siamo bestie!","Che i vostri figli non debbano mai marciare."];
+const DEATH_ANGER=["Bastardi. Bastardi in divisa.","Un giorno pagherete. Tutti.","Schiacciate dei ragazzi. Siete fieri, eh?","Guardateli: ridono. Ridono!","Vorrei strappargli quel fucile di mano.","Maledetto Consiglio. Maledetti tutti.","Assassini. Assassini!","Lo chiamano ordine. È un macello.","Spero che quel blindato si ribalti.","Anche voi avete delle madri. Pensateci.","Chi vi ha insegnato a uccidere così?","Un giorno abbatteremo le vostre statue.","Ditemi il vostro nome, soldato. Voglio ricordarlo.","Sputo sulla vostra Grazia.","Non siamo bestie. Non siamo bestie!","Che i vostri figli non debbano mai marciare."];
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
