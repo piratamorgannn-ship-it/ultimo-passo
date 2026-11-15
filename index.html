@@ -113,6 +113,7 @@ button:disabled{opacity:.35}
 #screen .choices.pix button:disabled{opacity:.6}
 #screen img.spr{image-rendering:pixelated;image-rendering:crisp-edges;margin:2px auto 6px;max-width:100%;height:auto}
 #screen .row2{display:flex;gap:10px;justify-content:center}
+.pid{margin:4px 0;font-size:11px}.ptag{display:inline-block;border:1px solid var(--amber);color:var(--amber);font-weight:800;font-size:10px;letter-spacing:1px;padding:1px 6px;margin-right:4px}
 .pbg{color:var(--amber);font-size:12px;letter-spacing:1px;margin:4px 0}
 /* centratura che non taglia il contenuto quando è più alto dello schermo (si può scorrere dall'inizio) */
 #screen>:first-child{margin-top:auto}#screen>:last-child{margin-bottom:auto}
@@ -1641,14 +1642,14 @@ function loadThen(fn){
 function presentPlayer(shoe){
   PLAYER=makePlayer();const P=PLAYER;
   show(`<h2>IL MARCIATORE · ${YEAR}</h2><div class="pcard"><canvas id="pspr" width="12" height="18"></canvas><div class="pinfo">
-    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><div class="pbg">${P.bg.t}</div><p>${P.desc}</p></div></div>
+    <div class="pname">${P.first} ${P.last.toUpperCase()}</div><div class="pbib">N.${P.bib}</div><div class="lbl">da ${P.city} · ${P.state.toUpperCase()}</div><div class="pbg">${P.bg.t}</div>${P.black||P.gay?`<div class="pid">${P.black?'<span class="ptag">NERO</span>':''}${P.gay?'<span class="ptag">GAY</span>':''} <span class="lbl">${P.black&&P.gay?'Nero e gay':P.black?'Nero':'Gay'}, in un'Europa che non perdona: qualcuno, in marcia, glielo farà pesare.</span></div>`:''}<p>${P.desc}</p></div></div>
     <button class="main" id="go">AVANTI</button>`);
   const c=$('pspr'),main=cx;cx=c.getContext('2d');cx.imageSmoothingEnabled=false;try{drawWalker(2,1,P,0,true,false);}finally{cx=main;}
-  $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);}));
+  $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';newRun(shoe,PROFILE);}));
 }
 function loading(shoe){
   show(`<h2>PARTENZA DA ${ROUTE.c[0].toUpperCase()} · ${YEAR}</h2><p style="font-size:16px;max-width:420px">${pick(TIPS)}</p><p class="lbl">— Manuale del Marciatore, ed. ${YEAR}</p><button class="main" id="go">INIZIA</button>`);
-  $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';if(shoe==='running')shoe='tennis';newRun(shoe,PROFILE);}));
+  $('go').addEventListener('click',()=>loadThen(()=>{sc.className='hide';newRun(shoe,PROFILE);}));
 }
 function end(win){
   MENU_MUSIC=false;{const bo=$('blackout');if(bo)bo.classList.remove('on');}
