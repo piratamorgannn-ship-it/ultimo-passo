@@ -160,6 +160,10 @@ button:disabled{opacity:.35}
 #rot.on{display:flex}
 #app.turn{position:fixed;left:0;top:0;width:100vh;height:100vw;transform-origin:0 0;transform:translateX(100vw) rotate(90deg);padding:0}
 .fsb{background:none;border:0;box-shadow:none;padding:0 2px;font-size:13px}
+.ach{position:absolute;right:12px;top:12px;display:flex;gap:10px;align-items:center;background:linear-gradient(#2a3444,#1a2230);border:1px solid #6a8ab0;box-shadow:0 4px 14px #000a;padding:8px 14px 8px 8px;z-index:60;min-width:230px;transform:translateY(-160%);transition:transform .45s ease-out;font-size:12px;color:#dde6f0;text-align:left}
+.ach.on{transform:translateY(0)}.ach .aic{width:42px;height:42px;background:#0e141c;border:1px solid #6a8ab0;display:flex;align-items:center;justify-content:center;font-size:24px}
+.cblist{display:flex;flex-direction:column;gap:5px;max-height:58vh;overflow:auto;text-align:left;font-size:11px}.cb{display:flex;gap:8px;align-items:center;background:#1a1620;border:1px solid #3a3040;padding:5px 8px}.cb.lock{opacity:.55}.cb .aic{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0e0c12;border:1px solid #3a3040;flex:none}
+.ach .at{font-size:9px;letter-spacing:1px;color:#9ab8d8}.ach .ad{font-size:10px;color:#9ab0c4}
 #toast{position:absolute;left:50%;bottom:36%;transform:translateX(-50%);background:#2e2738;border:2px solid #000;padding:8px 12px;font-size:12px;z-index:40;max-width:80%;text-align:center;display:none}
 @media (max-height:340px){#hud{font-size:10px}#bottom{min-height:80px}.pad svg{width:22px;height:22px}#inv button{padding:3px 2px;font-size:10px}}
 #rot .ph{font-size:46px;animation:rot 2s ease-in-out infinite}
@@ -598,7 +602,7 @@ function newRun(shoe,tr){{const bo=document.getElementById('blackout');if(bo)bo.
     const SS=shuffle(STATES.filter(x=>!usedS.has(x.s)))[0];usedS.add(SS.s);const fem=Math.random()<.4;let gn,tries=0;do{gn=pick(fem?SS.f:SS.m);}while(usedN.has(gn)&&++tries<12);usedN.add(gn);const li=Math.floor(Math.random()*SS.l.length);
     npcs.push({id:'g'+i,name:gn+' (N.'+n+')',first:gn,last:(fem?SS.lf:SS.l)[li],fem,state:SS.s,from:pick(SS.c),bibN:n,named:false,shirt:pick(ERA.shirts),hair:pick(hairs),skin:pick(['#e0b090','#b88860','#f0c8a8','#8a6040']),band:ERA.band&&Math.random()<.4,alive:true,off:rand(lo*.6,hi),v:rand(6.5,7.3)*SR,lane:Math.floor(rand(0,6)),elimAt:rand(30,760),ph:rand(0,4),leaving:0});}
   const sh=SHOES[shoe];
-  S={t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
+  S={combo:(COMBOS.find(c=>c.shoe===shoe&&c.item===RUN_ITEMS[0])||{}).id,t:0,speed:0,km:0,bib,shoe,sh,tr,wx:WX[ROUTE.wx],
      st:100,maxSt:100,ph:70+tr.f*.3,mh:40+tr.n*.6,hy:80,bl:15,sto:0,
      warn:0,underT:0,lastWarnT:0,steps:[],nextFoot:'L',anim:0,scroll:0,truckX:4,
      mode:'count',cd:0,cdStep:-1,collapsed:false,collapses:0,calls:[],callCur:null,shoutCd:0,groups:[],regroupT:8,karma:0,infame:false,paladin:false,nextVillain:rand(70,120),swT:6,nextMad:0,dyingNpc:null,fw:[],finale:false,qte:null,dlg:null,nextEvent:18,pregLine:Math.random()<.2,askTimes:(()=>{const r=Math.random(),k=r<.25?0:r<.6?1:r<.85?2:3,t0=(41-9)*HOUR;return Array.from({length:k},()=>rand(t0,t0+38*HOUR)).sort((a,b)=>a-b);})(),kioskAt:Math.random()<1/3?rand(120,600):0,kiosk:null,nextDlg:9,nextDeep:60,nextBigot:rand(35,70),deepUsed:[],black:PLAYER?PLAYER.black:Math.random()<.2,gay:PLAYER?PLAYER.gay:Math.random()<.2,outed:false,loveAsked:false,nextLoveQ:rand(90,200),hill:0,rain:0,heatMsg:false,coldMsg:false,helpCd:0,rivalCd:50,lastTalk:null,
@@ -643,12 +647,12 @@ document.addEventListener('contextmenu',e=>e.preventDefault());
 const onTap=(id,fn)=>$(id).addEventListener('pointerdown',e=>{e.preventDefault();if(S&&S.mode==='play')fn();});
 onTap('iDrink',()=>{if(S.drinkCd>0)return;S.hy=Math.min(100,S.hy+22);S.ph=Math.min(100,S.ph+5);S.drinkT=S.t+60;S.peeQ=(S.peeQ||0)+30;if(!S.peeAt)S.peeAt=S.t+60;S.drinkCd=4;sfx.eat();log('Chiedi la borraccia e bevi. Il corpo ringrazia. Fra un po\' la vescica presenterà il conto.','var(--blue)');});
 onTap('iBisc',()=>{if(S.bisc<=0)return;S.bisc--;eat(10,8,0,'Un biscotto di mamma. Sa di casa.');});
-onTap('iPan',()=>{if(S.pan<=0)return;S.pan--;eat(18,6,0,'Pane, burro e marmellata. Ti torna il fiato.');});
+onTap('iPan',()=>{if(S.pan<=0)return;S.pan--;eat(S.combo==='merenda'?25:18,6,0,'Pane, burro e marmellata. Ti torna il fiato.');});
 onTap('iCig',()=>{if(S.cig<=0)return;S.cig--;S.smoked++;S.mh=Math.min(100,S.mh+20);S.st=Math.min(S.maxSt,S.st+25);S.ph=Math.max(0,S.ph-10);tone(200,.3,'sine',.03,160);noise(.08,.4,undefined,900);
   log(pick(['Accendi una sigaretta. Il mondo rallenta.','Il fumo ti riempie il petto. Ti senti invincibile.','Una boccata lunga. Le gambe tornano a girare.']),'var(--green)');
-  if(!S.pneumonia&&Math.random()<.08*S.smoked)setTimeout(()=>{if(!S||S.mode!=='play'||S.pneumonia)return;S.pneumonia=true;S.st=Math.max(0,S.st-30);S.ph=Math.max(0,S.ph-20);sfx.bad();buzz([200,80,200]);log('Tossisci sangue. Il petto brucia: è polmonite.','var(--red)');},rand(15,35)*1000);});
+  if(!S.pneumonia&&Math.random()<(S.combo==='club'?.04:.08)*S.smoked)setTimeout(()=>{if(!S||S.mode!=='play'||S.pneumonia)return;S.pneumonia=true;S.st=Math.max(0,S.st-30);S.ph=Math.max(0,S.ph-20);sfx.bad();buzz([200,80,200]);log('Tossisci sangue. Il petto brucia: è polmonite.','var(--red)');},rand(15,35)*1000);});
 onTap('iHam',()=>{if(S.ham<=0)return;S.ham--;eat(35,0,0,'Carne cruda. Ti fa schifo, ma senti la forza tornare.');
-  if(Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
+  if(S.combo!=='cacciatore'&&Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
 onTap('iBar',()=>{if(!(S.bar>0))return;S.bar--;eat(25,4,3,'La barretta del tuo amico. Sa di cioccolato e di casa.');});
 onTap('iTub',()=>{if(S.tub<=0)return;S.tub--;eat(22,2,3,'Un tubetto di concentrato. Disgustoso, ma nutre.');});
 onTap('iPee',()=>{if(S.bl<35||S.peeing>0)return;S.peeing=5;log('Ti liberi senza fermarti... il passo ne risente. Tieni il ritmo!','var(--amber)');});
@@ -868,11 +872,11 @@ function update(dt){
   if(!S.fainted&&!S.collapsed&&S.hy<=0.5&&S.t>5){S.faintT=(S.faintT||0)+dt;if(S.faintT>=4){S.faintT=0;if(Math.random()<.5)faint();}}else if(!S.fainted)S.faintT=0;
   S.capNow=cap;
   if(!S.collapsed&&!S.fainted&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi o rallenta per recuperare)','var(--red)','th');}
-  const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.kway?.97:.94):1)*(S.injury?.95:1);
+  const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.combo==='montanaro'?1:S.kway?.97:.94):1)*(S.injury?.95:1);
   S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
   S.speed=Math.max(0,S.speed||0);S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
   S.maxSt=Math.max(40,100-S.t*.06);
-  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195)*sh.st;  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=1.4;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
+  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195)*sh.st;  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=S.combo==='montanaro'?1.2:1.4;if(S.combo==='walkman'&&S.radio)d*=.95;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
@@ -884,7 +888,7 @@ function update(dt){
   if(heat&&S.hy<15&&Math.random()<dt*.08){S.ph-=15;S.mh-=10;S.speed-=2*SR;log('Colpo di calore. Il mondo gira.','var(--red)');sfx.bad();}
   if(!S.blister&&sh.blister&&S.t>sh.blister){S.blister=true;log('Senti le vesciche aprirsi nelle scarpe.','var(--red)');}
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log(S.shoe==='mocassini'?'La suola dei mocassini si stacca.':'Le tue scarpe si rompono: la suola si apre e ogni passo è un sasso.','var(--red)');}
-  let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&isNight())pd+=.03;if(S.rain>0&&!S.kway)pd+=.04;
+  let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=S.combo==='domenica'?.06:.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&isNight())pd+=.03;if(S.rain>0&&!S.kway)pd+=.04;
   S.ph=clamp(S.ph-pd*dt,0,100);
   let md=.044*sh.mh*(1.3-S.tr.n/100);  // prova più facile (prima .05)if(S.bl>70)md+=.08;if(isNight())md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
   S.mh=clamp(S.mh-md*dt,0,100);
@@ -1506,6 +1510,14 @@ const ITEMS={
  kway:{n:'K-way',d:'Una giacca antipioggia che sta in una tasca. Riduce i guai della pioggia.'},
 };
 const itemOpen=k=>{const it=ITEMS[k];return !!(it&&!it.lock&&(it.always||store.get('up_unlock',{})[k]||DEBUG));};
+/* accoppiate scarpe + oggetto (con lo zainetto vale solo il primo oggetto) */
+const COMBOS=[
+ {id:'walkman',n:'Walkman',ic:'🎧',shoe:'ginnastica',item:'radio',d:'Con la radio accesa la stamina cala un altro 5% in meno.'},
+ {id:'montanaro',n:'Montanaro',ic:'⛰',shoe:'trekking',item:'kway',d:'Niente rallentamento sotto la pioggia; le salite stancano molto meno.'},
+ {id:'cacciatore',n:'Cacciatore',ic:'🥩',shoe:'trekking',item:'hamburger',d:'La carne cruda non fa più vomitare.'},
+ {id:'domenica',n:'Il vestito della domenica',ic:'⌚',shoe:'mocassini',item:'orologio',d:'Quando la suola si stacca, il corpo si logora la metà.'},
+ {id:'merenda',n:'Merenda al circolo',ic:'🥪',shoe:'tennis',item:'panini',d:'Ogni panino ridà più stamina.'},
+ {id:'club',n:'Club privato',ic:'🚬',shoe:'tennis',item:'sigarette',d:'Il rischio di polmonite si dimezza.'}];
 const ZAINO_WINS=3;let RUN_ITEMS=['biscotti'];
 /* migrazione v40: lo zainetto ora si sblocca con 3 vittorie di fila; tolto a chi l'aveva con la vecchia regola (5 marce finite) */
 if(!store.get('up_mig40',false)){const u=store.get('up_unlock',{});if(u.zainetto&&store.get('up_streak',0)<ZAINO_WINS){delete u.zainetto;store.set('up_unlock',u);}store.set('up_mig40',true);}
@@ -1570,17 +1582,23 @@ function trophies(page){
   const un=store.get('up_unlock',{});
   const list=page===0?Object.entries(SHOES).map(([k,s])=>({k,n:s.n,open:!s.unlock||!!un[k],pro:s.pro,con:s.con,how:T_SHOE[k]||'',hint:s.unlock||''}))
     :[...Object.keys(ITEMS),'zainetto'].map(k=>{const it=ITEMS[k]||{},t=T_ITEM[k]||{};const open=k==='zainetto'?!!un.zainetto:(it.always||!!un[k]);return {k,n:t.n||it.n,open,pro:t.pro,con:t.con,how:t.how,hint:'Si sblocca in un modo particolare.'};});
+  if(page===2){const cb=store.get('up_combos',{}),n=COMBOS.filter(c=>cb[c.id]).length;
+    show(`<h2>🏆 TROFEI · 3/3 ACCOPPIATE</h2><p class="lbl" style="margin-bottom:6px">Scoperte: ${n} / ${COMBOS.length} · alcune scarpe rendono di più insieme a un certo oggetto. Con lo zainetto conta solo il primo oggetto scelto.</p>
+      <div class="cblist">${COMBOS.map(c=>cb[c.id]?`<div class="cb"><span class="aic">${c.ic}</span><div><b>${c.n}</b> <span class="lbl">${SHOES[c.shoe].n} + ${(T_ITEM[c.item]&&T_ITEM[c.item].n)||ITEMS[c.item].n}</span><br>✚ ${c.d}</div></div>`:`<div class="cb lock"><span class="aic">?</span><div><b>🔒 ???</b><br><span class="lbl">Scopri l'accoppiata giocando una marcia con le scarpe e l'oggetto giusti.</span></div></div>`).join('')}</div>
+      <div class="row2"><button class="ghost" id="tback">MENU</button><button class="main" id="tprev">‹ OGGETTI</button></div>`,'troph');
+    $('tback').addEventListener('click',titleScreen);$('tprev').addEventListener('click',()=>trophies(1));return;}
   const got=list.filter(x=>x.open).length;let cur=null;
-  show(`<h2>🏆 TROFEI · ${page===0?'1/2 SCARPE':'2/2 OGGETTI'}</h2><p class="lbl" style="margin-bottom:6px">Sbloccati: ${got} / ${list.length} · tocca un oggetto per i dettagli</p>
+  show(`<h2>🏆 TROFEI · ${page===0?'1/3 SCARPE':'2/3 OGGETTI'}</h2><p class="lbl" style="margin-bottom:6px">Sbloccati: ${got} / ${list.length} · tocca un oggetto per i dettagli</p>
     <div class="tgrid pix" style="grid-template-columns:repeat(${list.length},minmax(0,1fr))">${list.map((x,i)=>`<button data-i="${i}" class="${x.open?'':'lock'}">${sprite(x.k,!x.open,4)}<br><b>${x.open?x.n:'🔒 ???'}</b></button>`).join('')}</div>
     <div class="tinfo" id="tinfo"><span class="lbl">Tocca una carta.</span></div>
-    <div class="row2"><button class="ghost" id="tback">MENU</button>${page===0?'<button class="main" id="tnext">OGGETTI ›</button>':'<button class="main" id="tprev">‹ SCARPE</button>'}</div>`,'troph');
+    <div class="row2"><button class="ghost" id="tback">MENU</button>${page===0?'<button class="main" id="tnext">OGGETTI ›</button>':'<button class="ghost" id="tprev">‹ SCARPE</button><button class="main" id="tnext2">ACCOPPIATE ›</button>'}</div>`,'troph');
   sc.querySelectorAll('.tgrid button').forEach(b=>b.addEventListener('click',()=>{const x=list[+b.dataset.i];
     sc.querySelectorAll('.tgrid button').forEach(o=>o.classList.toggle('sel',o===b));
     $('tinfo').innerHTML=x.open?`<b>${x.n}</b><br>✚ ${x.pro}<br>− ${x.con}<br><span style="color:var(--amber)">🏆 ${x.how}</span>`:`<b>🔒 ???</b><br><span class="lbl">${x.hint}</span>`;}));
   $('tback').addEventListener('click',titleScreen);
   if($('tnext'))$('tnext').addEventListener('click',()=>trophies(1));
   if($('tprev'))$('tprev').addEventListener('click',()=>trophies(0));
+  if($('tnext2'))$('tnext2').addEventListener('click',()=>trophies(2));
 }
 /* ================= SCHEDA DEL GIOCATORE ================= */
 const P_FIRST=['Luca','Marco','Andrea','Tomas','Jakub','Erik','Pavel','Mathis','Jonas','Diego','Nico','Viktor','Elias','Hugo','Milo','Teo','Sami','Aleks','Dario','Leon','Bruno','Oskar','Ivan','Felix','Matteo','Rafael','Stefan','Adam','Kai','Nils'];
@@ -1636,6 +1654,8 @@ function end(win){
    const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
    U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('kway',store.get('up_rains',0)>=10,'Sbloccato: K-way');U('mocassini',store.get('up_defends',0)>=5,'Sbloccati: Mocassini');U('trekking',store.get('up_betrays',0)>=5,'Sbloccati: Scarponi da trekking');U('running',win&&S.broken,'Sbloccate: Scarpe da corsa');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
    if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
+  let newCombo=null;if(S.combo){const cb=store.get('up_combos',{});if(!cb[S.combo]){cb[S.combo]=true;store.set('up_combos',cb);newCombo=COMBOS.find(c=>c.id===S.combo);}}
+  if(newCombo)setTimeout(()=>achievement(newCombo),900);
   const K2=store.get('up_know',{}),un2=store.get('up_unlock',{});let tipMsg='';
   K2[S.shoe]=K2[S.shoe]||{};
   if(!K2[S.shoe].con){K2[S.shoe].con=true;tipMsg+=`<p>👟 Ora conosci il difetto di <b>${SHOES[S.shoe].n}</b>: ${SHOES[S.shoe].con}</p>`;}
@@ -1660,6 +1680,8 @@ let lastTurn=null;
 function checkRot(){const portrait=window.innerHeight>window.innerWidth*1.05,turn=portrait&&!rotOk;app.classList.toggle('turn',turn);$('rot').classList.remove('on');
   if(turn!==lastTurn){lastTurn=turn;requestAnimationFrame(()=>{fit();if(sc.classList.contains('title')){const t=$('tcv');if(t)drawTitleArt(t);}});}}
 $('rotOk').addEventListener('click',()=>{rotOk=true;checkRot();});
+function achievement(c){const a=document.createElement('div');a.className='ach';a.innerHTML=`<div class="aic">${c.ic}</div><div><div class="at">🏆 ACCOPPIATA SCOPERTA</div><b>${c.n}</b><div class="ad">${SHOES[c.shoe].n} + ${(T_ITEM[c.item]&&T_ITEM[c.item].n)||ITEMS[c.item].n}</div></div>`;
+  app.appendChild(a);sfx.good();requestAnimationFrame(()=>a.classList.add('on'));setTimeout(()=>{a.classList.remove('on');setTimeout(()=>a.remove(),600);},5200);}
 const toastEl=document.createElement('div');toastEl.id='toast';app.appendChild(toastEl);
 function toast(m,ms=3500){toastEl.textContent=m;toastEl.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>toastEl.style.display='none',ms);}
 async function goFull(){
