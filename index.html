@@ -883,7 +883,7 @@ function update(dt){
   if(S.callCur){S.callCur.t-=dt;if(S.callCur.t<=0)S.callCur=null;}else if(S.calls.length){S.callCur={s:S.calls.shift(),t:1.8};sfx.warnSoft();}
   S.npcs.forEach(n=>{
     if(!n.alive)return;n.ph+=n.v*dt*.6;
-    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);if(n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>S.truckX+70)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+28)shoot(n,x);return;}
+    if(n.leaving){if(!n.w3){n.w3=1;tankCall(n,3);const ahead=PX+n.off*SPR>S.truckX+70;if(!ahead&&n!==S.dyingNpc&&Math.random()<.7&&!(S.chat&&S.chat.scream)){S.chat={n,s:freshPick(DYING_SCREAM),t:3.4,shout:true,scream:true};}}if(!n.legShot){n.legShot=1;const x0=PX+n.off*SPR;if(x0>S.truckX+70)legShot(n,x0);}n.off-=(S.speed/SR*1.1+3)*dt;const x=PX+n.off*SPR;if(x<=S.truckX+28)shoot(n,x);return;}
     {const w=n.elimAt-S.t;if(n.warns<1&&w<36)npcWarn(n);else if(n.warns<2&&w<18)npcWarn(n);else if(n.warns===0&&w>90&&Math.random()<dt*.004){npcWarn(n);n.tempW=S.t;n.tempKm=S.km;}
      if(n.tempW&&S.km-(n.tempKm||0)>=WARN_KM&&w>40){n.warns=0;n.tempW=0;}}
     n.v+=(rand(6.5,7.3)*SR-n.v)*dt*.3;
@@ -955,7 +955,10 @@ function aimingNow(){
   const fx=S.truckX+28;
   return S.npcs.some(n=>n.alive&&(n.leaving?(PX+n.off*SPR-fx)<(S.speed/SR*1.1+3)*SPR*2+2:(n.elimAt>S.t&&n.elimAt-S.t<2&&S.saving!==n&&!n.savePending)));
 }
-function legShot(n,x){const y=86+n.lane*5;const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:x+3,y1:y+13,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(120);
+const LEG_SCREAM=["AAAAAAH!","AAAAAAAAAAAH! LE GAMBE!","NO VI PREGO! HO UNA FIGLIA A CASA!","NO! NO! NOOO!","MI ALZO! MI ALZO! DATEMI UN SECONDO!","MAMMA! MAMMAAA!","PIETÀ! VI PREGO, PIETÀ!","NON SENTO PIÙ LE GAMBE! AIUTO!","HO UN BAMBINO! HO UN BAMBINO!","PERCHÉ IO? PERCHÉ IO?!","AIUTATEMI! QUALCUNO MI AIUTI!","FERMATELI! FERMATE QUELLE MACCHINE!","BRUCIA! BRUCIA TUTTO!","DIO MIO, NO! NON COSÌ!"];
+function legShot(n,x){
+  setTimeout(()=>{if(!S||S.mode==='over')return;if(Math.random()<.22){n.fainted=1;if(n.named||Math.random()<.5)log(n.name+' sviene dal dolore. Non emette più un suono.','var(--dim)');}
+    else if(n!==S.dyingNpc)S.chat={n,s:freshPick(LEG_SCREAM),t:3,shout:true,scream:true};},250);const y=86+n.lane*5;const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:x+3,y1:y+13,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(120);
   if(n.named||Math.random()<.3)log(ERA.veh==='drone'?'Il drone colpisce '+n.name+' alle gambe col laser. Cade.':'Un soldato spara alle gambe di '+n.name+'. Cade.','var(--dim)');}
 function shoot(n,x){
   n.alive=false;const y=86+n.lane*5;
@@ -1624,6 +1627,7 @@ function frame(){
       if(S.mode==='play'){update(dt);hud();}
       else if(S.mode==='count'){countdown(dt);hud();}
       else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
+        S.anim+=dt*4;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)n.off+=n.v/SR*dt*1.6;});if(S.chat){S.chat.t-=dt;if(S.chat.t<=0)S.chat=null;}  // gli altri proseguono senza di te
         if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);setTimeout(()=>{if(S&&!S.ended){S.ended=1;end(false);}},1800);}}}
       drawWorld();
     }
