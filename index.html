@@ -130,6 +130,7 @@ button:disabled{opacity:.35}
 .pinfo .pname{font-size:20px;font-weight:800;color:var(--amber)}.pinfo .pbib{display:inline-block;background:#f0f0e8;color:#b83a2a;font-weight:800;padding:1px 8px;margin:4px 0}
 .pinfo p{font-size:13px;line-height:1.5;margin:8px 0 0}
 #devp{position:absolute;inset:10% 18%;background:#120e16f2;border:2px solid #c86a3a;padding:10px 14px;z-index:6;text-align:left;font-size:12px}
+#rstp{position:absolute;inset:18% 22%;background:#120e16f6;border:2px solid #a83a2a;padding:14px 18px;z-index:7;text-align:left;font-size:12px}
 #devp p{margin:8px 0}#devp select{font-size:12px}
 #juke{position:absolute;inset:6% 8%;background:#120e16f2;border:2px solid #4a405a;padding:8px;overflow:auto;z-index:5;text-align:left}
 #juke .jh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
@@ -1393,7 +1394,7 @@ Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stes
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
-  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="tcol"><button class="ghost trbtn" id="manual">📖 MANUALE</button>${store.get('up_runs',0)>=1?'<button class="ghost trbtn" id="trophy">🏆 TROFEI</button>':''}</div><div class="copy">© cpt_morgannn</div>
+  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="tcol"><button class="ghost trbtn" id="manual">📖 MANUALE</button>${store.get('up_runs',0)>=1?'<button class="ghost trbtn" id="trophy">🏆 TROFEI</button>':''}<button class="ghost trbtn" id="rstT" style="border-color:#8a2a2a;color:#d87060">↺ RESET</button></div><div class="copy">© cpt_morgannn</div>
   <div class="dbg" id="dbgw"><span><button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><button class="ghost" id="devT" style="padding:3px 10px;font-size:10px;border-color:#c86a3a;color:#e8a070">🛠 DEVELOP</button></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
@@ -1401,12 +1402,17 @@ function titleScreen(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.top='14%';}));
   t.addEventListener('transitionend',done);setTimeout(done,5600);
   MENU_MUSIC=true;
-  sc.onclick=e=>{initAudio();if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target.closest('#devp')||e.target===go)return;done();};
+  sc.onclick=e=>{initAudio();if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target.closest('#devp')||e.target.closest('#rstp')||e.target===go)return;done();};
   $('devT').addEventListener('click',e=>{e.stopPropagation();initAudio();openDev();});
   $('fsT').addEventListener('click',e=>{e.stopPropagation();window.__goFull();});
   $('rtT').addEventListener('click',e=>{e.stopPropagation();rotOk=!rotOk;checkRot();});
   if($('trophy'))$('trophy').addEventListener('click',e=>{e.stopPropagation();initAudio();trophies(0);});
   $('manual').addEventListener('click',e=>{e.stopPropagation();initAudio();manual();});
+  $('rstT').addEventListener('click',e=>{e.stopPropagation();initAudio();if($('rstp'))return;const d=document.createElement('div');d.id='rstp';sc.appendChild(d);
+    d.innerHTML=`<h3 style="color:var(--red);margin:0 0 8px">↺ RESET DEL GIOCO</h3><p>Sei sicuro? Il gioco torna alla <b>prima marcia</b> (1980): perdi oggetti e scarpe sbloccati, zainetto, trofei, record e tutto ciò che hai scoperto.</p><p style="color:var(--dim)">Non si può annullare.</p><div class="row2"><button class="ghost" id="rstN">ANNULLA</button><button class="main" id="rstY" style="background:#a83a2a">SÌ, RESETTA</button></div>`;
+    $('rstN').addEventListener('click',ev=>{ev.stopPropagation();d.remove();});
+    $('rstY').addEventListener('click',ev=>{ev.stopPropagation();try{Object.keys(localStorage).filter(k=>k.startsWith('up_')&&k!=='up_mute').forEach(k=>localStorage.removeItem(k));}catch(_){}
+      Object.keys(MEM).filter(k=>k.startsWith('up_')&&k!=='up_mute').forEach(k=>delete MEM[k]);location.reload();});});
   go.addEventListener('click',e=>{e.stopPropagation();initAudio();JUKE=null;const j=$('juke');if(j)j.remove();const dp=$('devp');if(dp)dp.remove();loadThen(intro);});
 }
 /* [DEV] menu sviluppatore: da togliere nella versione pubblica */
