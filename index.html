@@ -127,6 +127,8 @@ button:disabled{opacity:.35}
 #pspr{width:96px;height:144px;image-rendering:pixelated;image-rendering:crisp-edges;flex:none;background:#1a1620;border:2px solid #4a405a}
 .pinfo .pname{font-size:20px;font-weight:800;color:var(--amber)}.pinfo .pbib{display:inline-block;background:#f0f0e8;color:#b83a2a;font-weight:800;padding:1px 8px;margin:4px 0}
 .pinfo p{font-size:13px;line-height:1.5;margin:8px 0 0}
+#devp{position:absolute;inset:10% 18%;background:#120e16f2;border:2px solid #c86a3a;padding:10px 14px;z-index:6;text-align:left;font-size:12px}
+#devp p{margin:8px 0}#devp select{font-size:12px}
 #juke{position:absolute;inset:6% 8%;background:#120e16f2;border:2px solid #4a405a;padding:8px;overflow:auto;z-index:5;text-align:left}
 #juke .jh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
 #juke .jh button{padding:3px 8px;font-size:10px}
@@ -1366,22 +1368,35 @@ Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
   show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="tcol"><button class="ghost trbtn" id="manual">📖 MANUALE</button>${store.get('up_runs',0)>=1?'<button class="ghost trbtn" id="trophy">🏆 TROFEI</button>':''}</div><div class="copy">© cpt_morgannn</div>
-  <div class="dbg" id="dbgw"><span><button class="ghost" id="jkT" style="padding:3px 8px;font-size:10px">🎵 jukebox</button> <button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> debug</label><select id="did"><option value="">identità casuale</option>${[['none','né nero né gay'],['black','nero'],['gay','gay'],['both','nero + gay']].map(([v,l])=>`<option value="${v}" ${DEBUG_ID===v?'selected':''}>${l}</option>`).join('')}</select><select id="dy"><option value="">anno auto</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></div>`,'title');
+  <div class="dbg" id="dbgw"><span><button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><button class="ghost" id="devT" style="padding:3px 10px;font-size:10px;border-color:#c86a3a;color:#e8a070">🛠 DEVELOP</button></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
   const done=()=>{if(fin)return;fin=true;t.style.transition='none';t.style.top='14%';go.classList.remove('hide');};
   requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.top='14%';}));
   t.addEventListener('transitionend',done);setTimeout(done,5600);
   MENU_MUSIC=true;
-  sc.onclick=e=>{initAudio();if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target===go)return;done();};
-  $('jkT').addEventListener('click',e=>{e.stopPropagation();initAudio();openJuke();});
-  $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;DEBUG_RUN0=store.get('up_runs',0);});
-  $('did').addEventListener('change',()=>{DEBUG_ID=$('did').value;});
+  sc.onclick=e=>{initAudio();if(e.target.closest('#dbgw')||e.target.closest('#juke')||e.target.closest('#devp')||e.target===go)return;done();};
+  $('devT').addEventListener('click',e=>{e.stopPropagation();initAudio();openDev();});
   $('fsT').addEventListener('click',e=>{e.stopPropagation();window.__goFull();});
   $('rtT').addEventListener('click',e=>{e.stopPropagation();rotOk=!rotOk;checkRot();});
   if($('trophy'))$('trophy').addEventListener('click',e=>{e.stopPropagation();initAudio();trophies(0);});
   $('manual').addEventListener('click',e=>{e.stopPropagation();initAudio();manual();});
-  go.addEventListener('click',e=>{e.stopPropagation();initAudio();JUKE=null;const j=$('juke');if(j)j.remove();DEBUG=$('dbg').checked;loadThen(intro);});
+  go.addEventListener('click',e=>{e.stopPropagation();initAudio();JUKE=null;const j=$('juke');if(j)j.remove();const dp=$('devp');if(dp)dp.remove();loadThen(intro);});
+}
+/* [DEV] menu sviluppatore: da togliere nella versione pubblica */
+function openDev(){
+  let d=$('devp');if(d){d.remove();return;}
+  d=document.createElement('div');d.id='devp';sc.appendChild(d);
+  d.innerHTML=`<div class="jh"><b>🛠 DEVELOP</b><button class="ghost" id="dvX">✕</button></div>
+    <p><label><input type="checkbox" id="dbg" ${DEBUG?'checked':''}> modalità debug</label></p>
+    <p>Identità del giocatore: <select id="did"><option value="">casuale</option>${[['none','né nero né gay'],['black','nero'],['gay','gay'],['both','nero + gay']].map(([v,l])=>`<option value="${v}" ${DEBUG_ID===v?'selected':''}>${l}</option>`).join('')}</select></p>
+    <p>Anno di partenza: <select id="dy"><option value="">automatico</option>${ERAS.map(e=>`<option value="${e.from}" ${DEBUG_YEAR===e.from?'selected':''}>${e.from}</option>`).join('')}</select></p>
+    <p><button class="ghost" id="jkT">🎵 JUKEBOX (musiche)</button></p>`;
+  $('dvX').addEventListener('click',e=>{e.stopPropagation();d.remove();});
+  $('dbg').addEventListener('change',()=>{DEBUG=$('dbg').checked;});
+  $('did').addEventListener('change',()=>{DEBUG_ID=$('did').value;});
+  $('dy').addEventListener('change',()=>{DEBUG_YEAR=$('dy').value?+$('dy').value:null;DEBUG_RUN0=store.get('up_runs',0);});
+  $('jkT').addEventListener('click',e=>{e.stopPropagation();d.remove();openJuke();});
 }
 function openJuke(){
   let j=$('juke');if(j){j.remove();return;}
