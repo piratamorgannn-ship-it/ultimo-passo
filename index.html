@@ -688,10 +688,11 @@ function relUp(n,d){const before=relLabel(n.rel);n.rel=clamp(n.rel+d,-100,100);c
 const helpSay=(n,s)=>{if(n&&S)S.chat={n,s,t:3.6,help:true};};
 const HELP_B={rialzati:'SU! TI TENGO IO!',sgambetto:'TI HO PRESO!',crampo:'TI MASSAGGIO LA GAMBA, CAMMINA!',caduta:'ATTENTO! TI TENGO!',isteria:'RESPIRA CON ME. DENTRO... FUORI...',blocco:'MUOVITI! TI SPINGO IO!',spinta:'STAI DIETRO DI ME!'};
 const HELP={rialzati:'{n} ti afferra sotto le braccia e ti rimette in piedi: «Non qui. Non adesso.»',sgambetto:'{n} ti tira su al volo prima che tu cada.',crampo:'{n} ti massaggia la gamba mentre camminate.',caduta:'{n} ti afferra prima che tu cada.',isteria:'{n} ti stringe la mano: «Respira con me.»',blocco:'{n} ti spinge avanti: «Muoviti, dai!»',spinta:'{n} si mette in mezzo e ti tiene in piedi.'};
+const debtor=()=>S.npcs.find(n=>n.alive&&!n.leaving&&n!==S.dyingNpc&&n.savedN>0&&(n.helpedN||0)<n.savedN+1);
 function startQTE(type,who){
   /* 1 volta su 4 un amico ti aiuta da solo (e l'amicizia cresce) */
   /* chi hai salvato ti restituisce il favore: ti aiuta almeno (volte che l'hai salvato + 1) */
-  if(HELP[type]){const db=S.npcs.find(n=>n.alive&&!n.leaving&&n!==S.dyingNpc&&n.savedN>0&&(n.helpedN||0)<n.savedN+1);
+  if(HELP[type]&&(type==='rialzati'||type==='isteria'||type==='blocco')){const db=debtor();
     if(db){db.helpedN=(db.helpedN||0)+1;S.qte={type,who,t:0,n:0};log(HELP[type].replace('{n}',db.name)+(db.helpedN===1?' «Te lo dovevo.»':''),'var(--green)');helpSay(db,db.helpedN===1?'TE LO DEVO!':(HELP_B[type]||'CI SONO IO!'));endQTE(true);relUp(db,4);return;}}
   if(HELP[type]){const br=friends().filter(n=>n.rel>=80),fr=br.length?br:(type==='rialzati'?[]:friends());if(fr.length&&Math.random()<(br.length?.5:.25)){const f=pick(fr);S.qte={type,who,t:0,n:0};if(f.rel>=80)f.savedMe=true;log(HELP[type].replace('{n}',f.name),'var(--green)');helpSay(f,HELP_B[type]||'CI SONO IO!');endQTE(true);relUp(f,6);return;}}
   const q={type,t:0,who,n:0,spd:S.speed};
@@ -990,6 +991,8 @@ function update(dt){
   if(!S.dlg&&!S.qte&&!S.collapsed&&!S.fainted&&S.t>=(S.dlgFree||0)){const alive=S.npcs.filter(n=>n.alive&&!n.leaving).length+1;
     const so=solNpc();if(so&&!S.solDone&&alive<=4&&so!==S.dyingNpc){S.solDone=1;so.off=4;openDlg(so,DEEP.sol1,'deep');}
     else{const sd=sadNpc();if(sd&&!S.sadDone&&(alive<=5||progress()>.8)&&sd!==S.dyingNpc){S.sadDone=1;S.sadSorry=1;sd.off=-4;openDlg(sd,DEEP.sad1,'deep');}}}
+  if(S.st<4&&!S.collapsed&&!S.fainted&&!S.qte&&S.t>=(S.debtT||0)){const db=debtor();if(db){S.debtT=S.t+20;db.helpedN=(db.helpedN||0)+1;S.st=Math.min(S.maxSt,S.st+30);S.underT=0;
+    log(db.name+' ti afferra prima che le gambe cedano e ti sorregge. Ti mette in bocca un concentrato: «Mangia. Te lo devo.»','var(--green)');helpSay(db,'TI TENGO IO! MANGIA QUESTO!');sfx.eat();relUp(db,4);}}
   if(S.infame){S.swT-=dt;if(S.swT<=0){S.swT=rand(4,9);const d=rand(-9,6);S.mh=clamp(S.mh+d,0,100);if(d<-5)log(pick(['“Cosa ho fatto?”','“Non guardatemi così.”','“Ho fatto quello che dovevo. Vero?”','“Li sento ridere di me.”']),'var(--red)','th');}}
   if(!S.dyingNpc&&S.npcs.filter(n=>n.alive&&!n.leaving).length+1<=6){const c=S.npcs.filter(n=>n.alive&&!n.leaving);if(c.length){S.dyingNpc=pick(c);if(S.dlg&&S.dlg.npc===S.dyingNpc){S.dlg=null;hideBox();}if(S.chat&&S.chat.n===S.dyingNpc)S.chat=null;}}
   if(!S.finale&&S.npcs.filter(n=>n.alive&&!n.leaving).length<=2){S.finale=true;const fin=ROUTE.c[ROUTE.c.length-1];S.zplan.push({z:'finale',dur:1e9,name:fin});S.zi=S.zplan.length-1;S.zNext=1e9;S.zones.push({z:'finale',s:S.scroll-.5*W/.15});
