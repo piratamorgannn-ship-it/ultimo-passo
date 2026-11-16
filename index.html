@@ -672,7 +672,7 @@ onTap('iCig',()=>{if(S.cig<=0)return;S.cig--;S.smoked++;S.mh=Math.min(100,S.mh+2
   log(pick(['Accendi una sigaretta. Il mondo rallenta.','Il fumo ti riempie il petto. Ti senti invincibile.','Una boccata lunga. Le gambe tornano a girare.']),'var(--green)');
   if(!S.pneumonia&&Math.random()<(S.combo==='club'?.04:.08)*S.smoked)setTimeout(()=>{if(!S||S.mode!=='play'||S.pneumonia)return;S.pneumonia=true;S.st=Math.max(0,S.st-30);S.ph=Math.max(0,S.ph-20);sfx.bad();buzz([200,80,200]);log('Tossisci sangue. Il petto brucia: è polmonite.','var(--red)');},rand(15,35)*1000);});
 onTap('iHam',()=>{if(S.ham<=0)return;S.ham--;eat(35,0,0,'Carne cruda. Ti fa schifo, ma senti la forza tornare.');
-  if(S.combo!=='cacciatore'&&Math.random()<.4)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
+  if(S.combo!=='cacciatore'&&Math.random()<.32)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-15);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('La carne cruda non va giù. Vomiti camminando.','var(--red)');},3000);});
 onTap('iBar',()=>{if(!(S.bar>0))return;S.bar--;eat(25,4,3,'La barretta del tuo amico. Sa di cioccolato e di casa.');});
 onTap('iTub',()=>{if(S.tub<=0)return;S.tub--;eat(22,2,3,'Un tubetto di concentrato. Disgustoso, ma nutre.');});
 onTap('iPee',()=>{if(S.bl<35||S.peeing>0)return;S.peeing=5;log('Ti liberi senza fermarti... il passo ne risente. Tieni il ritmo!','var(--amber)');});
@@ -683,7 +683,7 @@ $('jukeHud').addEventListener('click',()=>{const T=TRACKS();let i=T.findIndex(t=
 function eat(st,mh,ph,msg){
   S.st=Math.min(S.maxSt,S.st+st);S.mh=Math.min(100,S.mh+mh);S.ph=Math.min(100,S.ph+ph);sfx.eat();
   const full=S.sto>45;S.sto+=30;log(msg,'var(--green)');
-  if(full&&Math.random()<(1-S.tr.s/100)*1.1)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-12);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('Hai mangiato troppo e troppo in fretta. Vomiti camminando.','var(--red)');},2500);
+  if(full&&Math.random()<(1-S.tr.s/100)*1.1-.08)setTimeout(()=>{if(!S||S.mode!=='play')return;S.hy=Math.max(0,S.hy-20);S.st=Math.max(0,S.st-12);S.mh-=8;S.speed=Math.max(0,S.speed-2*SR);S.steps=[];sfx.bad();buzz(200);log('Hai mangiato troppo e troppo in fretta. Vomiti camminando.','var(--red)');},2500);
 }
 function cadence(){const st=S.steps;if(st.length<2)return 0;const n=Math.min(st.length-1,4);let sum=0;for(let i=st.length-n;i<st.length;i++)sum+=st[i]-st[i-1];const since=S.t-st[st.length-1];if(since>2)return 0;return 1/Math.max(sum/n,since,.15);}
 
@@ -1596,7 +1596,7 @@ function pickItem(shoe){
 const T_ITEM={
  biscotti:{pro:'Un po\' di stamina e un po\' di mente.',con:'Sono solo due.',how:'Li hai dall\'inizio: te li ha dati tua madre.'},
  radio:{pro:'La mente cala il 30% più lentamente e la musica del momento ti fa compagnia.',con:'Col passare della marcia si guasta e diventa sempre più inquietante.',how:'Sei morto per una crisi di panico.'},
- hamburger:{pro:'Moltissima stamina in un colpo solo.',con:'4 volte su 10 lo vomiti.',how:'Sei diventato fratello di un altro marciatore.'},
+ hamburger:{pro:'Moltissima stamina in un colpo solo.',con:'Circa 1 volta su 3 lo vomiti.',how:'Sei diventato fratello di un altro marciatore.'},
  panini:{pro:'Tanta stamina e un po\' di mente, per tre volte.',con:'Occupano il tuo unico posto libero.',how:'Qualcuno ti ha odiato a morte.'},
  orologio:{pro:'Vedi giorno e ora, e la mente cala il 15% più lentamente.',con:'Non si mangia.',how:'Sei morto quando più di metà dei marciatori era già caduta.'},
  kway:{pro:'Sotto la pioggia rallenti meno e non ti inzuppi: niente fatica né fisico in più.',con:'Quando non piove è solo peso.',how:'Hai camminato sotto 10 acquazzoni (contando tutte le marce).'},
