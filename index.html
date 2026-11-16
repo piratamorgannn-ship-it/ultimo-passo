@@ -214,6 +214,8 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
+const APP_VER='0.11';  // versione dell'app: +0.01 a ogni modifica
+
 (()=>{
 'use strict';
 const H=128,LIMIT=5.5,SR=LIMIT/6.4,K=4.6*SR,TOTAL=46,QPER=10,SPR=2; // SR: rapporto col vecchio limite (6,4 km/h) per ricalibrare passo e fatica
@@ -1438,7 +1440,7 @@ Tu sei uno di loro. Un marciatore come tutti gli altri: le stesse gambe, la stes
 Quest'anno, dall'urna, è uscito il tuo nome.
 Cammina. O muori.`;
 function titleScreen(){
-  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="tcol"><button class="ghost trbtn" id="manual">📖 MANUALE</button>${store.get('up_runs',0)>=1?'<button class="ghost trbtn" id="trophy">🏆 TROFEI</button>':''}<button class="ghost trbtn" id="rstT" style="border-color:#8a2a2a;color:#d87060">↺ RESET</button></div><div class="copy">© cpt_morgannn</div>
+  show(`<canvas id="tcv"></canvas><canvas class="ttl" id="ttl"></canvas><button class="main hide" id="go">INIZIA A CAMMINARE</button><div class="tcol"><button class="ghost trbtn" id="manual">📖 MANUALE</button>${store.get('up_runs',0)>=1?'<button class="ghost trbtn" id="trophy">🏆 TROFEI</button>':''}<button class="ghost trbtn" id="rstT" style="border-color:#8a2a2a;color:#d87060">↺ RESET</button></div><div class="copy">© cpt_morgannn · v${APP_VER}</div>
   <div class="dbg" id="dbgw"><span><button class="ghost" id="fsT" style="padding:3px 8px;font-size:10px">⛶ schermo intero</button> <button class="ghost" id="rtT" style="padding:3px 8px;font-size:10px">⟳ rotazione</button></span><button class="ghost" id="devT" style="padding:3px 10px;font-size:10px;border-color:#c86a3a;color:#e8a070">🛠 DEVELOP</button></div>`,'title');
   const tc=$('tcv');drawTitleArt(tc);
   const t=$('ttl'),go=$('go');let fin=false;drawTitleText(t);
