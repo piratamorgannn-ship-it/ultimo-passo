@@ -214,7 +214,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.14';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.15';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -821,13 +821,188 @@ function sickify(d){
   const sc=o=>o.m!=null?o.m*2+(o.r||0)*.1:(o.r||0);let best=0;d.o.forEach((o,i)=>{if(sc(o)>sc(d.o[best]))best=i;});
   return {...d,o:d.o.map((o,i)=>{if(i===best)return o;const a=freshPick(SICK_ANS);return {...o,l:a[0],sick:1,sm:a[1],ss:a[2]};})};
 }
+/* risposte del giocatore legate al suo passato, per argomento di ciò che dice il PNG */
+const BG_TOPICS=[
+ ['_skip',/barzellett|farti sorridere|battute|cecchino sul primo|ha vinto la marcia sette|posso camminare vicino a te\? solo|non ho mai avuto un amico\. mai|mi perdoni\?|cammino per arrivare lassù/i],
+ ['ostile',/spero che tu|applaudir|che schifo|togliti|non farti illusioni|mi hai guardato|ti ho odiato|crepa|sei il prossimo|cocco dei soldati|sarà mio|rubato|hehe|uno in meno|dirò ai soldati/i],
+ ['fede',/\bdio\b|credi in|lassù|coscienza|preg|chiesa|santo|madonna|anim[ae]\b|inferno|paradiso|candel|monaco|digiun|posto migliore|peccat/i],
+ ['famiglia',/per chi cammin/i],
+ ['regime',/consiglio|federazione|regime|governo|crimine|\bgrazia\b|marescial|requisizion|propaganda|volantin|poesie sui muri|ho detto di no|urli/i],
+ ['guerra',/guerra|soldat|bomb|fronte|esercit|fucil|cecchin|blindat|confine|divisa/i],
+ ['famiglia',/madre|padre|mamma|pap[àa]|fratell|sorell|figli|nonn|moglie|marito|famiglia|\bzi[oa]\b/i],
+ ['morte',/mort|muor|morir|moriamo|cadavere|cingol|uccid|tomb|ammazz|sotto i\b|ultimi/i],
+ ['paura',/paura|trem|panico|terror|spavent|svengo|svenire/i],
+ ['amore',/ragazz[ao]|fidanzat|bac[io]|innamor|\bamo\b|amore|lettera|ballare/i],
+ ['casa',/casa|paese|citt[àa]|torn|ti aspett|spiaggia|pub\b/i],
+ ['lavoro',/soldi|debit|lavor|pagan|porto|infermier|medico|pugni|maestro|fabbrica|campi/i],
+ ['fatica',/piedi|gambe|fame|sete|stanc|zoppic|vescic|pulsazion|lingua|caff[èe]|sedia|rallent|passo|barcoll|fiamme/i],
+ ['futuro',/vinc|traguardo|dopo|finir[àa]|se arrivo|lista|sogn|volevo fare|avresti fatto|possibilit|scommett/i],
+ ['ricordi',/ricord|cucina|\bcane\b|mangiare|stella|scuola|materia|bambin|infanzia/i],
+ ['amicizia',/promett|promess|amic|insieme|vicin|fidati|copri|ascoltat|raccontami|dimmi qualcosa/i],
+];
+const BGR=[
+ /* ORFANO DI GUERRA */ {
+  ostile:[['«Sono cresciuto in un orfanotrofio. Quelli come te li ho già visti, e sono ancora qui.»',2,2]],
+  fede:[['«Le suore ci facevano pregare per i nostri genitori morti. Io pregavo che tornassero. Non è successo.»',8,0]],
+  regime:[['«Il Consiglio ha costruito l\'orfanotrofio dove sono cresciuto. Poi ha costruito questa strada. Stessa mano.»',8,1]],
+  guerra:[['«I soldati che hanno bombardato casa mia avevano la stessa faccia di questi. Ero troppo piccolo per ricordarla, ma la riconosco.»',8,-1]],
+  famiglia:[['«Io una famiglia non l\'ho mai avuta. Ti invidio, sai? Anche se fa male.»',10,-1],['«All\'orfanotrofio ci chiamavamo fratelli. Non era vero, ma aiutava.»',8,2]],
+  morte:[['«I miei sono morti sotto le bombe, una notte d\'inverno. Da allora la morte non mi sembra una cosa lontana.»',8,-2],['«Le suore dicevano che i morti ci guardano. Spero che oggi guardino da un\'altra parte.»',7,1]],
+  paura:[['«All\'orfanotrofio, di notte, avevamo paura tutti. Ci tenevamo la mano tra le brande. Vuoi che lo facciamo anche qui?»',10,2],['«Ho imparato presto a non piangere. La paura però resta, ce l\'ho anch\'io.»',8,0]],
+  amore:[['«Io non ho mai ricevuto una lettera in vita mia. Quella che hai lasciato vale tanto, credimi.»',8,1]],
+  casa:[['«Io non ho una casa a cui tornare. Forse per questo cammino più leggero.»',6,-2]],
+  lavoro:[['«In orfanotrofio si lavorava in lavanderia dall\'alba. Le mani mi sanguinavano. Le gambe, adesso, sono peggio.»',6,0]],
+  fatica:[['«Le suore ci facevano stare in piedi ore, in cortile, per punizione. Ho le gambe abituate a soffrire.»',8,2]],
+  futuro:[['«Se vinco, voglio solo trovare la tomba dei miei genitori. Nessuno mi ha mai detto dov\'è.»',10,1]],
+  ricordi:[['«Il ricordo più bello che ho è la cucina delle suore la notte di Natale: cioccolata calda, una tazza a testa.»',8,2]],
+  amicizia:[['«Non ho mai avuto nessuno che contasse su di me. Va bene. Prometto.»',10,2]]},
+ /* CAMPO PROFUGHI */ {
+  ostile:[['«Al campo profughi ne ho visti tanti come te. Alla fine finivano tutti in fila per il pane, come gli altri.»',2,2]],
+  fede:[['«Al campo c\'era un prete che diceva messa sotto la lamiera. Pioveva dentro. Cantavamo lo stesso.»',8,2]],
+  regime:[['«Ho attraversato tre confini per scappare da un regime. Sono finito in un altro. La strada è sempre quella.»',8,0]],
+  guerra:[['«Ai confini c\'erano soldati come questi. Mia madre mi diceva: non guardarli negli occhi, e cammina.»',8,1]],
+  famiglia:[['«Mia madre mi teneva per mano mentre passavamo i confini. Ora qui non c\'è nessuno a tenermela.»',10,-1],['«Al campo vivevamo in nove in una baracca. Ho imparato a voler bene a tutti, per forza.»',8,2]],
+  morte:[['«Lungo la strada dei profughi la gente cadeva e non si rialzava. Non pensavo di rivedere la stessa scena.»',8,-2],['«Al campo dicevano: chi si siede, resta. Avevano ragione.»',8,1]],
+  paura:[['«La paura la conosco, mi ha accompagnato per tre confini. Si cammina anche con lei.»',10,2],['«Da bambino, alla frontiera, tremavo così. Mia madre mi faceva contare i passi. Contiamo?»',10,2]],
+  amore:[['«Al campo c\'era una ragazza che divideva il pane con me. Non le ho mai detto grazie come si deve.»',8,0]],
+  casa:[['«Casa mia era una baracca di lamiera. Eppure stasera la rimpiango.»',8,-1]],
+  lavoro:[['«Al campo ho fatto di tutto: scaricato camion, cucito sacchi. Per una pagnotta.»',6,1]],
+  fatica:[['«Ho camminato più di così, da bambino. Senza scarpe. Le gambe se lo ricordano.»',8,3]],
+  futuro:[['«Se vinco, chiedo un passaporto per tutta la mia famiglia. Uno vero, che nessuno possa strappare.»',10,2]],
+  ricordi:[['«Ricordo il primo pane bianco, al campo. L\'abbiamo diviso in nove. Era buonissimo.»',8,2]],
+  amicizia:[['«Al campo si imparava a fidarsi di pochi. Di te mi fido. Prometto.»',10,2]]},
+ /* FIGLIO DI UN DISERTORE */ {
+  ostile:[['«Sono il figlio di un disertore. Mi insultano da quando ho sei anni. Fatti venire un\'idea nuova.»',2,3]],
+  fede:[['«Mio padre diceva che Dio non vuole che si spari ai fratelli. Per questo ha gettato il fucile.»',10,1]],
+  regime:[['«Mio padre ha detto di no al Consiglio. Ha gettato il fucile. Da allora sui nostri documenti c\'è un timbro rosso.»',12,1]],
+  guerra:[['«Mio padre si rifiutò di sparare. Lo chiamarono codardo. Io lo chiamo papà.»',12,2]],
+  famiglia:[['«Mio padre è sparito nell\'ultimo anno di guerra. Mia madre apre ancora la porta quando bussano di notte.»',10,-1],['«In famiglia ci hanno insegnato a non abbassare la testa. Anche quando costa caro.»',8,2]],
+  morte:[['«Mio padre poteva morire al fronte, ha scelto di sparire. A volte mi chiedo se sia vivo.»',8,-2],['«Forse mi hanno estratto per colpa di mio padre. Non lascerò che finisca così.»',8,1]],
+  paura:[['«Dicevano che mio padre era un codardo. Ma ci vuole coraggio per gettare il fucile. Anche avere paura è coraggio.»',10,3],['«Ho paura anch\'io. Ma mio padre mi ha insegnato che si può avere paura e dire di no lo stesso.»',10,2]],
+  amore:[['«La ragazza che mi piaceva ha smesso di salutarmi quando ha saputo di mio padre. Spero che la tua sia diversa.»',8,-1]],
+  casa:[['«A casa mia ogni mese viene un funzionario a controllare. Mia madre gli offre il caffè. Lei è così.»',8,1]],
+  lavoro:[['«Con il timbro rosso sui documenti nessuno mi faceva lavorare. Facevo lavori di notte, di nascosto.»',6,0]],
+  fatica:[['«Mio padre ha camminato per settimane per non farsi trovare. Se ce l\'ha fatta lui, ce la faccio anch\'io.»',8,2]],
+  futuro:[['«Se vinco, chiederò di togliere il timbro rosso dai documenti di mia madre. Nient\'altro.»',10,2]],
+  ricordi:[['«Ricordo mio padre che mi insegnava a fischiare, l\'estate prima di sparire.»',8,2]],
+  amicizia:[['«Mio padre diceva: non si lascia indietro nessuno. Te lo prometto.»',12,2]]},
+ /* FIGLIO DI UN UFFICIALE */ {
+  ostile:[['«Mio padre è un ufficiale del Consiglio. Ho cenato con gente peggiore di te tutte le domeniche.»',2,2]],
+  fede:[['«Mio padre andava a messa in divisa, in prima fila. Poi firmava le liste. Io in chiesa non ci credo più.»',8,0]],
+  regime:[['«Conosco il Consiglio dall\'interno: mio padre ci siede. Non hanno pietà nemmeno dei loro figli. Guardami.»',10,-1]],
+  guerra:[['«Mio padre ha comandato uomini come questi. Conosco quei gradi. Quello sul blindato è solo un sergente.»',8,1]],
+  famiglia:[['«Mio padre ha medaglie fino alla cintura. Non ne ha usata una per togliere il mio nome dall\'urna.»',8,-2],['«So cosa pensi della mia famiglia. Non sono come lui.»',6,0]],
+  morte:[['«Mio padre ha firmato condanne a morte senza alzare gli occhi. Ora tocca a me camminare verso la mia.»',8,-2],['«Se muoio qui, mio padre farà un discorso. Bello, pieno di parole vuote.»',6,1]],
+  paura:[['«Da piccolo avevo paura di mio padre. Questa paura qui è quasi più onesta.»',8,1],['«Ho paura, sì. Il figlio di un ufficiale non dovrebbe dirlo. Lo dico lo stesso.»',10,1]],
+  amore:[['«Mio padre aveva già scelto chi dovevo sposare. Io non l\'ho mai amata. Tu almeno hai scelto.»',8,0]],
+  casa:[['«Casa mia ha i tappeti e i ritratti alle pareti. E nessuno che mi aspetti davvero.»',6,-1]],
+  lavoro:[['«Io non ho mai lavorato un giorno. Mi vergogno a dirtelo, qui in mezzo a voi.»',8,0]],
+  fatica:[['«Mio padre mi faceva marciare in giardino, per disciplina. Pensavo fosse crudele. Ora gli devo qualcosa.»',6,2]],
+  futuro:[['«Se vinco, salgo sul palco e gli sputo addosso. Davanti a tutti.»',10,3]],
+  ricordi:[['«Il ricordo più bello? La cuoca di casa che mi faceva le frittelle di nascosto da mio padre.»',8,2]],
+  amicizia:[['«Tutti quelli che mi sono stati amici volevano qualcosa da mio padre. Tu no. Prometto.»',10,2]]},
+ /* CONTRABBANDIERE */ {
+  ostile:[['«Al mercato nero i duri come te li compravo con due pacchetti di sigarette.»',2,2]],
+  fede:[['«Ho venduto rosari di contrabbando, sai? Andavano a ruba. La gente ha bisogno di credere.»',8,1]],
+  regime:[['«Il Consiglio mi ha arrestato tre volte. Poi i suoi funzionari compravano da me la penicillina.»',8,2]],
+  guerra:[['«Con i soldati ho fatto affari per anni. Calze di nylon per le fidanzate. Sono uomini, si comprano.»',8,1]],
+  famiglia:[['«Mia madre non ha mai voluto sapere cosa vendevo. Prendeva i soldi e mi baciava in fronte.»',8,1],['«Mio fratello piccolo mi faceva da palo sotto i portici. Spero che smetta, adesso.»',8,0]],
+  morte:[['«Ho venduto medicine a chi stava per morire. A volte arrivavo tardi. Me li ricordo tutti.»',8,-2],['«Al mercato nero si impara una cosa: tutto ha un prezzo. Anche questa strada.»',6,1]],
+  paura:[['«La paura la conosco: è quella della polizia alle tre di notte. Questa è più lenta, ma uguale.»',8,1],['«Quando avevo paura, sotto i portici, contavo la merce. Tieni, conta i miei passi.»',8,2]],
+  amore:[['«Ho procurato calze di nylon a mezza città per le loro ragazze. Per la mia, mai niente.»',8,0]],
+  casa:[['«Casa mia era sotto i portici. Lì sapevo sempre dove trovare quello che mancava.»',6,1]],
+  lavoro:[['«Io il mio lavoro lo facevo di notte e senza ricevuta. Ma era un lavoro, eh.»',8,2]],
+  fatica:[['«Se usciamo vivi, ti procuro un paio di scarpe come si deve. Parola di contrabbandiere.»',10,2]],
+  futuro:[['«Se vinco, apro un negozio vero, con l\'insegna. Niente più portici.»',8,2]],
+  ricordi:[['«Ricordo la prima sigaretta americana che ho venduto. Alla fine me la sono fumata io.»',8,2]],
+  amicizia:[['«Al mercato nero la parola data è tutto. Hai la mia.»',10,2]]},
+ /* MINATORE */ {
+  ostile:[['«Ho passato anni sottoterra con uomini veri. Tu non mi fai paura.»',2,2]],
+  fede:[['«In miniera ogni mattina ci facevamo il segno della croce prima di scendere. Anche chi non credeva.»',8,2]],
+  regime:[['«Il carbone della Federazione l\'ho scavato io. Con queste mani. E loro mi ripagano così.»',10,1]],
+  guerra:[['«I soldati venivano in miniera a contarci all\'uscita. Come adesso.»',8,0]],
+  famiglia:[['«Mio padre era minatore, e suo padre prima di lui. In famiglia si muore di polmoni, non di strada.»',8,-1],['«Mia moglie... la mia fidanzata, volevo dire, mi aspetta all\'uscita del turno, ogni sera. Stasera no.»',8,-1]],
+  morte:[['«Ho visto crollare una galleria con dentro sei amici. Questa è solo una strada.»',8,-2],['«Sottoterra il silenzio vuol dire che qualcosa sta per crollare. Qui vuol dire lo stesso.»',6,0]],
+  paura:[['«In miniera la paura si sente nel petto, come qui. Si respira piano e si va avanti.»',10,2],['«In miniera si canta per non pensare. Vuoi che canti?»',10,2]],
+  amore:[['«Lei mi lavava la polvere nera dal collo, ogni sera. È la cosa più bella che conosco.»',8,1]],
+  casa:[['«Casa mia è sotto una ciminiera. Sa di carbone anche il pane. Mi manca lo stesso.»',8,0]],
+  lavoro:[['«Lavoro in miniera da quando avevo quattordici anni. Questa strada, almeno, ha il cielo sopra.»',8,3]],
+  fatica:[['«Turni di dodici ore piegato in due. Le gambe le ho dure come il carbone.»',8,3]],
+  futuro:[['«Se vinco, non scendo più. Mai più. Voglio vedere il sole tutti i giorni.»',10,2]],
+  ricordi:[['«Ricordo il primo giorno di sole dopo un mese di turni di notte. Ho pianto come un bambino.»',8,2]],
+  amicizia:[['«In miniera ci si lega con la stessa corda. Da adesso sei nella mia cordata.»',12,2]]},
+ /* CONTADINI ESPROPRIATI */ {
+  ostile:[['«Ho visto portare via le vacche di mio padre. Tu sei solo uno che abbaia.»',2,2]],
+  fede:[['«Mia nonna benediceva i campi ogni primavera. Poi sono arrivate le requisizioni. Dio non è servito.»',8,0]],
+  regime:[['«Il Consiglio si è preso la nostra terra con un timbro. Mio padre ora ci lavora per loro, a giornata.»',10,1]],
+  guerra:[['«I soldati vennero con i camion a prendere il grano. Uno mi diede una caramella. Non l\'ho mai mangiata.»',8,0]],
+  famiglia:[['«Mio padre ora fa il bracciante sui campi che erano suoi. Non alza più la testa.»',10,-1],['«Eravamo in sette a tavola. Ora siamo in sette a fare la fame.»',8,-1]],
+  morte:[['«In campagna la morte la vedi ogni giorno: le bestie, il raccolto. Ma non così.»',8,-1],['«La terra si riprende tutti, prima o poi. Io vorrei che si riprendesse loro.»',6,1]],
+  paura:[['«Da bambino avevo paura dei temporali sul grano. Mio padre mi diceva: guarda avanti, non il cielo.»',10,2],['«La paura la conosco: quella di perdere tutto. L\'ho già persa una volta.»',8,0]],
+  amore:[['«La figlia dei vicini mi aspettava al fienile. Poi l\'hanno mandata in città. Non l\'ho più vista.»',8,0]],
+  casa:[['«Casa mia non è più nostra. Ma la terra si ricorda di chi la lavora.»',8,1]],
+  lavoro:[['«Mi alzavo alle quattro per mungere. Poi le vacche ce le hanno portate via. Le chiamavo per nome.»',8,-1]],
+  fatica:[['«Ho arato a mano quando non c\'era più il mulo. Le gambe sono abituate a soffrire.»',8,3]],
+  futuro:[['«La Grazia ridarebbe la terra a mio padre. Per questo cammino.»',10,3]],
+  ricordi:[['«Ricordo le vacche che tornavano dal pascolo, la sera. Ognuna sapeva qual era la sua stalla.»',8,2]],
+  amicizia:[['«In campagna una stretta di mano vale più di un contratto. Ecco la mia.»',10,2]]},
+ /* FRATELLO DI UN MARCIATORE */ {
+  ostile:[['«Mio fratello è morto su questa strada. Credi davvero che le tue parole mi facciano male?»',2,2]],
+  fede:[['«Ho pregato ogni notte per mio fratello mentre marciava. Non è servito. Ora prego per me, e mi vergogno.»',8,-1]],
+  regime:[['«Il Consiglio mi ha mandato una lettera di condoglianze per mio fratello. Firmata a macchina.»',10,0]],
+  guerra:[['«Uno di quei soldati, forse, ha sparato a mio fratello. Cerco di non guardarli in faccia.»',8,-2]],
+  famiglia:[['«Mio fratello ha marciato due anni fa. Non è tornato. Ora tocca a me.»',10,-2],['«Mia madre ha già perso un figlio su questa strada. Non può perderne un altro.»',10,1]],
+  morte:[['«Mio fratello si è fermato al centoventesimo chilometro. Io voglio passare quel punto.»',10,1],['«Ho visto le foto di mio fratello, dopo. Non auguro a nessuno di finire così.»',8,-2]],
+  paura:[['«Mio fratello mi scrisse prima di partire: avrò paura, ma camminerò. Faccio come lui.»',10,2],['«Ho paura di fare la sua stessa fine. Ma non te lo dico per farti paura.»',8,0]],
+  amore:[['«Mio fratello aveva una ragazza. Mi chiede ancora di lui, quando mi incontra.»',8,-1]],
+  casa:[['«A casa c\'è ancora la sua branda, rifatta. Mia madre non la tocca.»',8,-1]],
+  lavoro:[['«Facevo il garzone nella bottega di mio fratello. Dopo che è morto l\'abbiamo chiusa.»',6,0]],
+  fatica:[['«Mi ha lasciato le sue scarpe. Non mi stanno nemmeno. Ma cammino con quelle.»',8,1]],
+  futuro:[['«Se vinco, chiedo di sapere dov\'è sepolto mio fratello. Non ce l\'hanno mai detto.»',10,2]],
+  ricordi:[['«Ricordo mio fratello che mi portava sulle spalle alla fiera. Ero il più alto di tutti.»',8,2]],
+  amicizia:[['«Mio fratello avrebbe voluto un amico come te accanto. Prometto, per lui e per te.»',12,2]]},
+ /* STUDENTE ESPULSO */ {
+  ostile:[['«Mi hanno espulso per un volantino. Le tue minacce valgono meno della carta che ho usato.»',2,2]],
+  fede:[['«Ho letto troppa storia per credere in un Dio che lascia fare tutto questo. Ma rispetto chi ci crede.»',6,0]],
+  regime:[['«Ho scritto un volantino contro il Consiglio. Uno. E ora sono qui. Ne è valsa la pena.»',12,2]],
+  guerra:[['«Studiavo storia: ogni guerra finisce con una marcia come questa. Cambiano solo le divise.»',8,1]],
+  famiglia:[['«Mio padre ha bruciato i miei libri quando mi hanno espulso, per paura. Non l\'ho ancora perdonato.»',8,-1],['«Mia madre ha nascosto l\'ultimo volantino nella cassetta del cucito. Lo tiene ancora.»',8,1]],
+  morte:[['«Non ho paura di morire. Ho paura di dimenticare perché li odio.»',10,-1],['«La storia dimentica i nomi di chi muore su queste strade. Io voglio ricordare il tuo.»',10,1]],
+  paura:[['«La paura serve al Consiglio: ci tiene zitti. Non dargliela vinta, almeno dentro di te.»',10,2],['«Quando mi hanno arrestato tremavo come una foglia. Si sopravvive anche così.»',8,1]],
+  amore:[['«Lei distribuiva volantini con me. L\'hanno espulsa il giorno dopo. Non so dove sia ora.»',8,-1]],
+  casa:[['«Casa mia era la biblioteca della facoltà. Ora ha i sigilli alla porta.»',6,0]],
+  lavoro:[['«Volevo fare il professore. Insegnare la storia vera, non quella del Consiglio.»',8,1]],
+  fatica:[['«Studiavo fino all\'alba. Non pensavo che il corpo potesse fare così male. Ma la testa regge.»',6,1]],
+  futuro:[['«Se vinco, la Grazia la uso per riaprire la facoltà. O almeno per dirlo, in diretta.»',10,2]],
+  ricordi:[['«Ricordo l\'odore dei libri vecchi in biblioteca. Lo riconoscerei a occhi chiusi.»',8,2]],
+  amicizia:[['«Chi resiste ha bisogno di testimoni. Io sarò il tuo, e tu il mio. Prometto.»',12,2]]},
+ /* EX SEMINARISTA */ {
+  ostile:[['«Ho imparato in seminario a perdonare anche quelli come te. Non me lo rendere difficile.»',2,3]],
+  fede:[['«Ho lasciato il seminario quando il Consiglio scriveva le prediche. Ma la fede vera non me l\'hanno presa.»',12,2]],
+  regime:[['«Il Consiglio decideva anche cosa dire dal pulpito. Per questo me ne sono andato.»',10,1]],
+  guerra:[['«In seminario ho benedetto le bare dei soldati. Erano ragazzi come noi.»',8,-1]],
+  famiglia:[['«Mia madre sognava un figlio prete. Le ho spezzato il cuore due volte: quando ho lasciato, e adesso.»',8,-1],['«Prego per la tua famiglia, se vuoi. Non costa niente.»',10,3]],
+  morte:[['«Ho assistito tanti moribondi. Nessuno ha mai detto di aver paura del dopo. Avevano paura di restare soli.»',10,1],['«Se muori, dirò una preghiera per te. Anche se non ci credi.»',10,2]],
+  paura:[['«Anche Cristo ha avuto paura, nell\'orto. Non c\'è niente di cui vergognarsi.»',12,3],['«Recitiamo qualcosa insieme, piano. La voce scaccia la paura.»',10,2]],
+  amore:[['«Ho lasciato il seminario anche per una ragazza. Non gliel\'ho mai detto.»',8,0]],
+  casa:[['«Casa mia per anni è stata una cella con un crocifisso. Ora non so più dov\'è casa.»',6,-1]],
+  lavoro:[['«Facevo il catechismo ai bambini del quartiere. Era il lavoro più bello del mondo.»',8,2]],
+  fatica:[['«I pellegrini camminavano così per penitenza. Offro questo dolore per qualcuno. Per te, se vuoi.»',10,2]],
+  futuro:[['«Se vinco, apro una scuola per gli orfani. Senza prediche del Consiglio.»',10,2]],
+  ricordi:[['«Ricordo le campane del seminario all\'alba, d\'inverno. Sembrava che il mondo ricominciasse.»',8,2]],
+  amicizia:[['«Te lo prometto davanti a Dio. Per me vale ancora qualcosa.»',12,2]]},
+];
+
+const bgTopic=t=>{const f=BG_TOPICS.find(([,r])=>r.test(t||''));return f&&f[0]!=='_skip'?f[0]:null;};
 function openDlg(npc,d,kind){if(d===DEEP.sol2)S.solHeard=1;
   const fill=x=>x.replace(/\{ME\}/g,npc.name).replace(/\{CITY\}/g,npc.from||'casa');
   d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
   if(kind!=='bigot'&&kind!=='loveq')d=sickify(d);
   /* dialoghi personali: al massimo 3 risposte → una buona, una negativa e una legata al passato del giocatore */
   if(kind==='base'||kind==='deep'){const os=d.o.slice().sort((x,y)=>(y.r||0)-(x.r||0)),good=os[0],bad=os.length>1?os[os.length-1]:null;
-    let third=null;if(PLAYER&&PLAYER.bg){S.bgUsed=S.bgUsed||[];const av=PLAYER.bg.a.filter(a=>!S.bgUsed.includes(a[0]));if(av.length){const a=pick(av),nx=(good&&good.n)||(os.find(o=>o.n)||{}).n;third={l:a[0],r:a[1],m:a[2],bg:1,n:nx};}}
+    /* risposta legata al passato del giocatore: solo se coerente con quello che dice il PNG (stesso argomento) */
+    let third=null;if(PLAYER&&PLAYER.bg){S.bgUsed=S.bgUsed||[];const tp=bgTopic(d.t),set=tp&&BGR[BACKGROUNDS.indexOf(PLAYER.bg)];
+      const av=set&&set[tp]?set[tp].filter(a=>!S.bgUsed.includes(a[0])):[];if(av.length){const a=pick(av),nx=(good&&good.n)||(os.find(o=>o.n)||{}).n;third={l:a[0],r:a[1],m:a[2],bg:1,tp,n:nx};}}
     if(!third&&os.length>2)third=os.find(o=>o.g)||pick(os.slice(1,-1));
     const arr=shuffle([good,bad,third].filter(Boolean));d={...d,o:arr};}
   S.dlg={npc,d,t:0,dur:kind==='deep'?22:17,kind};S.lastTalk=npc;
@@ -841,7 +1016,7 @@ function follow(npc){setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.
 function answer(i){
   const g=S.dlg;if(!g)return;if(i>=0&&g.d&&g.d===DEEP.sad3&&g.d.o[i]&&g.d.o[i].l==='«Ti perdono.»')S.forgave=1;S.dlg=null;hideBox();S.dlgFree=S.t+3.5;const npc=g.npc;
   if(i>=0&&g.d.o[i]&&g.d.o[i].bg){const o=g.d.o[i];(S.bgUsed=S.bgUsed||[]).push(o.l);if(g.kind==='base')npc.stage++;npc.rel=clamp(npc.rel+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);
-    log(npc.name+' ti ascolta in silenzio. Poi annuisce piano.','var(--green)');fxLog(o.r,o.m,0,npc);
+    log(o.tp==='ostile'?npc.name+' ti fissa. Per una volta non trova niente da rispondere.':npc.name+' ti ascolta in silenzio. Poi annuisce piano.',o.tp==='ostile'?'var(--dim)':'var(--green)');fxLog(o.r,o.m,0,npc);
     if(o.n)setTimeout(()=>{if(S&&S.mode==='play'&&!S.dlg&&!S.qte&&npc.alive&&!npc.leaving)openDlg(npc,DEEP[o.n],'deep');},1800);else if(npc.rel>=40&&Math.random()<.6)follow(npc);return;}
   if(i>=0&&g.d.o[i]&&g.d.o[i].sick){const o=g.d.o[i];S.mh=clamp(S.mh+o.sm,0,100);if(o.ss)S.st=clamp(S.st+o.ss,0,S.maxSt);const good=o.sm>0||o.ss>0;setTimeout(()=>{if(S&&S.mode==='play')log((o.sm>0?pick(['“Strano. Mi sento meglio.”','“Che risata. Mi gira la testa, ma va bene.”','“Era assurdo. Eppure mi ha fatto bene.”']):o.ss>0?pick(['“Una forza strana nelle gambe. Non so da dove arriva.”','“La follia scalda. Le gambe vanno da sole.”']):pick(['“Perché l\'ho detto?”','“Quella non era la mia voce.”','“Sto perdendo la testa.”','“Chi ha parlato? Io?”']))+(o.ss?` (stamina ${o.ss>0?'+':''}${o.ss})`:''),good?'var(--amber)':'var(--red)','th');},900);}
   if(g.kind==='bigot'){const o=i<0?g.d.o.find(x=>x.def):g.d.o[i];npc.rel=clamp((npc.rel||0)+o.r,-100,100);S.mh=clamp(S.mh+o.m,0,100);if(o.s)S.st=clamp(S.st+o.s,0,S.maxSt);
@@ -1432,7 +1607,7 @@ function drawMap(c,prog){
 const sc=$('screen');
 function show(html,cls=''){if(!/winsc/.test(cls))finCleanup();sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.innerHTML=html;}
 const INTRO=`1979. La guerra è finita.
-Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di generali ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio Militare.
+Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di marescialli ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio dei Marescialli.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
 Quarantasei ragazzi, uno per ogni stato della Federazione, camminano senza mai fermarsi. Chi non tiene il passo viene eliminato.
 L'ultimo rimasto in piedi ottiene la Grazia: ha salva la vita e, per un anno intero, la sua terra riceve ciò che la Federazione nega a tutte le altre: pane, medicine, carbone, e nessuna requisizione.
@@ -1797,7 +1972,7 @@ DLG.aleksej=[
 DLG.colette=[
  {t:"Tu. Sì, tu, {N}. Sono {ME}, da {CITY}. Lo sai che questa Marcia è un crimine, vero? Dillo ad alta voce.",o:[O("«È un crimine.»",14),O("«Abbassa la voce, ci senti tutti.»",4),O("«Io cammino e basta.»",-8)]},
  {t:"Scrivevo poesie sui muri della facoltà. Contro il Consiglio. Indovina perché proprio io sono stata estratta.",o:[O("«Non era a sorte, allora.»",14),O("«Te la sei cercata.»",-14),O("«Recitami una poesia.»",12)]},
- {t:"Se vinco, salgo sul palco della Grazia e sputo in faccia al generale. Davanti alle telecamere.",o:[O("«Ti tengo il microfono.»",14),O("«Ti ammazzerebbero un secondo dopo.»",4),O("«Sei pazza.»",-6)]},
+ {t:"Se vinco, salgo sul palco della Grazia e sputo in faccia al maresciallo. Davanti alle telecamere.",o:[O("«Ti tengo il microfono.»",14),O("«Ti ammazzerebbero un secondo dopo.»",4),O("«Sei pazza.»",-6)]},
  {t:"Ho un fratellino che crede che io sia in vacanza. Ho lasciato una lettera per quando sarà grande.",o:[O("«Gliela leggerai tu.»",16),O("«Cosa c'è scritto?»",10),O("«Non pensarci, cammina.»",-4)]},
  {t:"Odio il silenzio di questa fila. Quarantasei persone e nessuno urla. Perché non urliamo tutti insieme?",o:[O("«Perché ci travolgerebbero.»",4),O("«Urlo con te. Al tre.»",16,-4),O("«Urla da sola.»",-10)]},
  {t:"Promettimi una cosa: se resto indietro, racconta a qualcuno che ho detto di no. Che non ero d'accordo.",o:[O("«Lo racconterò a tutti.»",18),O("«Lo dirai tu stessa.»",12),O("«Nessuno ascolterebbe.»",-10)]}];
@@ -2060,7 +2235,7 @@ const ARCS={
   x2:{t:"Vorrei sposarmi. Avere una casa sul Volga e un figlio che non dovrà mai marciare. È un desiderio piccolo, vero? Troppo piccolo per Dio.",o:[Q("«È il desiderio più grande che esista.»",D(14,6,'x3')),Q("«Dio fa il tifo per i desideri piccoli.»",D(12,7,'x3'))]},
   x3:{t:"Allora, se arrivo, mio figlio avrà il tuo nome. Non dire di no. È deciso.",o:[Q("«Allora devi arrivare.»",D(16,8)),Q("Ti si chiude la gola. Annuisci soltanto.",D(16,5))]}}],
  colette:[{
-  x1:{t:"Ti ho mentito, {N}. Non sono qui solo per sputare in faccia al generale.",o:[Q("«E per cosa, allora?»",D(6,1,'x2')),Q("«Lo sapevo.»",D(4,0,'x2'))]},
+  x1:{t:"Ti ho mentito, {N}. Non sono qui solo per sputare in faccia al maresciallo.",o:[Q("«E per cosa, allora?»",D(6,1,'x2')),Q("«Lo sapevo.»",D(4,0,'x2'))]},
   x2:{t:"Mio fratello Julien è in prigione per colpa delle mie poesie. Le firmavo con le sue iniziali per scherzo. Hanno preso lui.",o:[Q("«Non potevi immaginarlo.»",D(8,2,'x3')),Q("«Che cosa terribile.»",D(8,0,'x3')),Q("«Le poesie valevano tanto?»",D(-8,-3,'x3'))]},
   x3:{t:"Se vinco, chiedo la Grazia per lui invece che per il paese. Lo so, è egoista. Dimmi che non sono egoista.",o:[Q("«Non sei egoista. Sei sua sorella.»",D(14,6)),Q("«Lo sei. E farei lo stesso.»",D(12,5))]}},
  {x1:{t:"Ti scrivo una poesia, {N}. Adesso, a voce. Vuoi sentirla?",o:[Q("«Sì. Ti prego.»",D(8,5,'x2')),Q("«Dopo. Ho bisogno di fiato.»",D(-2,0))]},
@@ -2122,7 +2297,7 @@ function freshPick(pool){S.chatUsed=S.chatUsed||new Set();let c=pool.filter(x=>!
 /* ---- reazioni alle uccisioni ---- */
 const DEATH_SHOCK=["Oh Dio... oh Dio...","Allora ci ammazzano davvero...","Parlava con me e un attimo dopo era sotto i cingoli.","Ho il suo sangue sulle scarpe. Ho il suo sangue sulle scarpe!","Non è possibile. Non è possibile.","Era vero. Era tutto vero.","Mi viene da vomitare.","Non guardate. Non guardate indietro.","Ha urlato il nome di sua madre.","L'hanno schiacciato come un cane.","Credevo fosse solo propaganda. Credevo...","Quel rumore. Non lo dimenticherò mai.","Aveva la mia età. Aveva la mia età!","Lo hanno lasciato lì, in mezzo alla strada.","Tremo. Non riesco a smettere di tremare.","Ho sentito l'osso rompersi.","Sto per svenire. Tenetemi.","Qualcuno ha visto la sua faccia? Io sì. Io sì.","Mamma, voglio tornare a casa.","Gli ho sorriso stamattina. Gli ho sorriso.","Si è girato verso di noi prima che i cingoli lo prendessero.","È caduto senza un lamento. Senza niente.","Poteva essere chiunque. Poteva essere me.","Ho sentito qualcosa di caldo sulla faccia.","Non è un gioco. Non è mai stato un gioco."];
 const DEATH_RESIGN=["Un altro angelo.","La marcia è questa. Purtroppo...","Uno in meno. Per tutti.","Non mi giro più. Non serve.","Ci si abitua. È questa la cosa peggiore.","Riposa, amico. Tu almeno hai finito.","Prima o poi tocca a tutti.","Ho smesso di contarli.","Un'altra madre che aspetterà invano.","Un altro nome che nessuno dirà più.","Che la terra gli sia leggera.","Silenzio. Anche lui merita un minuto di silenzio.","Non piango più. Non ho più niente dentro.","Il prossimo potrei essere io. Va bene così.","Cammina. Cammina e non pensare.","È la strada che decide. Non noi."];
-const DEATH_ANGER=["Bastardi. Bastardi in divisa.","Un giorno pagherete. Tutti.","Schiacciate dei ragazzi. Siete fieri, eh?","Guardateli: ridono. Ridono!","Vorrei strappargli quel fucile di mano.","Maledetto Consiglio. Maledetti tutti.","Assassini. Assassini!","Lo chiamano ordine. È un macello.","Spero che quel blindato si ribalti.","Anche voi avete delle madri. Pensateci.","Chi vi ha insegnato a uccidere così?","Un giorno abbatteremo le vostre statue.","Ditemi il vostro nome, soldato. Voglio ricordarlo.","Sputo sulla vostra Grazia.","Non siamo bestie. Non siamo bestie!","Che i vostri figli non debbano mai marciare."];
+const DEATH_ANGER=["Marescialli assassini!","Che i Marescialli brucino all'inferno!","Ve la faranno pagare, Marescialli! Un giorno!","Bastardi. Bastardi in divisa.","Un giorno pagherete. Tutti.","Schiacciate dei ragazzi. Siete fieri, eh?","Guardateli: ridono. Ridono!","Vorrei strappargli quel fucile di mano.","Maledetti Marescialli. Maledetti tutti.","Assassini. Assassini!","Lo chiamano ordine. È un macello.","Spero che quel blindato si ribalti.","Anche voi avete delle madri. Pensateci.","Chi vi ha insegnato a uccidere così?","Un giorno abbatteremo le vostre statue.","Ditemi il vostro nome, soldato. Voglio ricordarlo.","Sputo sulla vostra Grazia.","Non siamo bestie. Non siamo bestie!","Che i vostri figli non debbano mai marciare."];
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
