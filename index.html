@@ -219,7 +219,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.29';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.30';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1877,7 +1877,7 @@ function trophies(page){
   const list=page===0?Object.entries(SHOES).map(([k,s])=>({k,n:s.n,open:!s.unlock||!!un[k],pro:s.pro,con:s.con,how:T_SHOE[k]||'',hint:s.unlock||''}))
     :[...Object.keys(ITEMS),'zainetto'].map(k=>{const it=ITEMS[k]||{},t=T_ITEM[k]||{};const open=k==='zainetto'?!!un.zainetto:(it.always||!!un[k]);return {k,n:t.n||it.n,open,pro:t.pro,con:t.con,how:t.how,hint:'Si sblocca in un modo particolare.'};});
   if(page===2){const cb=store.get('up_combos',{}),n=COMBOS.filter(c=>cb[c.id]).length;
-    show(`<h2>🏆 TROFEI · 3/3 ACCOPPIATE</h2><p class="lbl" style="margin-bottom:6px">Scoperte: ${n} / ${COMBOS.length} · alcune scarpe rendono di più insieme a un certo oggetto. Con lo zainetto conta solo il primo oggetto scelto.</p>
+    show(`<h2>🏆 TROFEI · 3/3 ACCOPPIATE</h2><p class="lbl" style="margin-bottom:6px">Scoperte: ${n} / ${COMBOS.length} · alcune scarpe rendono di più insieme a un certo oggetto.</p>
       <div class="cblist">${COMBOS.map(c=>cb[c.id]?`<div class="cb"><span class="aic">${c.ic}</span><div><b>${c.n}</b> <span class="lbl">${SHOES[c.shoe].n} + ${(T_ITEM[c.item]&&T_ITEM[c.item].n)||ITEMS[c.item].n}</span><br>✚ ${c.d}</div></div>`:`<div class="cb lock"><span class="aic">?</span><div><b>🔒 ???</b><br><span class="lbl">Scopri l'accoppiata giocando una marcia con le scarpe e l'oggetto giusti.</span></div></div>`).join('')}</div>
       <div class="row2"><button class="ghost" id="tback">MENU</button><button class="main" id="tprev">‹ OGGETTI</button></div>`,'troph');
     $('tback').addEventListener('click',titleScreen);$('tprev').addEventListener('click',()=>trophies(1));return;}
