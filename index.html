@@ -219,7 +219,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.28';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.29';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1825,8 +1825,8 @@ function equip(){
 function pickItem(shoe){
   const un=store.get('up_unlock',{}),slots=un.zainetto?2:1,streak=store.get('up_streak',0);
   let sel=RUN_ITEMS.filter(itemOpen).slice(0,slots);
-  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">${slots>1?'Hai 2 posti liberi.':'Hai un solo posto libero.'}</span></p>
-    <div class="choices pix" style="grid-template-columns:repeat(${Object.keys(ITEMS).length},minmax(0,1fr))">${Object.entries(ITEMS).map(([k,it])=>{const op=itemOpen(k);return `<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${op?'':'disabled'}>${sprite(k,!op,4)}<b>${op?it.n:'🔒 ???'}</b><small>${op?it.d:'Si sblocca in un modo particolare.'}</small></button>`;}).join('')}</div>
+  const render=()=>{show(`<h2>EQUIPAGGIAMENTO · ${YEAR}</h2><p style="margin-bottom:6px">2/2 · <b>Scegli cosa portare con te.</b> <span class="lbl" style="font-size:11px">${slots>1?'🎒 Con lo zainetto hai 2 posti liberi.':'Hai un solo posto libero. 🔒 Zainetto (2 posti): vinci '+ZAINO_WINS+' marce di fila ('+Math.min(streak,ZAINO_WINS)+'/'+ZAINO_WINS+').'}</span></p>
+    <div class="choices pix" style="grid-template-columns:repeat(${Object.keys(ITEMS).length+1},minmax(0,1fr))">${Object.entries(ITEMS).map(([k,it])=>{const op=itemOpen(k);return `<button data-k="${k}" class="${sel.includes(k)?'sel':''}" ${op?'':'disabled'}>${sprite(k,!op,4)}<b>${op?it.n:'🔒 ???'}</b><small>${op?it.d:'Si sblocca in un modo particolare.'}</small></button>`;}).join('')}<button class="zcard${un.zainetto?' sel':''}" disabled>${sprite('zainetto',!un.zainetto,4)}<b>${un.zainetto?'Zainetto':'🔒 ???'}</b><small>${un.zainetto?'+1 oggetto. Sempre con te.':'Si sblocca in un modo particolare.'}</small></button></div>
     <div class="row2"><button class="ghost" id="back">INDIETRO</button><button class="main" id="go">VAI ALLA PARTENZA</button></div>`);
     sc.querySelectorAll('.choices button[data-k]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;
       if(sel.includes(k))sel=sel.filter(x=>x!==k);else{sel.push(k);if(sel.length>slots)sel.shift();}render();}));
