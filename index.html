@@ -221,7 +221,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.32';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.33';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1091,7 +1091,7 @@ function answer(i){
 const isHeat=()=>{const h=hourNow()%24,w=S.wx.heat;return !!w&&h>=w[0]&&h<w[1];};
 function randomEvent(){
   const heat=isHeat(),wx=S.wx;
-  const ev=[['crampo',2+(S.hy<40?3:0)],['caduta',(2+(S.st<30?2:0))*(isNight()&&S.torch>0?.5:1)],['sasso',1.6],['salita',1.1*wx.hill*(S.zplan&&S.zplan[S.zi].z==='montagna'?2.2:1)],['pioggia',.9*wx.rain],['isteria',S.mh<35?3.5:0]];
+  const ev=[['crampo',(.3+2.7*Math.min(1,progress()/.7))+(S.hy<40?3*Math.min(1,.4+progress()):0)],['caduta',(2+(S.st<30?2:0))*(isNight()&&S.torch>0?.5:1)],['sasso',1.6],['salita',1.1*wx.hill*(S.zplan&&S.zplan[S.zi].z==='montagna'?2.2:1)],['pioggia',.9*wx.rain],['isteria',S.mh<35?3.5:0]];
   let r=Math.random()*ev.reduce((a,e)=>a+e[1],0),ch='crampo';for(const e of ev){r-=e[1];if(r<=0){ch=e[0];break;}}
   if(ch==='sasso'){if((S.sassi||0)>=2)ch='crampo';else S.sassi=(S.sassi||0)+1;}
   if(ch==='salita'){S.hillLen=Math.random()<.5?rand(12,18):rand(28,42);S.hill=S.hillLen;log(S.hillLen>25?'Inizia una lunga salita.':'Una salita.','var(--amber)');}
