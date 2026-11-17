@@ -78,6 +78,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:ui-m
 .box .tm b{display:block;height:100%;background:var(--amber)}
 .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px;flex:none}
 .opts button{padding:6px 8px;font-size:12px}
+.opts button.bgo{grid-column:1/-1;padding:3px 10px;font-size:11px;border-color:#6a5a3a;color:#e8d8a8;font-style:italic}
 button{font:inherit;color:var(--ink);background:#3a3248;border:2px solid #000;box-shadow:inset 0 -3px 0 #231d2c;padding:8px;text-align:left;font-size:12.5px;cursor:pointer}
 button:active{transform:translateY(1px);box-shadow:inset 0 -1px 0 #231d2c}
 button:disabled{opacity:.35}
@@ -218,7 +219,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.25';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.26';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -813,11 +814,14 @@ function startDialog(){
 }
 function deepTalk(){
   if(S.alone)return false;
-  const br=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=80);if(!br.length)return false;
+  let br=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=80);
+  if(!br.length){/* niente fraterni: con un amico, ogni tanto, un discorso a tema */const am=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving&&n.rel>=40),thl=THEME_START.filter(x=>!S.deepUsed.includes(x));
+    if(!am.length||!thl.length||Math.random()<.5)return false;const n=am.find(isNear);if(!n){nearOr(pick(am));return false;}const k=pick(thl);S.deepUsed.push(k);openDlg(n,DEEP[k],'deep');return true;}
   let left=DEEP_START.filter(k=>!S.deepUsed.includes(k));if(!left.length){S.deepUsed=[];left=DEEP_START.slice();}
   const n=br.find(isNear);if(!n){nearOr(pick(br));return false;}
   const pr=progress(),r=Math.random();let k;
-  if(pr>.6&&r<.5)k=freshPick(BRO_SICK);else if(r<.55)k=freshPick(BRO_CHAT);else{k=pick(left);S.deepUsed.push(k);}
+  const thl=THEME_START.filter(x=>!S.deepUsed.includes(x));
+  if(pr>.6&&r<.4)k=freshPick(BRO_SICK);else if(thl.length&&r<.65){k=pick(thl);S.deepUsed.push(k);}else if(r<.8)k=freshPick(BRO_CHAT);else{k=pick(left);S.deepUsed.push(k);}
   openDlg(n,DEEP[k],'deep');return true;
 }
 function loveQ(){const c=S.npcs.filter(n=>n!==S.dyingNpc&&n.named&&n.alive&&!n.leaving);if(!c.length)return false;const n=c.find(isNear);if(!n){nearOr(pick(c));return false;}openDlg(n,LOVEQ,'loveq');return true;}
@@ -838,26 +842,26 @@ function sickify(d){
   return {...d,o:d.o.map((o,i)=>{if(i===best)return o;const a=freshPick(SICK_ANS);return {...o,l:a[0],sick:1,sm:a[1],ss:a[2]};})};
 }
 /* risposte del giocatore legate al suo passato, per argomento di ciò che dice il PNG */
+/* battute dei PNG a cui il passato del giocatore risponde in modo pertinente (solo queste: le altre restano a 3 risposte) */
 const BG_TOPICS=[
- ['_skip',/barzellett|farti sorridere|battute|cecchino sul primo|ha vinto la marcia sette|posso camminare vicino a te\? solo|non ho mai avuto un amico\. mai|mi perdoni\?|cammino per arrivare lassù/i],
  ['ostile',/spero che tu|applaudir|che schifo|togliti|non farti illusioni|mi hai guardato|ti ho odiato|crepa|sei il prossimo|cocco dei soldati|sarà mio|rubato|hehe|uno in meno|dirò ai soldati/i],
- ['fede',/\bdio\b|credi in|lassù|coscienza|preg|chiesa|santo|madonna|anim[ae]\b|inferno|paradiso|candel|monaco|digiun|posto migliore|peccat/i],
- ['famiglia',/per chi cammin/i],
- ['regime',/consiglio|federazione|regime|governo|crimine|\bgrazia\b|marescial|requisizion|propaganda|volantin|poesie sui muri|ho detto di no|urli/i],
- ['guerra',/guerra|soldat|bomb|fronte|esercit|fucil|cecchin|blindat|confine|divisa/i],
- ['famiglia',/madre|padre|mamma|pap[àa]|fratell|sorell|figli|nonn|moglie|marito|famiglia|\bzi[oa]\b/i],
- ['morte',/mort|muor|morir|moriamo|cadavere|cingol|uccid|tomb|ammazz|sotto i\b|ultimi/i],
- ['paura',/paura|trem|panico|terror|spavent|svengo|svenire/i],
- ['amore',/ragazz[ao]|fidanzat|bac[io]|innamor|\bamo\b|amore|lettera|ballare/i],
- ['casa',/casa|paese|citt[àa]|torn|ti aspett|spiaggia|pub\b/i],
- ['lavoro',/soldi|debit|lavor|pagan|porto|infermier|medico|pugni|maestro|fabbrica|campi/i],
- ['fatica',/piedi|gambe|fame|sete|stanc|zoppic|vescic|pulsazion|lingua|caff[èe]|sedia|rallent|passo|barcoll|fiamme/i],
- ['futuro',/vinc|traguardo|dopo|finir[àa]|se arrivo|lista|sogn|volevo fare|avresti fatto|possibilit|scommett/i],
- ['ricordi',/ricord|cucina|\bcane\b|mangiare|stella|scuola|materia|bambin|infanzia/i],
- ['amicizia',/promett|promess|amic|insieme|vicin|fidati|copri|ascoltat|raccontami|dimmi qualcosa/i],
+ ['aspetta',/C'è qualcuno che ti aspetta|Ce l'hai la ragazza|Tu per chi cammin/i],
+ ['sogni',/cosa avresti fatto|Ho una lista di cose/i],
+ ['morte',/^Hai paura di morire|Ho visto morire tanta gente|Tu e io saremo gli ultimi|Quando mi hanno estratto ho pensato/i],
+ ['paura',/^Ho paura, |Ti ricordi com'eri al primo|Di cosa avevi paura/i],
+ ['fede',/Credi in qualcosa|Credi che chi muore|Ho pregato per tutti|non sono riuscito a pregare|una candela per ogni marciatore|Forse Dio cammina qui/i],
+ ['casa',/Raccontami di casa tua|Descrivimi la tua cucina|prima sera a casa/i],
+ ['ricordi',/ricordo più bello/i],
+ ['regime',/questa Marcia è un crimine|Odio il silenzio di questa fila/i],
+ ['guerra',/Ho visto come guardi i soldati/i],
+ ['amicizia',/unico amico vero|Se resto indietro, non voltarti|Se uno di noi due cade/i],
+ ['fatica',/piedi in fiamme|Ti ho visto barcollare/i],
+ ['amore',/lettera sotto il cuscino/i],
 ];
 const BGR=[
  /* ORFANO DI GUERRA */ {
+  aspetta:[['«Nessuno. Le suore, forse, se si ricordano ancora di me. Cammino per me. Triste, vero?»',10,1]],
+  sogni:[['«Avrei cercato i miei genitori. Le loro tombe, almeno. È in cima alla mia lista.»',8,2]],
   ostile:[['«Sono cresciuto in un orfanotrofio. Quelli come te li ho già visti, e sono ancora qui.»',2,2]],
   fede:[['«Le suore ci facevano pregare per i nostri genitori morti. Io pregavo che tornassero. Non è successo.»',8,0]],
   regime:[['«Il Consiglio ha costruito l\'orfanotrofio dove sono cresciuto. Poi ha costruito questa strada. Stessa mano.»',8,1]],
@@ -873,6 +877,8 @@ const BGR=[
   ricordi:[['«Il ricordo più bello che ho è la cucina delle suore la notte di Natale: cioccolata calda, una tazza a testa.»',8,2]],
   amicizia:[['«Non ho mai avuto nessuno che contasse su di me. Va bene. Prometto.»',10,2]]},
  /* CAMPO PROFUGHI */ {
+  aspetta:[['«Mia madre e i miei fratelli, in una baracca ai margini del campo. Cammino per loro.»',10,1]],
+  sogni:[['«Avrei preso un treno. Uno vero, con il biglietto, senza scappare da niente.»',8,2]],
   ostile:[['«Al campo profughi ne ho visti tanti come te. Alla fine finivano tutti in fila per il pane, come gli altri.»',2,2]],
   fede:[['«Al campo c\'era un prete che diceva messa sotto la lamiera. Pioveva dentro. Cantavamo lo stesso.»',8,2]],
   regime:[['«Ho attraversato tre confini per scappare da un regime. Sono finito in un altro. La strada è sempre quella.»',8,0]],
@@ -888,6 +894,8 @@ const BGR=[
   ricordi:[['«Ricordo il primo pane bianco, al campo. L\'abbiamo diviso in nove. Era buonissimo.»',8,2]],
   amicizia:[['«Al campo si imparava a fidarsi di pochi. Di te mi fido. Prometto.»',10,2]]},
  /* FIGLIO DI UN DISERTORE */ {
+  aspetta:[['«Mia madre. Ogni sera apre la porta pensando che sia mio padre. Non voglio che la apra per niente anche per me.»',10,1]],
+  sogni:[['«Avrei cercato mio padre. Ho una lista di posti dove potrebbe essersi nascosto.»',8,2]],
   ostile:[['«Sono il figlio di un disertore. Mi insultano da quando ho sei anni. Fatti venire un\'idea nuova.»',2,3]],
   fede:[['«Mio padre diceva che Dio non vuole che si spari ai fratelli. Per questo ha gettato il fucile.»',10,1]],
   regime:[['«Mio padre ha detto di no al Consiglio. Ha gettato il fucile. Da allora sui nostri documenti c\'è un timbro rosso.»',12,1]],
@@ -903,6 +911,8 @@ const BGR=[
   ricordi:[['«Ricordo mio padre che mi insegnava a fischiare, l\'estate prima di sparire.»',8,2]],
   amicizia:[['«Mio padre diceva: non si lascia indietro nessuno. Te lo prometto.»',12,2]]},
  /* FIGLIO DI UN UFFICIALE */ {
+  aspetta:[['«Mio padre, in tribuna, con le medaglie. Non aspetta me: aspetta di vedere come va a finire.»',10,1]],
+  sogni:[['«Avrei fatto tutto quello che mio padre mi ha vietato. La lista è lunga.»',8,2]],
   ostile:[['«Mio padre è un ufficiale del Consiglio. Ho cenato con gente peggiore di te tutte le domeniche.»',2,2]],
   fede:[['«Mio padre andava a messa in divisa, in prima fila. Poi firmava le liste. Io in chiesa non ci credo più.»',8,0]],
   regime:[['«Conosco il Consiglio dall\'interno: mio padre ci siede. Non hanno pietà nemmeno dei loro figli. Guardami.»',10,-1]],
@@ -918,6 +928,8 @@ const BGR=[
   ricordi:[['«Il ricordo più bello? La cuoca di casa che mi faceva le frittelle di nascosto da mio padre.»',8,2]],
   amicizia:[['«Tutti quelli che mi sono stati amici volevano qualcosa da mio padre. Tu no. Prometto.»',10,2]]},
  /* CONTRABBANDIERE */ {
+  aspetta:[['«Mia madre e un paio di creditori. Lei spera che torni. Loro molto di più.»',10,1]],
+  sogni:[['«Avrei aperto un negozio vero, con l\'insegna e la luce accesa. Niente più portici.»',8,2]],
   ostile:[['«Al mercato nero i duri come te li compravo con due pacchetti di sigarette.»',2,2]],
   fede:[['«Ho venduto rosari di contrabbando, sai? Andavano a ruba. La gente ha bisogno di credere.»',8,1]],
   regime:[['«Il Consiglio mi ha arrestato tre volte. Poi i suoi funzionari compravano da me la penicillina.»',8,2]],
@@ -933,6 +945,8 @@ const BGR=[
   ricordi:[['«Ricordo la prima sigaretta americana che ho venduto. Alla fine me la sono fumata io.»',8,2]],
   amicizia:[['«Al mercato nero la parola data è tutto. Hai la mia.»',10,2]]},
  /* MINATORE */ {
+  aspetta:[['«La mia ragazza, all\'uscita del pozzo. Le ho promesso che stavolta risalgo anch\'io.»',10,1]],
+  sogni:[['«Avrei visto il mare. Non l\'ho mai visto. Ho visto solo il buio, sottoterra.»',8,2]],
   ostile:[['«Ho passato anni sottoterra con uomini veri. Tu non mi fai paura.»',2,2]],
   fede:[['«In miniera ogni mattina ci facevamo il segno della croce prima di scendere. Anche chi non credeva.»',8,2]],
   regime:[['«Il carbone della Federazione l\'ho scavato io. Con queste mani. E loro mi ripagano così.»',10,1]],
@@ -948,6 +962,8 @@ const BGR=[
   ricordi:[['«Ricordo il primo giorno di sole dopo un mese di turni di notte. Ho pianto come un bambino.»',8,2]],
   amicizia:[['«In miniera ci si lega con la stessa corda. Da adesso sei nella mia cordata.»',12,2]]},
  /* CONTADINI ESPROPRIATI */ {
+  aspetta:[['«Mio padre, i miei fratelli e una terra che non è più nostra. Cammino per riprenderla.»',10,1]],
+  sogni:[['«Avrei riavuto la terra. E ci avrei piantato un frutteto, di quelli che durano cent\'anni.»',8,2]],
   ostile:[['«Ho visto portare via le vacche di mio padre. Tu sei solo uno che abbaia.»',2,2]],
   fede:[['«Mia nonna benediceva i campi ogni primavera. Poi sono arrivate le requisizioni. Dio non è servito.»',8,0]],
   regime:[['«Il Consiglio si è preso la nostra terra con un timbro. Mio padre ora ci lavora per loro, a giornata.»',10,1]],
@@ -963,6 +979,8 @@ const BGR=[
   ricordi:[['«Ricordo le vacche che tornavano dal pascolo, la sera. Ognuna sapeva qual era la sua stalla.»',8,2]],
   amicizia:[['«In campagna una stretta di mano vale più di un contratto. Ecco la mia.»',10,2]]},
  /* FRATELLO DI UN MARCIATORE */ {
+  aspetta:[['«Mia madre. Ha già aspettato mio fratello. Non posso farle aspettare anche me per niente.»',10,1]],
+  sogni:[['«Avrei finito quello che mio fratello aveva cominciato: la bottega, la ragazza, la vita.»',8,2]],
   ostile:[['«Mio fratello è morto su questa strada. Credi davvero che le tue parole mi facciano male?»',2,2]],
   fede:[['«Ho pregato ogni notte per mio fratello mentre marciava. Non è servito. Ora prego per me, e mi vergogno.»',8,-1]],
   regime:[['«Il Consiglio mi ha mandato una lettera di condoglianze per mio fratello. Firmata a macchina.»',10,0]],
@@ -978,6 +996,8 @@ const BGR=[
   ricordi:[['«Ricordo mio fratello che mi portava sulle spalle alla fiera. Ero il più alto di tutti.»',8,2]],
   amicizia:[['«Mio fratello avrebbe voluto un amico come te accanto. Prometto, per lui e per te.»',12,2]]},
  /* STUDENTE ESPULSO */ {
+  aspetta:[['«Una ragazza che distribuiva volantini con me. Non so nemmeno se è ancora libera.»',10,1]],
+  sogni:[['«Mi sarei laureato. E avrei insegnato la storia vera, quella che il Consiglio cancella.»',8,2]],
   ostile:[['«Mi hanno espulso per un volantino. Le tue minacce valgono meno della carta che ho usato.»',2,2]],
   fede:[['«Ho letto troppa storia per credere in un Dio che lascia fare tutto questo. Ma rispetto chi ci crede.»',6,0]],
   regime:[['«Ho scritto un volantino contro il Consiglio. Uno. E ora sono qui. Ne è valsa la pena.»',12,2]],
@@ -993,6 +1013,8 @@ const BGR=[
   ricordi:[['«Ricordo l\'odore dei libri vecchi in biblioteca. Lo riconoscerei a occhi chiusi.»',8,2]],
   amicizia:[['«Chi resiste ha bisogno di testimoni. Io sarò il tuo, e tu il mio. Prometto.»',12,2]]},
  /* EX SEMINARISTA */ {
+  aspetta:[['«Mia madre, e un vecchio prete che mi ha insegnato a leggere. Cammino perché loro pregano.»',10,1]],
+  sogni:[['«Avrei aperto una scuola per i bambini del quartiere. Senza prediche del Consiglio.»',8,2]],
   ostile:[['«Ho imparato in seminario a perdonare anche quelli come te. Non me lo rendere difficile.»',2,3]],
   fede:[['«Ho lasciato il seminario quando il Consiglio scriveva le prediche. Ma la fede vera non me l\'hanno presa.»',12,2]],
   regime:[['«Il Consiglio decideva anche cosa dire dal pulpito. Per questo me ne sono andato.»',10,1]],
@@ -1009,22 +1031,23 @@ const BGR=[
   amicizia:[['«Te lo prometto davanti a Dio. Per me vale ancora qualcosa.»',12,2]]},
 ];
 
-const bgTopic=t=>{const f=BG_TOPICS.find(([,r])=>r.test(t||''));return f&&f[0]!=='_skip'?f[0]:null;};
+const bgTopic=t=>{const f=BG_TOPICS.find(([,r])=>r.test(t||''));return f?f[0]:null;};
 function openDlg(npc,d,kind){if(d===DEEP.sol2)S.solHeard=1;
   const fill=x=>x.replace(/\{ME\}/g,npc.name).replace(/\{CITY\}/g,npc.from||'casa');
   d={...d,t:fill(d.t),o:d.o.filter(o=>!o.g||S.gay).map(o=>({...o,l:fill(o.l)}))};
   if(kind!=='bigot'&&kind!=='loveq')d=sickify(d);
-  /* dialoghi personali: al massimo 3 risposte → una buona, una negativa e una legata al passato del giocatore */
+  /* dialoghi personali: 3 risposte affiancate (la migliore, la peggiore e una di mezzo) + sotto una quarta legata al passato del giocatore */
   if(kind==='base'||kind==='deep'){const os=d.o.slice().sort((x,y)=>(y.r||0)-(x.r||0)),good=os[0],bad=os.length>1?os[os.length-1]:null;
-    /* risposta legata al passato del giocatore: solo se coerente con quello che dice il PNG (stesso argomento) */
-    let third=null;if(PLAYER&&PLAYER.bg){S.bgUsed=S.bgUsed||[];const tp=bgTopic(d.t),set=tp&&BGR[BACKGROUNDS.indexOf(PLAYER.bg)];
-      const av=set&&set[tp]?set[tp].filter(a=>!S.bgUsed.includes(a[0])):[];if(av.length){const a=pick(av),nx=(good&&good.n)||(os.find(o=>o.n)||{}).n;third={l:a[0],r:a[1],m:a[2],bg:1,tp,n:nx};}}
-    if(!third&&os.length>2)third=os.find(o=>o.g)||pick(os.slice(1,-1));
-    const arr=shuffle([good,bad,third].filter(Boolean));d={...d,o:arr};}
+    const mid=os.length>2?(os.find(o=>o.g)||pick(os.slice(1,-1))):null;
+    let bgo=null;const bgi=PLAYER&&PLAYER.bg?BACKGROUNDS.indexOf(PLAYER.bg):-1,nx=(good&&good.n)||(os.find(o=>o.n)||{}).n;
+    if(bgi>=0&&d.b&&d.b[bgi])bgo={l:d.b[bgi],r:Math.max(6,(good&&good.r)||6),m:2,bg:1,n:nx};   // risposta scritta apposta per questa battuta
+    else if(bgi>=0){S.bgUsed=S.bgUsed||[];const tp=bgTopic(d.t),set=tp&&BGR[bgi];
+      const av=set&&set[tp]?set[tp].filter(a=>!S.bgUsed.includes(a[0])):[];if(av.length){const a=pick(av);bgo={l:a[0],r:a[1],m:a[2],bg:1,tp,n:nx};}}
+    d={...d,o:[...shuffle([good,bad,mid].filter(Boolean)),...(bgo?[bgo]:[])]};}
   S.dlg={npc,d,t:0,dur:kind==='deep'?22:17,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm"><span class="big">${npc.named?npc.name:npc.name.replace(/ \(N\.\d+\)/,'')}</span> <span class="rl">N.${npc.bibN}</span> <span class="rl">· ${npc.from||'?'}${npc.state?' ('+npc.state+')':''}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
-  box.querySelectorAll('.opts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);}));
+  box.querySelectorAll('.opts button').forEach(b=>{if(d.o[+b.dataset.i]&&d.o[+b.dataset.i].bg)b.classList.add('bgo');b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);});});
   sfx.tick();
 }
 /* con amici e fraterni la conversazione prosegue su più battute */
@@ -2075,6 +2098,181 @@ const SADIC_SAY=["Ahah, guarda come zoppica quello.","Scommetto che il prossimo 
 const SADIC_SORRY=["Scusate... scusate tutti...","Non volevo. Non volevo niente di tutto questo.","Qualcuno mi parla? Qualcuno?","Mamma, avevi ragione su di me.","Ho paura. Ho tanta paura."];
 const SOLO_SAY=["...","Cammina.","...","Non guardare i cingoli."];
 const sadNpc=()=>S.npcs.find(n=>n.id==='sadico'&&n.alive&&!n.leaving),solNpc=()=>S.npcs.find(n=>n.id==='solitario'&&n.alive&&!n.leaving);
+/* ===== dialoghi a tema (morte, dolore, filosofia, Dio, amicizia, morire perché l'altro viva) =====
+   ogni battuta ha 3 risposte neutre (o) e, in b, una risposta per ciascuno dei 10 passati (stesso ordine di BACKGROUNDS) */
+const THN=(t,o,b)=>({t,o,b});
+Object.assign(DEEP,{
+ th_a1:THN("Ci penso da ore. Perché io arrivi in fondo, devi morire tu. E tutti gli altri. Non ti sembra una cosa mostruosa?",
+  [Q("«Non pensarci. Cammina.»",D(2,0,'th_a2')),Q("«È il gioco del Consiglio, non il nostro.»",D(8,1,'th_a2')),Q("«Allora uno di noi due deve sperare che l'altro cada.»",D(-4,-3,'th_a2'))],
+  ["«All'orfanotrofio la minestra non bastava per tutti. Chi mangiava, mangiava al posto di un altro. Ho imparato a odiarmi per questo.»",
+   "«Al campo, una coperta in due voleva dire un freddo in meno per uno. Non ho mai smesso di contare chi restava fuori.»",
+   "«Mio padre ha gettato il fucile proprio per questo: per non comprarsi la vita con quella di un altro.»",
+   "«Mio padre lo chiama \"il costo dell'ordine\". L'ha detto a cena, una volta, tagliando la carne.»",
+   "«Al mercato nero si dice: quello che guadagni tu, l'ha perso qualcun altro. Non pensavo valesse anche per la vita.»",
+   "«In miniera, quando crolla una galleria, chi esce vivo esce sopra chi è rimasto sotto. Ci si convive. Male.»",
+   "«Il Consiglio ha preso la nostra terra per darla a un altro. Adesso vuole che io prenda la tua vita. Stessa logica.»",
+   "«Qualcuno è sopravvissuto alla marcia di mio fratello. Ho passato due anni a odiarlo senza sapere il suo nome.»",
+   "«È proprio questo il punto: ci costringono a desiderare la morte dell'altro. Così nessuno desidera la loro.»",
+   "«\"Nessuno ha amore più grande di chi dà la vita per gli amici.\" Non c'è scritto niente su chi la prende.»"]),
+ th_a2:THN("Se restiamo noi due, ultimi... tu cosa farai? Rallenterai per me? O mi guarderai cadere?",
+  [Q("«Non lo so. Davvero.»",D(6,-1,'th_a3')),Q("«Cammineremo finché uno non crolla. Senza rancore.»",D(8,0,'th_a3')),Q("«Spero che non succeda mai.»",D(4,1,'th_a3'))],
+  ["«Non ho mai avuto nessuno da perdere. Se arriviamo lì, non so se ho la forza di tornare solo.»",
+   "«Al confine mia madre mi ha spinto avanti e si è fermata lei. Forse è questo che si fa, per chi si vuole bene.»",
+   "«Farò come mio padre: getterò il fucile. Mi fermerò. Non voglio vincere sopra di te.»",
+   "«Mio padre direbbe di guardarti cadere senza voltarmi. Proprio per questo non lo farò.»",
+   "«Facciamo un patto, come al mercato: chi resta porta a casa la merce dell'altro. Le sue parole, la sua famiglia.»",
+   "«In miniera si esce in cordata o non si esce. Ma qui la corda la tagliano loro.»",
+   "«Mio padre diceva che non si lascia una bestia sola nel campo a morire. Figurarsi un uomo.»",
+   "«Mio fratello è morto da solo. Non lascerò che tu muoia senza nessuno accanto. Anche se a vincere sono io.»",
+   "«Rallenterò. Non per eroismo: per non dare al Consiglio lo spettacolo che vuole.»",
+   "«Ti benedirò, e poi camminerò. È l'unica cosa onesta che posso prometterti.»"]),
+ th_a3:THN("Promettimi una cosa. Chiunque di noi due arrivi, si ricorda dell'altro. Ogni giorno. Anche solo un minuto.",
+  [Q("«Te lo prometto.»",D(12,3)),Q("«Ricordarsi fa male.»",D(-2,-2)),Q("«Un minuto è poco. Ti ricorderò sempre.»",D(10,2))],
+  ["«Io non ho tombe da visitare. Avrò te. Ogni giorno, un minuto. Prometto.»",
+   "«Al campo scrivevamo i nomi dei morti sulle lamiere. Il tuo lo scriverò dentro di me.»",
+   "«Mia madre accende una candela per mio padre ogni sera. Ne accenderò una anche per te.»",
+   "«Metterò il tuo nome dove mio padre non potrà toglierlo. Te lo giuro.»",
+   "«Parola di contrabbandiere: il tuo ricordo non lo vendo a nessun prezzo.»",
+   "«In miniera, a fine turno, si dice il nome di chi non è risalito. Dirò il tuo, ogni sera.»",
+   "«Se torno a casa pianterò un albero. Avrà il tuo nome. Lo vedrò crescere ogni giorno.»",
+   "«Mi ricordo di mio fratello ogni giorno. C'è posto anche per te.»",
+   "«La storia dimentica. Io no. Scriverò il tuo nome, perché resti.»",
+   "«Ti metterò nelle mie preghiere del mattino. Per sempre. È una promessa davanti a Dio.»"]),
+ th_d1:THN("Credi che Dio guardi questa strada? O si è girato dall'altra parte, come tutti?",
+  [Q("«Se guarda, non fa niente.»",D(4,-2,'th_d2')),Q("«Io credo di sì. Deve.»",D(8,2,'th_d2')),Q("«Dio non c'entra. C'entra il Consiglio.»",D(6,0,'th_d2'))],
+  ["«Le suore dicevano che Dio è padre degli orfani. Non l'ho mai visto, ma a volte sentivo una mano sulla spalla.»",
+   "«Al campo pregavamo in cinque lingue diverse. Se Dio esiste, almeno una di quelle voci l'ha sentita.»",
+   "«Mio padre diceva che Dio era nel suo no, non nei cannoni. Forse guarda chi si rifiuta.»",
+   "«I cappellani benedicevano i cannoni di mio padre. Se Dio guarda, guarda anche loro. E questo mi fa paura.»",
+   "«Ho venduto santini al mercato nero. La gente li pagava più del pane. Qualcosa vorrà dire.»",
+   "«Sottoterra, al buio, credono tutti. Quando la galleria scricchiola nessuno è ateo.»",
+   "«Mia nonna diceva che Dio vede anche il grano che nessuno raccoglie. Spero che veda anche noi.»",
+   "«Ho chiesto a Dio perché proprio mio fratello. Non ha risposto. Sto ancora aspettando.»",
+   "«Se Dio guarda e lascia fare, è come il Consiglio. Se non guarda, siamo soli. Non so cosa sia peggio.»",
+   "«Guarda. Ne sono sicuro. Il silenzio di Dio non è assenza: è dolore.»"]),
+ th_d2:THN("Mia madre mi ha messo un rosario in tasca. Io non so più pregare. Ho dimenticato le parole.",
+  [Q("«Le parole tornano quando servono.»",D(8,1,'th_d3')),Q("«Allora buttalo, è solo un peso.»",D(-6,-2,'th_d3')),Q("«Tienilo stretto. Basta quello.»",D(10,2,'th_d3'))],
+  ["«Io le preghiere le so tutte: le suore ce le facevano ripetere. Te le dico piano, tu ripeti.»",
+   "«Al campo una donna pregava senza parole, solo con le mani. Diceva che Dio capisce lo stesso.»",
+   "«Mia madre prega per mio padre senza parole, ogni sera, guardando la porta. Puoi fare così.»",
+   "«A casa mia le preghiere erano per le parate. Non le ho mai sentite vere come il tuo rosario in tasca.»",
+   "«Tienilo. Un rosario benedetto, al mercato nero, valeva una settimana di pane. In mano a te vale di più.»",
+   "«In miniera si diceva solo: \"Signore, fammi risalire.\" Basta quello.»",
+   "«Mia nonna sgranava il rosario mentre sgranava i piselli. Le parole venivano da sole.»",
+   "«Anche mio fratello ne aveva uno, quando è partito. Non ce l'hanno restituito.»",
+   "«Non serve credere per dire una parola gentile al buio. Chiamala preghiera, se vuoi.»",
+   "«Dammi la mano. Recito io, tu muovi solo le dita sui grani. Dio sente lo stesso.»"]),
+ th_d3:THN("Se muoio stanotte... pensi che ci sia qualcosa, dopo? O solo l'asfalto?",
+  [Q("«Qualcosa c'è. Deve esserci.»",D(8,2)),Q("«Solo l'asfalto. E il silenzio.»",D(-2,-4)),Q("«Non lo so. Ma non sarai solo fino all'ultimo.»",D(12,1))],
+  ["«Spero di sì. Così finalmente conoscerei i miei genitori.»",
+   "«Dopo c'è un posto senza confini, diceva mia madre. Niente documenti, niente filo spinato.»",
+   "«Mio padre forse è già lì. Se c'è un dopo, digli che suo figlio ha camminato a testa alta.»",
+   "«Se c'è qualcosa dopo, spero che non ci siano gradi. Né medaglie.»",
+   "«Se c'è un dopo, ci vediamo lì e ti offro da bere. Roba buona, non di contrabbando.»",
+   "«Dopo c'è la luce. Chi risale dal pozzo lo sa: la luce arriva sempre, in fondo.»",
+   "«Dopo si torna terra, e la terra dà grano. Non è poco.»",
+   "«Spero che ci sia. Mio fratello mi aspetta da due anni.»",
+   "«Forse resta solo quello che lasciamo negli altri. Allora lascia qualcosa in me.»",
+   "«C'è. Ci credo come credo che domani sorgerà il sole. E pregherò per te finché ho fiato.»"]),
+ th_p1:THN("Il dolore non passa. Si sposta. Prima i piedi, poi le ginocchia, ora mi fanno male perfino i denti.",
+  [Q("«Tieni duro. Pensa ad altro.»",D(6,1,'th_p2')),Q("«Smetti di lamentarti, stiamo tutti così.»",D(-6,-1,'th_p2')),Q("«Parlami. Il dolore ascolta meno quando parli.»",D(8,2,'th_p2'))],
+  ["«All'orfanotrofio, se piangevi per il dolore, ti punivano. Ho imparato a sentirlo e basta. Ti insegno.»",
+   "«Da bambino ho camminato scalzo sulla neve per tre giorni. A un certo punto il dolore diventa solo rumore.»",
+   "«Nascosto nei boschi, mio padre si è tolto un dente da solo. Diceva che il dolore si sopporta, se hai un perché.»",
+   "«Mio padre dice che il dolore è debolezza che esce dal corpo. È una bugia, ma oggi aiuta.»",
+   "«Avessi qualcosa da venderti per il dolore... ho solo parole. Ma sono gratis.»",
+   "«In miniera il dolore è un compagno di turno. Lo saluti la mattina e la sera. Non lo combatti.»",
+   "«Quando si mieteva a mano la schiena urlava. Mio padre diceva: guarda quanto ne resta, non quanto hai fatto.»",
+   "«Mio fratello scrisse che dopo il centesimo chilometro il dolore diventa un amico. Ci credo poco, ma lo spero.»",
+   "«Il dolore è l'unica cosa che il Consiglio non può requisirci. È nostro. Usalo per restare sveglio.»",
+   "«I santi offrivano il dolore per qualcuno. Offrilo per tua madre: diventa più leggero, te lo giuro.»"]),
+ th_p2:THN("A volte penso che il dolore sia l'unica prova che sono ancora vivo. È malato, vero?",
+  [Q("«No. È umano.»",D(8,1)),Q("«Sì. Smettila di pensarci.»",D(-4,-2)),Q("«Allora siamo vivissimi, tutti e due.»",D(10,3))],
+  ["«Da piccolo, di notte, mi pizzicavo il braccio per essere sicuro di esistere. Non sei malato.»",
+   "«Al campo dicevamo: se fa male, sei ancora in fila. Quando non fa più male, è finita.»",
+   "«Anche mio padre, nei boschi, diceva che il freddo gli ricordava di essere un uomo libero.»",
+   "«A casa mia nessuno sentiva niente. Era peggio. Il dolore almeno è sincero.»",
+   "«Al mercato si dice che solo i morti non hanno debiti. Il dolore è il nostro debito con la vita.»",
+   "«In miniera chi smetteva di sentire il freddo era quello che stava per svenire. Il dolore è un allarme, non una malattia.»",
+   "«Anche la terra, quando l'ari, sembra soffrire. Poi dà il grano. Non è malato. È vivo.»",
+   "«Mio fratello, alla fine, non sentiva più niente. Così mi hanno detto. Preferisco che tu senta.»",
+   "«Non è malato. È lucido. Malato è chi ci guarda dal palco e applaude.»",
+   "«Non è malato. Anche Cristo sulla croce ha detto \"ho sete\". Il dolore ci rende veri.»"]),
+ th_f1:THN("Ci pensi? Camminiamo verso un traguardo che non abbiamo scelto. Ma è tanto diverso dal resto della vita?",
+  [Q("«Nella vita almeno puoi fermarti.»",D(6,0,'th_f2')),Q("«Non fare il filosofo, risparmia il fiato.»",D(-4,-1,'th_f2')),Q("«Forse no. Forse la vita è solo una marcia più lunga.»",D(8,-1,'th_f2'))],
+  ["«Io non ho mai scelto niente. Né i genitori, né la casa. Per me è sempre stata una marcia.»",
+   "«Da profugo ho camminato verso confini scelti da altri. Sì, è sempre stato così.»",
+   "«Mio padre ha scelto, una volta. Ha detto no. È la differenza tra marciare e vivere.»",
+   "«Mio padre mi ha scelto la scuola, la ragazza, la carriera. Questa marcia è la prima cosa onesta della mia vita.»",
+   "«Io il traguardo me lo sceglievo: il prossimo affare. Ma la strada la decideva sempre la polizia.»",
+   "«Sottoterra segui la vena del carbone. Non la scegli tu. Ma come scavare lo decidi tu.»",
+   "«In campagna le stagioni decidono per te. Però sei tu che semini. Qualcosa lo scegliamo.»",
+   "«Mio fratello pensava di poter scegliere di vincere. La strada ha scelto per lui.»",
+   "«Un filosofo ha scritto che siamo condannati a essere liberi. Anche qui: scegliamo come camminare.»",
+   "«In seminario dicevano che la libertà è scegliere il bene dentro quello che non hai scelto. Credo sia questo.»"]),
+ th_f2:THN("E se fosse tutto inutile? Se domani nessuno si ricordasse di noi, di questi passi?",
+  [Q("«I passi se li ricordano le gambe. A me basta.»",D(6,2)),Q("«Allora che senso ha parlare?»",D(-4,-3)),Q("«Io me li ricorderò. I tuoi soprattutto.»",D(10,2))],
+  ["«Nessuno si è mai ricordato di me. Eppure sono qui. Forse il senso non dipende dal ricordo.»",
+   "«I profughi non li ricorda nessuno. Ma ogni passo ci ha portato a un pezzo di pane in più. Non è inutile.»",
+   "«Il no di mio padre l'hanno dimenticato tutti, tranne me. Basta uno che ricorda.»",
+   "«I discorsi di mio padre se li ricordano tutti, ed erano vuoti. Meglio passi dimenticati, ma veri.»",
+   "«Al mercato nero niente lasciava traccia. Eppure la gente mangiava. Contano gli effetti, non il ricordo.»",
+   "«Il carbone che ho scavato scalda case che non vedrò mai. Nessuno sa il mio nome. Non è inutile.»",
+   "«Nessuno ricorda chi ha seminato. Ma il pane lo mangiano tutti.»",
+   "«Io ricordo ogni passo di mio fratello, anche quelli che non ho visto. Qualcuno ricorderà i tuoi.»",
+   "«La storia la scrivono i vincitori. Ma anche i passi dei vinti consumano la strada.»",
+   "«Dio conta perfino i capelli del capo. Figurati i passi.»"]),
+ th_m1:THN("Sai qual è la cosa strana? Ti conosco da un giorno e mi sembra di conoscerti da sempre.",
+  [Q("«Anche a me.»",D(10,2,'th_m2')),Q("«È la stanchezza che parla.»",D(-4,-1,'th_m2')),Q("«Qui un giorno vale un anno.»",D(8,1,'th_m2'))],
+  ["«All'orfanotrofio si diventava fratelli in una notte. Era l'unico modo per non avere paura. Qui è uguale.»",
+   "«Al campo le amicizie nascevano in fila per il pane. Duravano per sempre. O una settimana.»",
+   "«Gli amici che hanno nascosto mio padre per anni lo conoscevano da un giorno, la prima volta.»",
+   "«I miei amici li sceglieva mio padre. Tu sei il primo che ho scelto io.»",
+   "«Nel mio mestiere ci si fida in fretta o non ci si fida mai. Di te mi sono fidato subito.»",
+   "«In miniera, un turno insieme e sei fratello. Due turni e sei famiglia.»",
+   "«Mio padre diceva che un uomo lo conosci dopo una mietitura insieme. Questa è la nostra mietitura.»",
+   "«Mio fratello mi aveva scritto di un amico conosciuto in marcia. Pensavo esagerasse. Ora capisco.»",
+   "«La paura accelera tutto. Anche l'affetto. È la cosa più umana che ci resta.»",
+   "«Gesù ha chiamato i suoi con una parola, e loro l'hanno seguito. A volte basta un giorno.»"]),
+ th_m2:THN("Se torni a casa e io no... vai da mia madre. Dille che non ero solo. Che avevo un amico.",
+  [Q("«Te lo prometto.»",D(12,2)),Q("«Glielo dirai tu stesso.»",D(10,3)),Q("«Qui non posso promettere niente.»",D(-4,-2))],
+  ["«Io una madre a cui dire qualcosa non l'ho mai avuta. La tua sarà un po' anche mia. Ci andrò.»",
+   "«Andrò da lei anche se dovrò passare tre confini. Ci sono abituato.»",
+   "«Andrò. E le dirò che eri coraggioso. Mia madre sa cosa vuol dire aspettare.»",
+   "«Ci andrò senza scorta e senza divisa. Come un amico, non come il figlio di un ufficiale.»",
+   "«Le porterò qualcosa di buono, di quelle cose che non si trovano. E le parlerò di te.»",
+   "«Andrò da lei col vestito della domenica, come si fa in miniera quando qualcuno non risale.»",
+   "«Le porterò un sacco di farina e le parlerò di te. Da noi si fa così, con le madri.»",
+   "«So cosa vuol dire ricevere quella visita. Da mia madre non è venuto nessuno. Io dalla tua verrò.»",
+   "«Le racconterò tutto. Anche quello che il Consiglio non vuole che si sappia.»",
+   "«Andrò. Pregheremo insieme per te, e le dirò che hai camminato fino all'ultimo con un amico.»"]),
+ th_x1:THN("Hai visto il ragazzo di prima, sotto i cingoli? Aveva gli occhi aperti. Mi guardava.",
+  [Q("«Non guardare più. Guarda solo avanti.»",D(6,1,'th_x2')),Q("«Prima o poi tocca a tutti.»",D(-4,-3,'th_x2')),Q("«L'ho visto anch'io. Non riesco a togliermelo dalla testa.»",D(8,-1,'th_x2'))],
+  ["«I miei genitori sono morti sotto le macerie, mi hanno detto. Ero piccolo. Quegli occhi aperti me li sogno ancora.»",
+   "«Lungo la strada dei profughi nessuno chiudeva gli occhi ai morti. Non c'era tempo. Me ne vergogno ancora.»",
+   "«Mio padre ha disertato per non vedere più occhi così. Adesso capisco cosa intendeva.»",
+   "«Mio padre ne ha visti a migliaia. Dice che non ci pensa mai. Credo sia per questo che non dorme.»",
+   "«Al porto ho visto morire un ragazzo colpito dalla polizia. Aveva in mano la mia merce. Mi guarda ancora.»",
+   "«Quando abbiamo tirato fuori i miei compagni dalla galleria avevano tutti gli occhi aperti. Al buio.»",
+   "«In campagna gli occhi si chiudono perfino alle bestie. Qui nemmeno quello.»",
+   "«Mio fratello... chissà se qualcuno gli ha chiuso gli occhi. Non lo saprò mai.»",
+   "«Ci guardava perché vuole che lo ricordiamo. È l'unica cosa che possiamo fare per lui.»",
+   "«Ho detto una preghiera per lui, mentre passavamo. Adesso quegli occhi guardano Dio.»"]),
+ th_x2:THN("Io non ho paura di morire. Ho paura di morire così: per niente, davanti a gente che applaude.",
+  [Q("«Non morirai per niente. Te lo giuro.»",D(10,2)),Q("«Qui moriamo tutti per niente.»",D(-6,-3)),Q("«Allora vivi. Per fargli dispetto.»",D(8,3))],
+  ["«I miei sono morti per niente, sotto una bomba qualsiasi. Almeno la mia morte voglio che abbia un nome.»",
+   "«I profughi muoiono così da sempre: per niente, guardati da gente che chiude le finestre.»",
+   "«Mio padre ha rischiato di morire per un no. È l'unico modo per non morire per niente.»",
+   "«Quelli che applaudono li conosco: cenano a casa mia. Non meritano nemmeno la tua paura.»",
+   "«Al mercato nessuno regala niente. Facciamogli pagare cari tutti i nostri passi.»",
+   "«In miniera si muore per il carbone di qualcun altro. Ma i compagni sanno per chi muori.»",
+   "«Mio nonno almeno è morto sulla sua terra. Noi moriamo sulla strada loro. È questo che fa rabbia.»",
+   "«Mio fratello è morto per niente, davanti a quella stessa gente. A te non lo permetterò.»",
+   "«Chi applaude oggi verrà giudicato domani. La storia ha la memoria lunga, anche se lenta.»",
+   "«Davanti a Dio nessuna morte è per niente. Nemmeno questa. Ma lottiamo per non dargliela.»"]),
+});
+const THEME_START=['th_a1','th_d1','th_p1','th_f1','th_m1','th_x1'];
+
 DLG.marek.push(
  {t:"Sai cosa faremo, se usciamo vivi? Una barca. Io e te. Aringhe fino alla vecchiaia.",o:[O("Io tengo il timone.",14),O("Odio il pesce.",2),O("Smettila di sognare.",-10)]},
  {t:"Ho una ragazza, Agata. Le ho detto che tornavo per Natale. Ho mentito, vero?",o:[O("Non hai mentito. Hai sperato.",16),O("Forse sì.",-4),O("Non pensarci adesso.",6)]},
