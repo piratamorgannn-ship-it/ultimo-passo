@@ -221,7 +221,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.34';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.35';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -722,7 +722,7 @@ function startQTE(type,who){
    spinta:{dur:2.2,need:5,title:(who||'').toUpperCase()+' TI SPINGE!',sub:'Resta in piedi',btn:'RESISTI'},
    isteria:{dur:4,need:7,title:'PANICO',sub:'Il cuore impazzisce. Respira.',btn:'RESPIRA'},
    blocco:{dur:4,need:10,title:'LE GAMBE NON SI MUOVONO',sub:'Tutti partono. Tu no. Sbloccati!',btn:'MUOVITI'},
-   sgambetto:{dur:1.6,title:'<span style="color:var(--red)">'+(who||'').toUpperCase()+'</span> TI FA LO SGAMBETTO!',sub:'Salta quando il segno è nel verde',btn:'SALTA',timing:true},
+   sgambetto:{dur:1.6,title:'<span style="color:var(--red)">'+(who||'').toUpperCase()+'</span> TI FA LO SGAMBETTO!',sub:'Continua a camminare e salta quando il segno è nel verde',btn:'SALTA',timing:true},
    rialzati:{dur:3,need:Math.max(6,Math.min(32,18+4*((S&&S.collapses||1)-1))-(S&&S.img?(S.cb['nonna']?10:5):0)),title:'RIALZATI!',sub:(S&&S.collapsed==='mh'?'La mente cede.':'Il corpo cede.')+' Tocca i tasti dei piedi più veloce che puoi!',btn:'',padsOnly:1},
    salva:{dur:3.2,need:9,title:'SORREGGI '+(who||'').toUpperCase()+'!',sub:'Tienilo in piedi senza rallentare',btn:'SORREGGI'},
   }[type]);
@@ -1119,7 +1119,7 @@ function update(dt){
   if(!S.collapsed&&!S.fainted&&!(S.qte&&S.qte.type==='blocco')&&S.peeing<=0&&cap<LIMIT&&S.t>5&&(!S.breathT||S.t-S.breathT>15)){S.breathT=S.t;log('“Non ho più fiato: per quanto spingo, le gambe non vanno più veloci.” (stamina esaurita: mangia, bevi, o recupera in discesa)','var(--red)','th');}
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.cb['montanaro']?1:S.kway?.97:.94):1)*(S.injury?.95:1);
   /* durante gli eventi (crampi, cadute, spinte…) il marciatore cammina da solo: il giocatore pensa solo al problema */
-  const autoW=S.qte&&!['blocco','rialzati','caduta'].includes(S.qte.type)&&!S.collapsed&&!S.fainted;  // quando inciampi devi continuare a camminare tu
+  const autoW=S.qte&&!['blocco','rialzati','caduta','sgambetto'].includes(S.qte.type)&&!S.collapsed&&!S.fainted;  // quando inciampi devi continuare a camminare tu
   if(autoW){S.want=0;S.speed+=(Math.max(LIMIT*1.04,Math.min(S.qte.spd||0,cap))-S.speed)*Math.min(1,dt*2.5);S.steps=[S.t-.4,S.t];}
   else{S.want=Math.min(cadence()*k,cap*1.6);S.speed+=(Math.min(S.want,cap)-S.speed)*Math.min(1,dt*2.5);}
   S.speed=Math.max(0,S.speed||0);S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
@@ -1869,7 +1869,7 @@ function tutorial(){
     <h3>IL LIMITE E I RICHIAMI</h3><p>Non puoi scendere sotto i <b>5,5 km/h</b>. Se resti sotto per 3 secondi ricevi un <b>richiamo</b> (i quadratini rossi in alto). Ogni 30 km percorsi senza richiami, uno viene cancellato. Al <b>terzo richiamo</b> la tua marcia è finita.</p>
     <h3>STAMINA, ACQUA, VESCICA</h3><p>Le barre in alto. La <b>stamina</b> cala sempre mentre cammini, di più se vai veloce o in salita: senza stamina le gambe non tengono il passo. <b>La stamina si recupera soprattutto mangiando</b>: i <b>tubetti</b> del cinturone (nuovi ogni mattina alle 9), i cibi che porti con te (<b>biscotti</b>, <b>panini</b>, <b>hamburger</b>…) e quelli che ti regalano gli amici (<b>barrette</b>, razioni). Anche le sigarette la ridanno (ma rovinano il corpo), e in <b>discesa</b> si consuma meno: se rallenti un po' il ritmo, la stamina risale. <b>BEVI</b> quando vuoi: l'acqua aiuta il corpo, ma dopo un minuto dovrai <b>liberarti</b> (camminando un po' più piano).</p>
     <h3>CORPO E MENTE</h3><p>Fisico e mente non si vedono: li capisci dai <b>pensieri</b> che compaiono nei messaggi. Se uno dei due arriva a zero crolli a terra: tocca i piedi più veloce che puoi per <b>rialzarti</b>.</p>
-    <h3>EVENTI</h3><p>Crampi, cadute, spinte, sassi, sgambetti: quando compare un riquadro in alto, segui le istruzioni prima che la barra del tempo finisca. Di solito devi premere il pulsante dell'evento <b>più volte</b> (per esempio nella <b>spinta</b> o nella <b>crisi di nervi</b>), a volte al <b>momento giusto</b> (quando inciampi o ti fanno lo <b>sgambetto</b>, tocca quando il segno è nel verde). Nel <b>crampo</b> invece devi massaggiare il polpaccio: al centro compare un cerchio: appoggia il dito dove vuoi (il cerchio si sposta lì) e fallo girare per 3 giri completi. Durante l'evento il tuo marciatore <b>continua a camminare da solo</b>, al passo che aveva: non devi toccare i piedi, concentrati solo sul problema. Fanno eccezione: quando <b>inciampi</b> devi continuare a toccare i piedi mentre ritrovi l'equilibrio; con le <b>gambe bloccate</b> sei fermo finché non ti sblocchi; nel <b>crollo a terra</b> ti rialzi toccando i piedi.</p>
+    <h3>EVENTI</h3><p>Crampi, cadute, spinte, sassi, sgambetti: quando compare un riquadro in alto, segui le istruzioni prima che la barra del tempo finisca. Di solito devi premere il pulsante dell'evento <b>più volte</b> (per esempio nella <b>spinta</b> o nella <b>crisi di nervi</b>), a volte al <b>momento giusto</b> (quando inciampi o ti fanno lo <b>sgambetto</b>, tocca quando il segno è nel verde). Nel <b>crampo</b> invece devi massaggiare il polpaccio: al centro compare un cerchio: appoggia il dito dove vuoi (il cerchio si sposta lì) e fallo girare per 3 giri completi. Durante l'evento il tuo marciatore <b>continua a camminare da solo</b>, al passo che aveva: non devi toccare i piedi, concentrati solo sul problema. Fanno eccezione: quando <b>inciampi</b> o ti fanno lo <b>sgambetto</b> devi continuare a toccare i piedi mentre ritrovi l'equilibrio o salti; con le <b>gambe bloccate</b> sei fermo finché non ti sblocchi; nel <b>crollo a terra</b> ti rialzi toccando i piedi.</p>
     <h3>GLI ALTRI MARCIATORI</h3><p>Chi ti cammina vicino ti parla: scegli le risposte. Le scelte decidono chi diventa tuo <b>amico</b> e chi ti <b>odierà</b>. Attento a chi gode quando gli altri cadono.</p>
     <h3>FORTUNA E CARATTERE</h3><p>La marcia non è fatta solo di bravura: c'è anche la <b>fortuna</b>. Il percorso, il meteo, le salite, chi ti cammina accanto e cosa ti capita lungo la strada cambiano ogni volta. Anche il tuo <b>carattere</b> conta: le risposte al test, il tuo passato e le scelte che fai con gli altri marciatori possono cambiare l'esito della marcia.</p>
     <h3>VINCERE</h3><p>Resta l'ultimo in piedi. Siete in quarantasei: uno solo arriva in fondo.</p></div>
