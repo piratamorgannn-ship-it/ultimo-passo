@@ -219,7 +219,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.26';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.27';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1044,7 +1044,7 @@ function openDlg(npc,d,kind){if(d===DEEP.sol2)S.solHeard=1;
     else if(bgi>=0){S.bgUsed=S.bgUsed||[];const tp=bgTopic(d.t),set=tp&&BGR[bgi];
       const av=set&&set[tp]?set[tp].filter(a=>!S.bgUsed.includes(a[0])):[];if(av.length){const a=pick(av);bgo={l:a[0],r:a[1],m:a[2],bg:1,tp,n:nx};}}
     d={...d,o:[...shuffle([good,bad,mid].filter(Boolean)),...(bgo?[bgo]:[])]};}
-  S.dlg={npc,d,t:0,dur:kind==='deep'?22:17,kind};S.lastTalk=npc;
+  S.dlg={npc,d,t:0,dur:kind==='deep'?22:20,kind};S.lastTalk=npc;
   showBox('box',`<div class="hd"><canvas width="16" height="16" id="face"></canvas><div><div class="nm"><span class="big">${npc.named?npc.name:npc.name.replace(/ \(N\.\d+\)/,'')}</span> <span class="rl">N.${npc.bibN}</span> <span class="rl">· ${npc.from||'?'}${npc.state?' ('+npc.state+')':''}</span></div><div class="rl" style="color:${relColor(npc.rel)}">${relLabel(npc.rel)}</div></div></div><div class="tx">“${d.t.replace('{N}',S.bib)}”</div><div class="tm"><b id="dt"></b></div><div class="opts">${d.o.map((o,i)=>`<button data-i="${i}">${o.l}</button>`).join('')}</div>`);
   drawFace($('face').getContext('2d'),npc);
   box.querySelectorAll('.opts button').forEach(b=>{if(d.o[+b.dataset.i]&&d.o[+b.dataset.i].bg)b.classList.add('bgo');b.addEventListener('pointerdown',e=>{e.preventDefault();answer(+b.dataset.i);});});
