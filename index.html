@@ -217,7 +217,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.22';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.23';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1149,6 +1149,7 @@ function update(dt){
     n.km=(n.km||0)+va*dt/HOUR;
     n.off=clamp(n.off+(va-S.speed)/SR*dt*1.6,lo-90,hi+90);  // se rallenti o ti fermi gli altri proseguono (anche fuori schermo)
     if(n.savePending&&S.t-(n.saveAskT||0)>12&&!(S.dlg&&S.dlg.choice)){n.savePending=false;n.leaving=1;}  // la scelta è stata chiusa da un crollo
+    if(S.t>900&&n.elimAt>S.t+40)n.elimAt=S.t+rand(15,40);  // dopo ~15 minuti nessuno regge più: la marcia deve chiudersi
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=60&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
       else{n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}}
   });
@@ -1297,11 +1298,14 @@ function collapse(kind){
   S.rT=.5;
 }
 function die(cause,shot){
+  if(!S||S.mode==='over'||S.mode==='finale'||S.mode==='dying')return;
   {const bo=$('blackout');if(bo)bo.classList.remove('on');}
   const down=S.collapsed||S.fainted;
   if(shot)cause+=down?' La linea di cingolati ti è passata sopra.':(ERA.veh==='drone'?' Il drone ti ha colpito alle gambe col laser e la linea di cingolati ti è passata sopra.':' Un soldato ti ha sparato alle gambe e la linea di cingolati ti è passata sopra.');
   S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;S.chat=null;hideBox();
-  if(shot&&!down&&PX-TX()>60){S.down=true;S.agony=true;S.bloodR=0;S.cause=cause.replace(' e la linea di cingolati ti è passata sopra.',', da lontano. Sei morto dissanguato sull\'asfalto, mentre gli altri passavano oltre.');
+  /* agonia se tra i cingolati e il giocatore c'è qualcuno (i cingoli dovrebbero sorpassare gli altri) o se sono rimasti indietro */
+  const between=S.npcs.some(n=>n.alive&&!n.leaving&&PX+n.off*SPR<PX-4&&PX+n.off*SPR>TX());
+  if(shot&&!down&&(between||(S.lag||0)>20)){S.down=true;S.agony=true;S.bloodR=0;S.cause=cause.replace(' e la linea di cingolati ti è passata sopra.',', da lontano. Sei morto dissanguato sull\'asfalto, mentre gli altri passavano oltre.');
     setTimeout(()=>{const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:PX+3,y1:111,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(400);
       app.classList.add('fin');[cv,$('fx')].forEach(c=>{c.style.transformOrigin=(PX/W*100).toFixed(1)+'% 82%';c.style.transition='transform 3.6s ease-in';});
       requestAnimationFrame(()=>[cv,$('fx')].forEach(c=>c.style.transform='translate('+(50-PX/W*100).toFixed(1)+'%,-30%) scale(2.6)'));
