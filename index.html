@@ -218,7 +218,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.24';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.25';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1886,7 +1886,9 @@ const ID_GAY=["Vuole solo tornare a casa dal suo compagno.","Se vincerà, si è 
 function makePlayer(){
   const black=DEBUG_ID?(DEBUG_ID==='black'||DEBUG_ID==='both'):Math.random()<.2,gay=DEBUG_ID?(DEBUG_ID==='gay'||DEBUG_ID==='both'):Math.random()<.2;
   /* descrizione: metà dal test (i due tratti più marcati), metà casuale */
-  const bg=pick(BACKGROUNDS),rn=shuffle(P_RAND.filter(x=>!(bg.x&&bg.x.test(x)))).slice(0,1);
+  /* passato: mai uno dei due usati nelle ultime marce */
+  const lastBg=store.get('up_lastBg',[]),bg=pick(BACKGROUNDS.filter(b=>!lastBg.includes(b.t)));store.set('up_lastBg',[bg.t,...lastBg].slice(0,2));
+  const rn=shuffle(P_RAND.filter(x=>!(bg.x&&bg.x.test(x)))).slice(0,1);
   const N=pick(STATES.filter(x=>x.s!=='Ungheria')),li=Math.floor(Math.random()*N.l.length); // l'Ungheria resta all'ansiosa ungherese
   return {first:pick(N.m),last:N.l[li],state:N.s,bib:Math.floor(rand(1,TOTAL+1)),city:pick(N.c),black,gay,idLine:[black?pick(ID_BLACK.filter(x=>!(bg.x&&bg.x.test(x)))):'',gay?pick(ID_GAY.filter(x=>!(bg.x&&bg.x.test(x)))):''].filter(Boolean).join(' '),
     shirt:pick(['#d8d0b8','#c8553d','#4a78a8','#6a9a5a','#d89a30','#a05a90','#3a3a4a','#e8e8e8','#8a2a2a','#3ac8c8',...ERA.shirts]),
