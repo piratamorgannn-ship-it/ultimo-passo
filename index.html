@@ -152,6 +152,7 @@ button:disabled{opacity:.35}
 @keyframes crawl{from{top:100%;transform:translate(-50%,0)}to{top:0;transform:translate(-50%,-100%)}}
 #screen.intro{overflow:hidden}
 .intro-tx{max-width:640px;text-align:left;font-size:14px;line-height:1.6;white-space:pre-wrap;color:#e8dcc0}
+.skip .hold{font-size:9px;opacity:.8;animation:holdBlink 1.2s steps(2) infinite}@keyframes holdBlink{50%{opacity:0}}
 .skip{position:absolute;bottom:10px;right:14px;font-size:11px;animation:blink 1.2s steps(2) infinite}
 .copy{position:absolute;z-index:5;text-shadow:0 0 3px #000,0 0 3px #000;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(16px + env(safe-area-inset-left));font-size:11px;color:#b8a890;opacity:.95;letter-spacing:.5px}
 @keyframes blink{50%{opacity:.2}}
@@ -214,7 +215,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.18';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.19';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -1621,7 +1622,7 @@ function drawMap(c,prog){
 
 /* ================= SCHERMATE ================= */
 const sc=$('screen');
-function show(html,cls=''){if(!/winsc/.test(cls))finCleanup();sc.className=cls;sc.onclick=null;sc.scrollTop=0;sc.innerHTML=html;}
+function show(html,cls=''){if(!/winsc/.test(cls))finCleanup();sc.className=cls;sc.onclick=null;sc.onpointerdown=sc.onpointerup=sc.onpointercancel=null;sc.scrollTop=0;sc.innerHTML=html;}
 const INTRO=`1979. La guerra è finita.
 Sei anni di bombe hanno ridotto l'Europa in macerie. Dalle rovine, un'élite di marescialli ha preso il potere "per riportare l'ordine": è nata la Federazione Europea, governata dal Consiglio della Pace e della Guerra.
 Per ricordare a tutti il prezzo della pace, ogni anno il Consiglio indice la Marcia.
@@ -1678,10 +1679,14 @@ function openJuke(){
   render();
 }
 function intro(){
-  show(`<div class="crawl" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare</div>`,'intro');
+  show(`<div class="crawl" id="itx"></div><div class="skip lbl">tocca lo schermo per saltare<br><span class="hold">tieni premuto per scorrere più velocemente</span></div>`,'intro');
   const el=$('itx');el.textContent=INTRO;
   el.addEventListener('animationend',()=>{const k=sc.querySelector('.skip');if(k)k.textContent='tocca lo schermo per continuare';});
-  sc.onclick=()=>loadThen(quiz);
+  /* tocco breve = salta; tenere premuto = scorrimento veloce */
+  let downT=0,held=false,hT=null;const rate=r=>el.getAnimations().forEach(a=>a.playbackRate=r);
+  sc.onclick=null;
+  sc.onpointerdown=()=>{downT=performance.now();held=false;hT=setTimeout(()=>{held=true;rate(5);},250);};
+  sc.onpointerup=sc.onpointercancel=()=>{clearTimeout(hT);rate(1);if(!held&&downT){downT=0;sc.onpointerdown=sc.onpointerup=sc.onpointercancel=null;loadThen(quiz);}downT=0;};
 }
 function mapScreen(){
   MENU_MUSIC=true;
