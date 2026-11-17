@@ -214,7 +214,7 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.17';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.18';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
@@ -508,7 +508,7 @@ const SHOES={
  trekking:{n:'Scarponi da trekking',unlock:'Aiuta gli infami a fare 5 sgambetti (anche in marce diverse).',pro:'Indistruttibili, niente vesciche.',con:'Pesanti: consumano più stamina.',st:1.08,ph:.9,mh:1},
  pantofole:{n:'Pantofole della nonna',unlock:'Muori prima di mezzogiorno del primo giorno.',pro:'Comodissime: corpo e mente si logorano molto meno.',con:'La suola si stacca presto, e gli altri ti prendono in giro.',st:1,ph:.65,mh:.65,breaks:[380,560]},
  fratello:{n:'Scarpe del fratello di '+store.get('up_broname','?'),unlock:'Vinci una marcia dopo aver ascoltato la verità del solitario.',pro:'Leggere e indistruttibili. Una volta a marcia il cecchino, al terzo richiamo, abbassa il fucile.',con:'Nessuno.',st:.86,ph:.9,mh:.95},
- running:{n:'Scarpe da corsa',pro:'Leggerissime e indistruttibili: tanta stamina in più, niente vesciche, corpo e mente reggono meglio.',con:'Nessuno.',st:.8,ph:.85,mh:.92,unlock:'Vinci una marcia con le scarpe rotte.'},
+ running:{n:'Scarpe da corsa',pro:'Leggerissime e indistruttibili: tanta stamina in più, niente vesciche, corpo e mente reggono meglio.',con:'Nessuno.',st:.8,ph:.85,mh:.92,unlock:'Stacca di 8 km il marciatore più avanti.'},
 };
 const BISC=2;
 const TIPS=["Consiglio n.1: \"Ogni marcia inizia con il primo passo.\"","Consiglio n.2: \"Rispondere al test attitudinale aiuta ogni marciatore a conoscere se stesso. Rispondere sinceramente aiuta di più.\"","Consiglio n.3: \"Non indossare le sneakers.\"","Consiglio n.4: \"Ogni 30 chilometri un richiamo sarà cancellato.\"","Consiglio n.5: \"In salita le gambe chiedono il doppio.\"","Consiglio n.6: \"I morti della Marcia vengono sempre onorati.\"","Consiglio n.7: \"Va' piano e ce la farai.\"","Consiglio n.8: \"Risparmiare il fiato.\"","Consiglio n.9: \"Raccomandiamo di indossare calze da ginnastica.\"","Consiglio n.10: \"Risparmia energia, quando è possibile.\"","Consiglio n.11: \"È severamente vietato molestare gli altri marciatori.\"","Consiglio n.12: \"Se scendi sotto i 5,5 km/h verrai richiamato.\"","Consiglio n.13: \"Nuove scorte di cibo saranno distribuite ogni giorno alle ore 9.\"","Consiglio n.14: \"Alla terza ammonizione la marcia viene <i>sospesa</i> per il marciatore.\"","Consiglio n.15: \"Prepararsi alle intemperie migliora le possibilità di farcela.\"","Consiglio n.16: \"Ricordati di idratarti adeguatamente.\"","Consiglio n.17: \"Chi corre arriva stanco. Chi cammina al limite arriva.\"","Consiglio n.18: \"Un sasso nella scarpa costa meno di un richiamo. Quasi sempre.\"","Consiglio n.19: \"La Federazione autorizza lo scambio di beni tra marciatori.\"","Consiglio n.20: \"Vietato interagire con gli spettatori.\"","Consiglio n.21: \"Le notti sono la parte più difficile per la mente dei marciatori.\"","Consiglio n.22: \"Le scarpe migliori non sono le più comode. Né le più leggere.\"","Consiglio n.23: \"Ricordati di mangiare, ma non eccedere.\""];
@@ -601,7 +601,7 @@ function startFinale(){if(S.mode!=='play')return;S.mode='finale';S.finale=true;S
   [cv,$('fx')].forEach(c=>{c.style.transformOrigin=(PX/W*100).toFixed(1)+'% 82%';c.style.transition='transform 5s ease-in-out';});
   requestAnimationFrame(()=>[cv,$('fx')].forEach(c=>c.style.transform='translate('+(50-PX/W*100).toFixed(1)+'%,-30%) scale(2.4)'));}
 function finStep(dt){S.anim+=dt*4;S.scroll+=dt*27;S.stepT-=dt;if(S.stepT<=0){S.stepT=.5;sfx.step();}}
-function finCleanup(){app.classList.remove('fin');[cv,$('fx')].forEach(c=>{c.style.transition='';c.style.transform='';});const f=$('winfade');if(f)f.remove();if(S)S.finale=false;}
+function finCleanup(){if(S)S.agony=false;app.classList.remove('fin');[cv,$('fx')].forEach(c=>{c.style.transition='';c.style.transform='';});const f=$('winfade');if(f)f.remove();if(S)S.finale=false;}
 function newRun(shoe,tr){finCleanup();{const bo=document.getElementById('blackout');if(bo)bo.classList.remove('on');}
   fit();
   $('jukeHud').style.display=DEBUG?'inline':'none';
@@ -1081,7 +1081,8 @@ function update(dt){
   else{S.want=Math.min(cadence()*k,cap*1.6);S.speed+=(Math.min(S.want,cap)-S.speed)*Math.min(1,dt*2.5);}
   S.speed=Math.max(0,S.speed||0);S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
   S.maxSt=Math.max(40,100-S.t*.06);
-  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195+Math.max(0,(S.want||0)-S.speed)/SR*.12)*sh.st;  // spingere oltre quello che le gambe danno consuma comunque  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=S.combo==='montanaro'?1.2:1.4;if(S.combo==='walkman'&&S.radio)d*=.95;if(S.combo==='scout'&&isNight()&&S.torch>0)d*=.85;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
+  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195+Math.max(0,(S.want||0)-S.speed)/SR*.12)*sh.st;  // spingere oltre quello che le gambe danno consuma comunque (base: prova più facile, prima .45 / .22)
+  if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=S.combo==='montanaro'?1.2:1.4;if(S.combo==='walkman'&&S.radio)d*=.95;if(S.combo==='scout'&&isNight()&&S.torch>0)d*=.85;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
@@ -1096,7 +1097,8 @@ function update(dt){
   if(!S.broken&&S.t>S.breakAt){S.broken=true;log(S.shoe==='mocassini'?'La suola dei mocassini si stacca.':'Le tue scarpe si rompono: la suola si apre e ogni passo è un sasso.','var(--red)');}
   let pd=.03*sh.ph;if(S.pneumonia){pd+=.1;S.coughT=(S.coughT||8)-dt;if(S.coughT<=0){S.coughT=rand(7,14);noise(.18,.35,undefined,700);log(pick(['“Non riesco a respirare.”','“Ogni colpo di tosse è un coltello.”','“Il petto è pieno di sabbia.”']),'var(--red)','th');}}if(S.hy<25)pd+=.15;if(S.blister)pd+=.06;if(S.broken)pd+=S.combo==='domenica'?.06:.12;if(S.stone>0){pd+=.07;S.stone-=dt;}if(S.injury)pd+=.05;if(wx.cold&&isNight())pd+=.03;if(S.rain>0&&!S.kway)pd+=.04;
   S.ph=clamp(S.ph-pd*dt,0,100);
-  let md=.044*sh.mh*(1.3-S.tr.n/100);  // prova più facile (prima .05)if(S.bl>70)md+=.08;if(isNight())md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(isNight()&&S.torch>0)md*=.85;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
+  let md=.044*sh.mh*(1.3-S.tr.n/100);  // prova più facile (prima .05)
+  if(S.bl>70)md+=.08;if(isNight())md+=wx.cold?.08:.05;md+=.03*S.warn;if(S.radio)md*=.7;if(isNight()&&S.torch>0)md*=.85;if(S.watch)md*=.85;if(S.zplan&&S.zplan[S.zi].z==='mare')md*=.45;
   S.mh=clamp(S.mh-md*dt,0,100);
   const lp=lvl(S.ph),lm=lvl(S.mh);S.thT-=dt;
   if(lp>S.lvPH){think('ph');S.thT=rand(12,18);}else if(lm>S.lvMH){think('mh');S.thT=rand(12,18);}
@@ -1133,11 +1135,14 @@ function update(dt){
     const ncap=(5.6+4*Math.pow(n.st/100,.6))*SR;va=clamp(va,Math.min(6.5*SR,ncap),Math.min(8.2*SR,ncap));
     n.st=clamp(n.st-(.3+Math.max(0,va-LIMIT)/SR*.2)*dt*(n.named?.9:1)+(n.st<30&&Math.random()<dt*.04?rand(18,26):0),0,100);
     if(n.st<=0&&n.elimAt>S.t+12)n.elimAt=S.t+rand(6,12);
+    n.km=(n.km||0)+va*dt/HOUR;
     n.off=clamp(n.off+(va-S.speed)/SR*dt*1.6,lo-90,hi+90);  // se rallenti o ti fermi gli altri proseguono (anche fuori schermo)
     if(n.savePending&&S.t-(n.saveAskT||0)>12&&!(S.dlg&&S.dlg.choice)){n.savePending=false;n.leaving=1;}  // la scelta è stata chiusa da un crollo
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=60&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
       else{n.leaving=1;if(n.named)log(n.name+' rallenta. Barcolla.','var(--dim)');}}
   });
+  {let fr=-1e9;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)fr=Math.max(fr,n.km||0);});if(fr>-1e9){S.lead=S.km-fr;if(S.lead>(S.maxLead||0))S.maxLead=S.lead;
+    if(S.maxLead>=LEAD_KM&&!S.leadMsg){S.leadMsg=1;log('Ti volti: dietro di te non c\'è nessuno per chilometri. Solo la strada e il blindato.','var(--amber)');}}}
   {let rear=1e9;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)rear=Math.min(rear,PX+n.off*SPR);});
    const tgt=rear<1e9?clamp(S.truckX+38-rear,0,260):0;S.lag=(S.lag||0)+(tgt-(S.lag||0))*Math.min(1,dt*1.5);}
   S.corpses=S.corpses.filter(c=>c.wx-S.scroll>-20);
@@ -1184,6 +1189,7 @@ function update(dt){
     else{const sd=sadNpc();if(sd&&!S.sadDone&&(alive<=5||progress()>.8)&&sd!==S.dyingNpc){S.sadDone=1;S.sadSorry=1;sd.off=-4;openDlg(sd,DEEP.sad1,'deep');}}}
   if(S.st<4&&!S.collapsed&&!S.fainted&&!S.qte&&S.t>=(S.debtT||0)){const db=debtor();if(db){S.debtT=S.t+20;db.helpedN=(db.helpedN||0)+1;S.st=Math.min(S.maxSt,S.st+30);S.underT=0;
     log(db.name+' ti afferra prima che le gambe cedano e ti sorregge. Ti mette in bocca un concentrato: «Mangia. Te lo devo.»','var(--green)');helpSay(db,'TI TENGO IO! MANGIA QUESTO!');sfx.eat();relUp(db,4);}}
+  if(S.speed>8.4&&!S.qte){S.fastT=(S.fastT||0)+dt;if(S.fastT>2.5&&S.t>(S.fastSayT||0)&&!S.chat){const vis=S.npcs.filter(n=>n.alive&&!n.leaving&&n!==S.dyingNpc&&PX+n.off*SPR>20&&PX+n.off*SPR<W-20);if(vis.length){S.fastSayT=S.t+14;S.chat={n:pick(vis),s:freshPick(FAST_SAY),t:3.4};}}}else S.fastT=0;
   if(S.infame){S.swT-=dt;if(S.swT<=0){S.swT=rand(4,9);const d=rand(-9,6);S.mh=clamp(S.mh+d,0,100);if(d<-5)log(pick(['“Cosa ho fatto?”','“Non guardatemi così.”','“Ho fatto quello che dovevo. Vero?”','“Li sento ridere di me.”']),'var(--red)','th');}}
   if(!S.dyingNpc&&S.npcs.filter(n=>n.alive&&!n.leaving).length+1<=6){const c=S.npcs.filter(n=>n.alive&&!n.leaving);if(c.length){S.dyingNpc=pick(c);if(S.dlg&&S.dlg.npc===S.dyingNpc){S.dlg=null;hideBox();}if(S.chat&&S.chat.n===S.dyingNpc)S.chat=null;}}
   if(!S.finale&&S.npcs.filter(n=>n.alive&&!n.leaving).length<=2){S.finale=true;const fin=ROUTE.c[ROUTE.c.length-1];S.zplan.push({z:'finale',dur:1e9,name:fin});S.zi=S.zplan.length-1;S.zNext=1e9;S.zones.push({z:'finale',s:S.scroll-.5*W/.15});
@@ -1283,7 +1289,13 @@ function die(cause,shot){
   {const bo=$('blackout');if(bo)bo.classList.remove('on');}
   const down=S.collapsed||S.fainted;
   if(shot)cause+=down?' La linea di cingolati ti è passata sopra.':(ERA.veh==='drone'?' Il drone ti ha colpito alle gambe col laser e la linea di cingolati ti è passata sopra.':' Un soldato ti ha sparato alle gambe e la linea di cingolati ti è passata sopra.');
-  S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;hideBox();
+  S.mode='dying';S.cause=cause;S.qte=null;S.dlg=null;S.chat=null;hideBox();
+  if(shot&&!down&&PX-TX()>60){S.down=true;S.agony=true;S.bloodR=0;S.cause=cause.replace(' e la linea di cingolati ti è passata sopra.',', da lontano. Sei morto dissanguato sull\'asfalto, mentre gli altri passavano oltre.');
+    setTimeout(()=>{const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:PX+3,y1:111,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(400);
+      app.classList.add('fin');[cv,$('fx')].forEach(c=>{c.style.transformOrigin=(PX/W*100).toFixed(1)+'% 82%';c.style.transition='transform 3.6s ease-in';});
+      requestAnimationFrame(()=>[cv,$('fx')].forEach(c=>c.style.transform='translate('+(50-PX/W*100).toFixed(1)+'%,-30%) scale(2.6)'));
+      const f=document.createElement('div');f.id='winfade';f.style.transition='opacity 3.6s ease-in';app.appendChild(f);f.getBoundingClientRect();setTimeout(()=>f.style.opacity='1',60);},500);
+    setTimeout(()=>{if(S&&S.mode==='dying'&&!S.ended){S.ended=1;end(false);}},4600);return;}
   if(shot){S.tankRoll=0;S.down=true;
     if(!down)setTimeout(()=>{const[gx,gy]=gunPos();S.flash={x0:gx,y0:gy,x1:PX+3,y1:111,t:.18};(ERA.veh==='drone'?sfx.laser:sfx.shot)();buzz(400);S.tankRoll=1;},600);
     else S.tankRoll=1;
@@ -1426,7 +1438,7 @@ function drawScene(){
   list.push({p:true,x:PX,y:98});list.sort((a,b)=>a.y-b.y);
   const me=S.me||{shirt:'#d8d0b8',hair:S.black?'#1a1210':'#3a2418',skin:S.skin||'#e8b896'};
   list.forEach(o=>{
-    if(o.p){if(S.dead)drawCrushed(o.x,o.y+10,me);else if(S.collapsed||S.fainted||S.down)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
+    if(o.p){if(S.agony&&S.bloodR>0){const r=Math.round(S.bloodR);R(o.x+4-r,o.y+12-Math.ceil(r/3),r*2,Math.ceil(r/1.5),'#6a0e0a');R(o.x+5-r/2,o.y+12-Math.ceil(r/5),r,Math.ceil(r/3),'#8a1a12');}if(S.dead)drawCrushed(o.x,o.y+10,me);else if(S.collapsed||S.fainted||S.down)drawSlump(o.x,o.y,me,true);else drawWalker(o.x,o.y,me,Math.floor(S.anim)%4,true);}
     else{if(o.x<-10||o.x>W+10)return;if(o.n.leaving)drawSlump(o.x,o.y,o.n,false);else drawWalker(o.x,o.y,o.n,Math.floor(o.n.ph)%4,false,false);if(S.dlg&&S.dlg.npc===o.n&&Math.floor(S.t*3)%2)R(o.x+2,o.y-6,2,3,'#e8a838');}
   });
   S.aiming=aimingNow();drawTankLine(TX());
@@ -1441,7 +1453,7 @@ function drawScene(){
    /* MH < 5%: ogni 2-3 s una piccola scossa con leggera sfocatura */
    if(on&&S.mh<5){S.shkN=(S.shkN==null?1:S.shkN)-1/60;if(S.shkN<=0){S.shkN=rand(2,3);S.shkT=.35;}}else S.shkT=0;
    if(S.shkT>0){S.shkT-=1/60;const a=S.shkT/.35;bl=` blur(${(.9*a).toFixed(2)}px)`;tr=`translate(${(Math.random()*4-2)*a|0}px,${(Math.random()*3-1.5)*a|0}px)`;}
-   if(!S.finale&&cv.style.transform!==tr){cv.style.transform=tr;$('fx').style.transform=tr;}
+   if(!S.finale&&!S.agony&&cv.style.transform!==tr){cv.style.transform=tr;$('fx').style.transform=tr;}
    /* stamina o PH < 5%: lo schermo pulsa come un battito */
    {const v=$('vig');let o=0;if(on&&(S.st<5||S.ph<5)){const ph=(performance.now()/1000)%1.1;o=ph<.12?ph/.12:ph<.45?1-(ph-.12)/.33:0;o*=.85;}const os=o.toFixed(2);if(v.style.opacity!==os)v.style.opacity=os;}
    const f=`grayscale(${(.08+.92*pr).toFixed(2)}) contrast(${(1+.35*pr).toFixed(2)}) brightness(${(1-.12*pr).toFixed(2)})${bl}`;if(cv.style.filter!==f)cv.style.filter=f;}
@@ -1748,7 +1760,8 @@ const COMBOS=[
  {id:'scout',n:'Scout',ic:'🏕',shoe:'trekking',item:'torcia',d:'Di notte, con la torcia accesa, la stamina cala il 15% in meno e la torcia si scarica più piano.'},
  {id:'nonna',n:'La nonna prega per te',ic:'🙏',shoe:'pantofole',item:'immagine',d:'Per rialzarti servono 10 tocchi in meno invece di 5.'},
  {id:'serenata',n:'Serenata notturna',ic:'🌙',shoe:'tennis',item:'armonica',d:'Se suoni di notte, per un minuto gli infami non fanno sgambetti.'}];
-const ZAINO_WINS=3;let RUN_ITEMS=['biscotti'];
+const ZAINO_WINS=3,LEAD_KM=8;  // LEAD_KM: km di vantaggio sul marciatore più avanti per sbloccare le scarpe da corsa
+let RUN_ITEMS=['biscotti'];
 /* migrazione v40: lo zainetto ora si sblocca con 3 vittorie di fila; tolto a chi l'aveva con la vecchia regola (5 marce finite) */
 if(!store.get('up_mig40',false)){const u=store.get('up_unlock',{});if(u.zainetto&&store.get('up_streak',0)<ZAINO_WINS){delete u.zainetto;store.set('up_unlock',u);}store.set('up_mig40',true);}
 function equip(){
@@ -1789,7 +1802,7 @@ const T_ITEM={
  torcia:{pro:'Di notte, se è carica, la mente cala meno e inciampi meno.',con:'Si scarica: va ricaricata toccandola.',how:'Hai camminato 5 notti (contando tutte le marce).'},
  zainetto:{n:'Zainetto',pro:'Porti 2 oggetti invece di 1.',con:'Nessuno.',how:'Hai vinto 3 marce di fila.'},
 };
-const T_SHOE={pantofole:'Sei morto prima di mezzogiorno del primo giorno.',fratello:'Hai vinto dopo aver ascoltato la verità del solitario.',ginnastica:'Disponibili dall\'inizio.',tennis:'Disponibili dall\'inizio.',mocassini:'Ferma 5 sgambetti degli infami (anche in marce diverse).',trekking:'Aiuta gli infami a fare 5 sgambetti (anche in marce diverse).',running:'Vinci una marcia con le scarpe rotte.'};
+const T_SHOE={pantofole:'Sei morto prima di mezzogiorno del primo giorno.',fratello:'Hai vinto dopo aver ascoltato la verità del solitario.',ginnastica:'Disponibili dall\'inizio.',tennis:'Disponibili dall\'inizio.',mocassini:'Ferma 5 sgambetti degli infami (anche in marce diverse).',trekking:'Aiuta gli infami a fare 5 sgambetti (anche in marce diverse).',running:'Hai staccato tutti gli altri marciatori di 8 km.'};
 /* ================= MANUALE DEL MARCIATORE: consigli in ordine e tutorial ================= */
 function manual(){
   const num=t=>+((t.match(/n\.(\d+)/)||[0,999])[1]);
@@ -1890,7 +1903,7 @@ function end(win){
    const U=(k,cond,msg)=>{if(cond&&!unZ[k]){unZ[k]=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 '+msg+'</p>';}};
    U('sigarette',S.npcs.filter(n=>n.named).every(n=>n.rel<=-40),'Sbloccato: Pacchetto di sigarette');U('hamburger',S.bro,'Sbloccato: Hamburger crudo');U('panini',S.hate,'Sbloccati: Panini burro e marmellata');U('kway',store.get('up_rains',0)>=10,'Sbloccato: K-way');U('immagine',S.forgave,'Sbloccata: Immagine sacra');U('armonica',S.solHeard,'Sbloccata: Armonica a bocca');U('torcia',store.get('up_nights',0)>=5,'Sbloccata: Torcia a dinamo');U('pantofole',!win&&S.t<3*HOUR,'Sbloccate: Pantofole della nonna');
    if(win&&S.solHeard&&!unZ.fratello){const so=S.npcs.find(n=>n.id==='solitario');store.set('up_broname',so?so.name:'?');SHOES.fratello.n='Scarpe del fratello di '+store.get('up_broname','?');}
-   U('fratello',win&&S.solHeard,'Sbloccate: '+SHOES.fratello.n);U('mocassini',store.get('up_defends',0)>=5,'Sbloccati: Mocassini');U('trekking',store.get('up_betrays',0)>=5,'Sbloccati: Scarponi da trekking');U('running',win&&S.broken,'Sbloccate: Scarpe da corsa');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
+   U('fratello',win&&S.solHeard,'Sbloccate: '+SHOES.fratello.n);U('mocassini',store.get('up_defends',0)>=5,'Sbloccati: Mocassini');U('trekking',store.get('up_betrays',0)>=5,'Sbloccati: Scarponi da trekking');U('running',(S.maxLead||0)>=LEAD_KM,'Sbloccate: Scarpe da corsa');U('orologio',!win&&deadN>=Math.ceil(S.npcs.length/2),'Sbloccato: Orologio del padre');
    if(S.panicDeath&&!unZ.radio){unZ.radio=true;store.set('up_unlock',unZ);unlockMsg+='<p style="color:var(--amber)">🔓 Sbloccata: Radio portatile</p>';}}
   let newCombo=null;if(S.combo){const cb=store.get('up_combos',{});if(!cb[S.combo]){cb[S.combo]=true;store.set('up_combos',cb);newCombo=COMBOS.find(c=>c.id===S.combo);}}
   if(newCombo)setTimeout(()=>achievement(newCombo),900);
@@ -1950,7 +1963,8 @@ function frame(){
       else if(S.mode==='over'&&S.finale)finStep(dt);
       else if(S.mode==='dying'){S.t+=dt*.2;if(S.flash){S.flash.t-=dt;if(S.flash.t<=0)S.flash=null;}
         S.anim+=dt*4;S.npcs.forEach(n=>{if(n.alive&&!n.leaving)n.off+=n.v/SR*dt*1.6;});if(S.chat){S.chat.t-=dt;if(S.chat.t<=0)S.chat=null;}  // gli altri proseguono senza di te
-        if(S.lag>0&&!S.dead)S.lag=Math.max(0,S.lag-50*dt);else if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);
+        if(S.agony){S.bloodR=Math.min(10,(S.bloodR||0)+dt*3);}
+        else if(S.lag>0&&!S.dead)S.lag=Math.max(0,S.lag-50*dt);else if(S.tankRoll&&!S.dead){S.truckX+=46*dt;if(S.truckX+28>=PX+5){S.dead=true;sfx.crush();buzz([200,80,300]);
           setTimeout(()=>{const bo=$('blackout');if(bo&&S&&S.mode==='dying')bo.classList.add('on');},1600);
           setTimeout(()=>{if(S&&!S.ended){S.ended=1;end(false);}},2600);}}
         else if(S.dead)S.truckX+=40*dt;}  // la linea di cingolati riprende la marcia dietro chi resta
@@ -2030,6 +2044,7 @@ Object.assign(DEEP,{
  sad2:{t:"Non ho mai avuto un amico. Mai. A scuola mi chiudevano nei bagni. Ho imparato che se ridi tu per primo, gli altri non ridono di te.",o:[Q("«Mi dispiace.»",D(10,2,'sad3')),Q("Lo lasci parlare.",D(6,1,'sad3')),Q("«Questo non giustifica niente.»",D(-2,0,'sad3'))]},
  sad3:{t:"Tutte quelle cose che ho detto... sui morti, sui cingoli... Non le pensavo. Avevo paura. Ho ancora paura. Mi perdoni?",o:[Q("«Ti perdono.»",D(14,5)),Q("«Non sta a me perdonarti.»",D(4,-1)),Q("«No.»",D(-10,-3))]},
 });
+const FAST_SAY=["Questo tra un po' scoppia.","Guardate come corre!","Non arriva alla prossima ora, così.","Ehi, dove corri? Il traguardo non si sposta!","Rallenta, idiota! Ti scoppia il cuore!","Corri, corri... ti ritroviamo più avanti. Steso.","Ha fretta di morire, quello.","Guarda come sbuffa. Altri dieci minuti e crolla."];
 const SADIC_SAY=["Ahah, guarda come zoppica quello.","Scommetto che il prossimo è il biondo.","Forza, cadete! Sto aspettando.","Che bel rumore fanno i cingoli.","Più spazio per me.","Chi piange per primo perde. Hehe."];
 const SADIC_SORRY=["Scusate... scusate tutti...","Non volevo. Non volevo niente di tutto questo.","Qualcuno mi parla? Qualcuno?","Mamma, avevi ragione su di me.","Ho paura. Ho tanta paura."];
 const SOLO_SAY=["...","Cammina.","...","Non guardare i cingoli."];
