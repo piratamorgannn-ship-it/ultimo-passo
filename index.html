@@ -214,11 +214,11 @@ button:disabled{opacity:.35}
   <div id="rot"><div class="ph">📱</div><div>Ruota il telefono in orizzontale<br><span class="lbl" style="font-size:12px">per vedere tutta la folla dei marciatori</span></div><button id="rotOk" class="ghost" style="text-align:center">continua in verticale</button></div>
 </div>
 <script>
-const APP_VER='0.16';  // versione dell'app: +0.01 a ogni modifica
+const APP_VER='0.17';  // versione dell'app: +0.01 a ogni modifica
 
 (()=>{
 'use strict';
-const H=128,LIMIT=5.5,SR=LIMIT/6.4,K=4.6*SR,TOTAL=46,QPER=10,SPR=2; // SR: rapporto col vecchio limite (6,4 km/h) per ricalibrare passo e fatica
+const H=128,LIMIT=5.5,SR=LIMIT/6.4,K=3.4*SR,TOTAL=46,QPER=10,SPR=2; // SR: rapporto col vecchio limite (6,4 km/h) per ricalibrare passo e fatica
 let W=320,PX=96;
 const $=id=>document.getElementById(id);
 const cv=$('scene');let cx=cv.getContext('2d');let OFF=null,OCX=null;
@@ -1067,7 +1067,7 @@ const isNight=()=>{const h=hourNow()%24;return h>=20||h<6;};
 function update(dt){
   S.t+=dt;const sh=S.sh,hour=hourNow(),heat=isHeat(),wx=S.wx;
   if(!(S.st>=0))S.st=0;if(!(S.ph>=0))S.ph=0;  // la stamina negativa dava velocità NaN
-  let cap=(5.2+5*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100))*SR;
+  let cap=(5.2+7*Math.pow(S.st/100,.6)*(.6+.4*S.ph/100))*SR;  // con stamina piena si arriva a ~12 km/h tappando a raffica
   if(S.peeing>0){cap=Math.min(cap,6.9*SR);S.peeing-=dt;if(S.peeing<=0){S.bl=0;S.mh-=3;log('Fatto. Nessuno ci fa caso. Quasi.','var(--dim)');}}
   if(S.qte&&S.qte.type==='blocco')cap=0;
   if(S.collapsed||S.fainted)cap=0;
@@ -1077,11 +1077,11 @@ function update(dt){
   const k=K*(S.hill>0?.78:S.desc>0?1.05:1)*(S.rain>0?(S.combo==='montanaro'?1:S.kway?.97:.94):1)*(S.injury?.95:1);
   /* durante gli eventi (crampi, cadute, spinte…) il marciatore cammina da solo: il giocatore pensa solo al problema */
   const autoW=S.qte&&S.qte.type!=='blocco'&&S.qte.type!=='rialzati'&&!S.collapsed&&!S.fainted;
-  if(autoW){S.speed+=(Math.max(LIMIT*1.04,Math.min(S.qte.spd||0,cap))-S.speed)*Math.min(1,dt*2.5);S.steps=[S.t-.4,S.t];}
-  else S.speed+=(Math.min(cadence()*k,cap)-S.speed)*Math.min(1,dt*2.5);
+  if(autoW){S.want=0;S.speed+=(Math.max(LIMIT*1.04,Math.min(S.qte.spd||0,cap))-S.speed)*Math.min(1,dt*2.5);S.steps=[S.t-.4,S.t];}
+  else{S.want=Math.min(cadence()*k,cap*1.6);S.speed+=(Math.min(S.want,cap)-S.speed)*Math.min(1,dt*2.5);}
   S.speed=Math.max(0,S.speed||0);S.anim+=S.speed/SR*dt*.6;S.scroll+=S.speed/SR*dt*4;S.km+=S.speed*dt/HOUR;
   S.maxSt=Math.max(40,100-S.t*.06);
-  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195)*sh.st;  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=S.combo==='montanaro'?1.2:1.4;if(S.combo==='walkman'&&S.radio)d*=.95;if(S.combo==='scout'&&isNight()&&S.torch>0)d*=.85;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
+  let d=(.395+Math.max(0,S.speed-LIMIT)/SR*.195+Math.max(0,(S.want||0)-S.speed)/SR*.12)*sh.st;  // spingere oltre quello che le gambe danno consuma comunque  // prova più facile (prima .45 / .22)if(S.rain>0&&!S.kway)d*=1.12;if(S.drinkT>S.t)d*=.85;if(S.melonT>S.t)d*=.65;if(S.hill>0)d*=S.combo==='montanaro'?1.2:1.4;if(S.combo==='walkman'&&S.radio)d*=.95;if(S.combo==='scout'&&isNight()&&S.torch>0)d*=.85;if(S.pneumonia)d*=1.45;if(S.speed<LIMIT)d-=Math.min(2,(LIMIT-S.speed)/SR*.6);
   S.st=clamp(S.st-d*dt,0,S.maxSt);
   S.hy=clamp(S.hy-.11*wx.hyd*(heat?2:1)*(S.hill>0?1.4:1)*dt,0,100);
   S.bl=clamp(S.bl+.045*dt,0,100);S.sto=Math.max(0,S.sto-.4*dt);S.drinkCd-=dt;
@@ -1128,7 +1128,11 @@ function update(dt){
     let tgt=n.named?(n.home=(n.home==null?rand(-14,14):clamp(n.home+rand(-3,3)*dt,-16,16))):(S.groups[n.g]?S.groups[n.g].a:0)+n.jit;if(n.warns>=1&&!n.tempW)tgt=Math.min(tgt,lo*.8+n.jit);if(n.appT>S.t)tgt=n.off>=0?4:-4;
     // velocità assoluta del PNG (km/h): segue il suo posto nella fila ma non scende sotto ~6,5 né sale oltre ~8,2
     let va=n.v+(tgt-n.off)*.25;if(S.dlg&&S.dlg.npc===n)va=S.speed+(6-n.off)*.4;else if(n.buddy&&n.rel>=80)va=S.speed+(n.buddy-n.off)*.5;
-    va=clamp(va,6.5*SR,8.2*SR);
+    /* stamina dei PNG: più vanno veloci più si stancano; mangiano un tubetto quando sono a terra; a zero crollano */
+    if(n.st==null)n.st=rand(85,100);
+    const ncap=(5.6+4*Math.pow(n.st/100,.6))*SR;va=clamp(va,Math.min(6.5*SR,ncap),Math.min(8.2*SR,ncap));
+    n.st=clamp(n.st-(.3+Math.max(0,va-LIMIT)/SR*.2)*dt*(n.named?.9:1)+(n.st<30&&Math.random()<dt*.04?rand(18,26):0),0,100);
+    if(n.st<=0&&n.elimAt>S.t+12)n.elimAt=S.t+rand(6,12);
     n.off=clamp(n.off+(va-S.speed)/SR*dt*1.6,lo-90,hi+90);  // se rallenti o ti fermi gli altri proseguono (anche fuori schermo)
     if(n.savePending&&S.t-(n.saveAskT||0)>12&&!(S.dlg&&S.dlg.choice)){n.savePending=false;n.leaving=1;}  // la scelta è stata chiusa da un crollo
     if(S.t>=n.elimAt&&S.saving!==n&&!n.savePending){if(n.named&&n.rel>=60&&!n.saveAsked&&!S.alone&&n!==S.dyingNpc&&S.mode==='play'){if(!S.qte&&!S.dlg)askSave(n);}
